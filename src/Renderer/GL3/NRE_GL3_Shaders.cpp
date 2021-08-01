@@ -1,13 +1,14 @@
 #include <Renderer/GL3/NRE_GL3_Shaders.h>
+#include <Renderer/NRE_GPU_API.h>
 #include <iostream>
 
 using namespace std;
 
-std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader vs){
+std::string NRE_GenGL3VertexShader(nre::gpu::vertex_shader vs){
     
     std::string output = "\n";
     
-    if (NRE_GPU_ShaderBase::backend == NRE_GPU_GLES){
+    if (nre::gpu::get_api() == nre::gpu::GLES){
         output.append("precision highp float; \n");
     }
     
@@ -27,7 +28,7 @@ std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader vs){
     }
     else {
         
-        if (vs.type == NRE_GPU_VS_Z_PREPASS){
+        if (vs.type == nre::gpu::VS_Z_PREPASS){
             output.append(NRE_Shader(
                 layout (location = 0) in vec3 oe_position;
                 
@@ -54,7 +55,7 @@ std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader vs){
                 }
             ));
         } 
-        else if (vs.type == NRE_GPU_VS_LIGHT){
+        else if (vs.type == nre::gpu::VS_LIGHT){
             output.append(NRE_Shader(
                 layout (location = 0) in vec3 oe_position;
                 //layout (location = 1) in vec3 oe_normals;
@@ -95,7 +96,7 @@ std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader vs){
                 }
             ));
         }
-        else if ((vs.type == NRE_GPU_VS_REGULAR) || (vs.type == NRE_GPU_VS_BOUNDING_BOX) || (vs.type == NRE_GPU_VS_BOUNDING_SPHERE)){
+        else if ((vs.type == nre::gpu::VS_REGULAR) || (vs.type == nre::gpu::VS_BOUNDING_BOX) || (vs.type == nre::gpu::VS_BOUNDING_SPHERE)){
             
             // setup inputs
             output.append(NRE_Shader(
@@ -134,7 +135,7 @@ std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader vs){
             ));
             
             // setup final logic
-            if (vs.type == NRE_GPU_VS_REGULAR){
+            if (vs.type == nre::gpu::VS_REGULAR){
                 
                 // handle regular case
                 output.append(NRE_Shader(
@@ -154,7 +155,7 @@ std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader vs){
                     }
                 ));
             }
-            else if (vs.type == NRE_GPU_VS_BOUNDING_BOX) {
+            else if (vs.type == nre::gpu::VS_BOUNDING_BOX) {
                 
                 // handle bounding box case
                 // here one does not need to consider rotation, since the (non-naive) bounding box
@@ -187,7 +188,7 @@ std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader vs){
                     }
                 ));
             }
-            else if (vs.type == NRE_GPU_VS_BOUNDING_SPHERE) {
+            else if (vs.type == nre::gpu::VS_BOUNDING_SPHERE) {
                 
                 // handle bounding sphere case
                 // here one does not need to consider rotation, since the sphere
@@ -220,18 +221,18 @@ std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader vs){
 
     
     
-    return NRE_GPU_ShaderBase::shader_prefix + output;
+    return nre::gpu::shader_base::shader_prefix + output;
 }
 
-std::string NRE_GenGL3PixelShader(NRE_GPU_PixelShader fs){
+std::string NRE_GenGL3PixelShader(nre::gpu::pixel_shader fs){
     
     std::string output = "\n";
     
-    if (NRE_GPU_ShaderBase::backend == NRE_GPU_GLES){
+    if (nre::gpu::get_api() == nre::gpu::GLES){
         output.append("precision highp float; \n");
     }
     
-    if ((fs.type == NRE_GPU_FS_UNDEFINED) or (fs.type == NRE_GPU_FS_SIMPLE)){
+    if ((fs.type == nre::gpu::FS_UNDEFINED) or (fs.type == nre::gpu::FS_SIMPLE)){
         output.append(NRE_Shader(
             in vec2 position;
             out vec4 fragColor;
@@ -240,9 +241,9 @@ std::string NRE_GenGL3PixelShader(NRE_GPU_PixelShader fs){
                 fragColor = vec4(vec3(0.5), 1.0);
             }
         ));
-        return NRE_GPU_ShaderBase::shader_prefix + output;
+        return nre::gpu::shader_base::shader_prefix + output;
     }
-    else if (fs.type == NRE_GPU_FS_GAMMA){
+    else if (fs.type == nre::gpu::FS_GAMMA){
         output.append(NRE_Shader(
             in vec2 position;
             out vec4 fragColor;
@@ -262,9 +263,9 @@ std::string NRE_GenGL3PixelShader(NRE_GPU_PixelShader fs){
                 fragColor = vec4(pow(sampled_data.xyz, vec3(1.0/2.2)), sampled_data.w);
             }
         ));
-        return NRE_GPU_ShaderBase::shader_prefix + output;
+        return nre::gpu::shader_base::shader_prefix + output;
     }
-    else if (fs.type == NRE_GPU_FS_LIGHT_INDEX){
+    else if (fs.type == nre::gpu::FS_LIGHT_INDEX){
          output.append(NRE_Shader(
             flat in float instance_num;
              
@@ -276,7 +277,7 @@ std::string NRE_GenGL3PixelShader(NRE_GPU_PixelShader fs){
             }
              
         ));
-        return NRE_GPU_ShaderBase::shader_prefix + output;
+        return nre::gpu::shader_base::shader_prefix + output;
     }
     
     output.append(NRE_Shader(
@@ -305,7 +306,7 @@ std::string NRE_GenGL3PixelShader(NRE_GPU_PixelShader fs){
     ));
     output.append("\n");
     
-    if (fs.type == NRE_GPU_FS_MATERIAL){
+    if (fs.type == nre::gpu::FS_MATERIAL){
         
         // setup uniforms
         output.append(NRE_Shader(
@@ -352,7 +353,7 @@ std::string NRE_GenGL3PixelShader(NRE_GPU_PixelShader fs){
         ));
         
     }
-    else if (fs.type == NRE_GPU_FS_NORMALS){
+    else if (fs.type == nre::gpu::FS_NORMALS){
         
             output.append(NRE_Shader(
             
@@ -368,5 +369,5 @@ std::string NRE_GenGL3PixelShader(NRE_GPU_PixelShader fs){
         
     }
     
-    return NRE_GPU_ShaderBase::shader_prefix + output;
+    return nre::gpu::shader_base::shader_prefix + output;
 }

@@ -1,6 +1,7 @@
 #include <OE_SDL_WindowSystem.h>
 #include <types/OE_Libs.h>
 #include <iostream>
+#include <Renderer/NRE_GPU_API.h>
 
 using namespace std;
 
@@ -152,6 +153,13 @@ void OE_SDL_WindowSystem::finishInit(){
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     SDL_GL_SwapWindow(this->window);
+    
+    if (!this->isES){
+        nre::gpu::init(nre::gpu::GL, this->major, this->minor);
+    } 
+    else{
+        nre::gpu::init(nre::gpu::GLES, this->major, this->minor);
+    }
     
     this->event_handler.init();
         

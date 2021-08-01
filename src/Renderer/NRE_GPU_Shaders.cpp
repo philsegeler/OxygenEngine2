@@ -1,34 +1,35 @@
 #include <Renderer/GL3/NRE_GL3_Shaders.h>
+#include <Renderer/NRE_GPU_API.h>
 #include <iostream>
 #include <sstream>
 
 using namespace std;
+using namespace nre::gpu;
+
 
 // General boilerplate
 
-NRE_GPU_SHADER_BACKEND NRE_GPU_ShaderBase::backend = NRE_GPU_UNDEFINED;
-std::string NRE_GPU_ShaderBase::shader_prefix = "";
+std::string nre::gpu::shader_base::shader_prefix = "";
 
-NRE_GPU_ShaderBase::~NRE_GPU_ShaderBase(){
+nre::gpu::shader_base::~shader_base(){
     
 }
 
-void NRE_GPU_ShaderBase::init(NRE_GPU_SHADER_BACKEND backend, int major, int minor){
+void nre::gpu::shader_base::init(SHADER_BACKEND backend, int major, int minor){
     
-    NRE_GPU_ShaderBase::backend = backend;
     
-    if (backend == NRE_GPU_GLES){
-        NRE_GPU_ShaderBase::shader_prefix = "#version 300 es \n";
+    if (backend == GLES){
+        nre::gpu::shader_base::shader_prefix = "#version 300 es \n";
     }
-    else if (backend == NRE_GPU_GL){
+    else if (backend == GL){
         
         if (major == 3 && minor == 1){
-            NRE_GPU_ShaderBase::shader_prefix = "#version 140 \n"
+            nre::gpu::shader_base::shader_prefix = "#version 140 \n"
                                  "#extension GL_ARB_explicit_attrib_location"
                                  ": require\n";
         } 
         else if (major == 3 && minor >= 2){
-            NRE_GPU_ShaderBase::shader_prefix = "#version 150 core \n"
+            nre::gpu::shader_base::shader_prefix = "#version 150 core \n"
                                  "#extension GL_ARB_explicit_attrib_location"
                                  ": require\n";
         }
@@ -43,25 +44,25 @@ void NRE_GPU_ShaderBase::init(NRE_GPU_SHADER_BACKEND backend, int major, int min
 }
 
 
-std::string NRE_GPU_ShaderBase::genShader(){
+std::string nre::gpu::shader_base::gen_shader(){
     return "";
 }
 
-std::string NRE_GPU_ShaderBase::info(){
+std::string nre::gpu::shader_base::info(){
     return "";
 }
 
 // Vertex Shader
 
-NRE_GPU_VertexShader::NRE_GPU_VertexShader(){
+nre::gpu::vertex_shader::vertex_shader(){
     
 }
 
-NRE_GPU_VertexShader::~NRE_GPU_VertexShader(){
+nre::gpu::vertex_shader::~vertex_shader(){
     
 }
 
-bool NRE_GPU_VertexShader::operator< (const NRE_GPU_VertexShader& other) const{
+bool nre::gpu::vertex_shader::operator< (const nre::gpu::vertex_shader& other) const{
     if (this->num_of_uvs < other.num_of_uvs){
         return true;
     }
@@ -83,36 +84,36 @@ bool NRE_GPU_VertexShader::operator< (const NRE_GPU_VertexShader& other) const{
     return false;
 }
 
-bool NRE_GPU_VertexShader::operator == (const NRE_GPU_VertexShader& other) const{
+bool nre::gpu::vertex_shader::operator == (const nre::gpu::vertex_shader& other) const{
     return (this->fullscreenQuad == other.fullscreenQuad) && (this->type == other.type) && (this->num_of_uvs == other.num_of_uvs);
 }
 
-std::string NRE_GPU_VertexShader::genShader(){
-    if (NRE_GPU_ShaderBase::backend == NRE_GPU_GL || NRE_GPU_ShaderBase::backend == NRE_GPU_GLES)
+std::string nre::gpu::vertex_shader::gen_shader(){
+    if (nre::gpu::get_api() == GL || nre::gpu::get_api() == GLES)
         return NRE_GenGL3VertexShader(*this);
     return "";
 }
 
-std::string NRE_GPU_VertexShader::info(){
+std::string nre::gpu::vertex_shader::info(){
     
     stringstream ss;
     switch(this->type){
-        case NRE_GPU_VS_UNDEFINED:
+        case VS_UNDEFINED:
             ss << "VS_UNDEFINED";
             break;
-        case NRE_GPU_VS_Z_PREPASS:
+        case VS_Z_PREPASS:
             ss << "VS_Z_PREPASS";
             break;
-        case NRE_GPU_VS_REGULAR:
+        case VS_REGULAR:
             ss << "VS_REGULAR";
             break;
-        case NRE_GPU_VS_BOUNDING_BOX:
+        case VS_BOUNDING_BOX:
             ss << "VS_BOUNDING_BOX";
             break;
-        case NRE_GPU_VS_BOUNDING_SPHERE:
+        case VS_BOUNDING_SPHERE:
             ss << "VS_BOUNDING_SPHERE";
             break;
-        case NRE_GPU_VS_LIGHT:
+        case VS_LIGHT:
             ss << "VS_LIGHT";
             break;
     }
@@ -122,15 +123,15 @@ std::string NRE_GPU_VertexShader::info(){
 
 // Fragment/Pixel Shader
 
-NRE_GPU_PixelShader::NRE_GPU_PixelShader(){
+nre::gpu::pixel_shader::pixel_shader(){
     
 }
 
-NRE_GPU_PixelShader::~NRE_GPU_PixelShader(){
+nre::gpu::pixel_shader::~pixel_shader(){
     
 }
 
-bool NRE_GPU_PixelShader::operator< (const NRE_GPU_PixelShader& other) const{
+bool nre::gpu::pixel_shader::operator< (const nre::gpu::pixel_shader& other) const{
     if (this->num_of_uvs < other.num_of_uvs){
         return true;
     }
@@ -144,40 +145,40 @@ bool NRE_GPU_PixelShader::operator< (const NRE_GPU_PixelShader& other) const{
     return false;
 }
 
-std::string NRE_GPU_PixelShader::genShader(){
-    if (NRE_GPU_ShaderBase::backend == NRE_GPU_GL || NRE_GPU_ShaderBase::backend == NRE_GPU_GLES)
+std::string nre::gpu::pixel_shader::gen_shader(){
+    if (nre::gpu::get_api() == GL || nre::gpu::get_api() == GLES)
         return NRE_GenGL3PixelShader(*this);
     return "";
 }
 
-std::string NRE_GPU_PixelShader::info(){
+std::string nre::gpu::pixel_shader::info(){
     stringstream ss;
     switch(this->type){
-        case NRE_GPU_FS_UNDEFINED:
+        case FS_UNDEFINED:
             ss << "FS_UNDEFINED";
             break;
-        case NRE_GPU_FS_SIMPLE:
+        case FS_SIMPLE:
             ss << "FS_SIMPLE";
             break;
-        case NRE_GPU_FS_GAMMA:
+        case FS_GAMMA:
             ss << "FS_GAMMA";
             break;
-        case NRE_GPU_FS_MATERIAL:
+        case FS_MATERIAL:
             ss << "FS_MATERIAL";
             break;
-        case NRE_GPU_FS_NORMALS:
+        case FS_NORMALS:
             ss << "FS_NORMALS";
             break;
-        case NRE_GPU_FS_SIMPLE_LIGHT:
+        case FS_SIMPLE_LIGHT:
             ss << "FS_SIMPLE_LIGHT";
             break;
-        case NRE_GPU_FS_DIR_LIGHT:
+        case FS_DIR_LIGHT:
             ss << "FS_DIR_LIGHT";
             break;
-        case NRE_GPU_FS_INDIR_LIGHTS:
+        case FS_INDIR_LIGHTS:
             ss << "FS_INDIR_LIGHTS";
             break;
-        case NRE_GPU_FS_LIGHT_INDEX:
+        case FS_LIGHT_INDEX:
             ss << "FS_LIGHT_INDEX";
             break;
     }

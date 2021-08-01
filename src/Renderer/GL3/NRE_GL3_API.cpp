@@ -63,12 +63,12 @@ void APIENTRY openglCallbackFunction(GLenum source,
 
 // small utility function to translate the buffer usages to something opengl understands
 // This should be different on other APIs
-GLenum NRE2GL_BufferUse(NRE_GPU_BUFFER_USAGE usage){
+GLenum NRE2GL_BufferUse(nre::gpu::BUFFER_USAGE usage){
     GLenum buf_usage;
     switch(usage){
-        case NRE_GPU_STATIC: buf_usage = GL_STATIC_DRAW; break;
-        case NRE_GPU_DYNAMIC: buf_usage = GL_DYNAMIC_DRAW; break;
-        case NRE_GPU_STREAM: buf_usage = GL_STREAM_DRAW; break;
+        case nre::gpu::STATIC: buf_usage = GL_STATIC_DRAW; break;
+        case nre::gpu::DYNAMIC: buf_usage = GL_DYNAMIC_DRAW; break;
+        case nre::gpu::STREAM: buf_usage = GL_STREAM_DRAW; break;
         default: buf_usage = GL_STATIC_DRAW;
     }
     return buf_usage;
@@ -111,11 +111,11 @@ bool NRE_GL3_Program::operator< (const NRE_GL3_Program& other) const{
     return false;
 }
 
-bool NRE_GL3_Texture::hasNotChanged(NRE_GPU_TEXTURE_TYPE type_in, NRE_GPU_TEXTURE_FILTER filter_in, int x_in, int y_in, int mipmaps_in){
+bool NRE_GL3_Texture::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, nre::gpu::TEXTURE_FILTER filter_in, int x_in, int y_in, int mipmaps_in){
     return (this->type == type_in) and (this->filter == filter_in) and (this->x == x_in) and (this->y == y_in) and (this->mipmaps == mipmaps_in);
 }
 
-bool NRE_GL3_RenderBuffer::hasNotChanged(NRE_GPU_TEXTURE_TYPE type_in, int x_in, int y_in){
+bool NRE_GL3_RenderBuffer::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, int x_in, int y_in){
     return (this->type == type_in) and (this->x == x_in) and (this->y == y_in);
 }
 
@@ -151,10 +151,10 @@ NRE_GL3_API::~NRE_GL3_API(){
 
 void NRE_GL3_API::update(uint32_t x_in, uint32_t y_in){
     
-    if (x_in != this->x or y_in != this->y){
+    if (x_in != nre::gpu::x or y_in != nre::gpu::y){
         glViewport(0, 0, x_in, y_in);
-        this->x = x_in;
-        this->y = y_in;
+        nre::gpu::x = x_in;
+        nre::gpu::y = y_in;
     }
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -200,9 +200,9 @@ void NRE_GL3_API::destroy(){
 }
 
 std::string NRE_GL3_API::getRenderingAPI(){
-    if (NRE_GPU_ShaderBase::backend == NRE_GPU_GLES)
+    if (nre::gpu::get_api() == nre::gpu::GLES)
         return "OpenGL ES 3";
-    else if (NRE_GPU_ShaderBase::backend == NRE_GPU_GL)
+    else if (nre::gpu::get_api() == nre::gpu::GL)
         return "OpenGL 3";
     else{
         return "Unknown";
@@ -345,68 +345,68 @@ void NRE_GL3_API::get_program_all_uniforms_(std::size_t id){
     }
 }
 
-int NRE_GL3_API::teximage_internalformat_(NRE_GPU_TEXTURE_TYPE type){
+int NRE_GL3_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type){
     switch (type){
 
-        case NRE_GPU_FLOAT:
+        case nre::gpu::FLOAT:
             return GL_RGB32F;
-        case NRE_GPU_RGBA:
+        case nre::gpu::RGBA:
             return GL_RGBA8;
-        case NRE_GPU_RGB10_A2:
+        case nre::gpu::RGB10_A2:
             return GL_RGB10_A2;
-        case NRE_GPU_RGBA16F:
+        case nre::gpu::RGBA16F:
             return GL_RGBA16F;
-        case NRE_GPU_SRGBA:
+        case nre::gpu::SRGBA:
             return GL_SRGB8_ALPHA8;
-        case NRE_GPU_RGBA_U16:
+        case nre::gpu::RGBA_U16:
             return GL_RGBA16UI;
-        case NRE_GPU_RGBA_U8:
+        case nre::gpu::RGBA_U8:
             return GL_RGBA8UI;
-        case NRE_GPU_DEPTHSTENCIL:
+        case nre::gpu::DEPTHSTENCIL:
             return GL_DEPTH24_STENCIL8;
     };
     return GL_RGB;
 }
 
-int NRE_GL3_API::teximage_format_(NRE_GPU_TEXTURE_TYPE type){
+int NRE_GL3_API::teximage_format_(nre::gpu::TEXTURE_TYPE type){
      switch (type){
-        case NRE_GPU_FLOAT:
+        case nre::gpu::FLOAT:
             return GL_RGB32F;
-        case NRE_GPU_RGBA:
+        case nre::gpu::RGBA:
             return GL_RGBA;
-        case NRE_GPU_RGB10_A2:
+        case nre::gpu::RGB10_A2:
             return GL_RGBA;
-        case NRE_GPU_RGBA16F:
+        case nre::gpu::RGBA16F:
             return GL_RGBA;
-        case NRE_GPU_SRGBA:
+        case nre::gpu::SRGBA:
             return GL_RGBA;
-        case NRE_GPU_RGBA_U16:
+        case nre::gpu::RGBA_U16:
             return GL_RGBA_INTEGER;
-        case NRE_GPU_RGBA_U8:
+        case nre::gpu::RGBA_U8:
             return GL_RGBA_INTEGER;
-        case NRE_GPU_DEPTHSTENCIL:
+        case nre::gpu::DEPTHSTENCIL:
             return GL_DEPTH_STENCIL;
     };
     return GL_RGB;
 }
 
-int NRE_GL3_API::teximage_type_(NRE_GPU_TEXTURE_TYPE type){
+int NRE_GL3_API::teximage_type_(nre::gpu::TEXTURE_TYPE type){
      switch (type){
-        case NRE_GPU_FLOAT:
+        case nre::gpu::FLOAT:
             return GL_FLOAT;
-        case NRE_GPU_RGBA:
+        case nre::gpu::RGBA:
             return GL_UNSIGNED_BYTE;
-        case NRE_GPU_RGB10_A2:
+        case nre::gpu::RGB10_A2:
             return GL_UNSIGNED_INT_2_10_10_10_REV;
-        case NRE_GPU_RGBA16F:
+        case nre::gpu::RGBA16F:
             return GL_FLOAT;
-        case NRE_GPU_SRGBA:
+        case nre::gpu::SRGBA:
             return GL_UNSIGNED_BYTE;
-        case NRE_GPU_RGBA_U16:
+        case nre::gpu::RGBA_U16:
             return GL_UNSIGNED_SHORT;
-        case NRE_GPU_RGBA_U8:
+        case nre::gpu::RGBA_U8:
             return GL_UNSIGNED_BYTE;
-        case NRE_GPU_DEPTHSTENCIL:
+        case nre::gpu::DEPTHSTENCIL:
             return GL_UNSIGNED_INT_24_8;
     };
     return GL_UNSIGNED_BYTE;
@@ -472,7 +472,7 @@ std::size_t  NRE_GL3_API::newRenderBuffer(){
     
 //--------------------Render Buffer -------------------------------//
     
-void  NRE_GL3_API::setRenderBufferType(std::size_t id, NRE_GPU_TEXTURE_TYPE a_type, int x, int y){
+void  NRE_GL3_API::setRenderBufferType(std::size_t id, nre::gpu::TEXTURE_TYPE a_type, int x, int y){
     this->check_rbo_id_(id, "setRenderBufferType");
     
     if (this->rbos[id].hasNotChanged(a_type, x, y)){
@@ -494,7 +494,7 @@ void  NRE_GL3_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t rb
     glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[fbo_id].handle);
     glBindRenderbuffer(GL_RENDERBUFFER, this->rbos[rbo_id].handle);
     
-    if (this->rbos[rbo_id].type != NRE_GPU_DEPTHSTENCIL){
+    if (this->rbos[rbo_id].type != nre::gpu::DEPTHSTENCIL){
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_RENDERBUFFER, this->rbos[rbo_id].handle);  
     }
     else {
@@ -507,7 +507,7 @@ void  NRE_GL3_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t rb
 
 //---------------------Vertex Buffer-----------------------------//
 
-void NRE_GL3_API::setVertexBufferMemory(std::size_t id, std::size_t memory_size, NRE_GPU_BUFFER_USAGE buf_usage){
+void NRE_GL3_API::setVertexBufferMemory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage){
     
     this->check_vbo_id_(id, "setVertexBufferMemory");
     
@@ -531,7 +531,7 @@ void NRE_GL3_API::setVertexBufferData(std::size_t id, const std::vector<float>& 
     glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLuint>(offset)*sizeof(float), v.size()*sizeof(float), &v[0]);
 }
 
-void NRE_GL3_API::setVertexBufferMemoryData(std::size_t id, const std::vector<float>& v, NRE_GPU_BUFFER_USAGE buf_usage){
+void NRE_GL3_API::setVertexBufferMemoryData(std::size_t id, const std::vector<float>& v, nre::gpu::BUFFER_USAGE buf_usage){
     
     this->check_vbo_id_(id, "setVertexBufferMemoryData");
     
@@ -554,7 +554,7 @@ void NRE_GL3_API::deleteVertexBuffer(std::size_t id){
 
 //--------------------Index Buffer-------------------------------//
 
-void NRE_GL3_API::setIndexBufferMemory(std::size_t id, std::size_t memory_size, NRE_GPU_BUFFER_USAGE buf_usage){
+void NRE_GL3_API::setIndexBufferMemory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage){
     
     this->check_ibo_id_(id, "setIndexBufferMemory");
     
@@ -579,7 +579,7 @@ void NRE_GL3_API::setIndexBufferData(std::size_t id, const std::vector<uint32_t>
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(offset)*sizeof(uint32_t), v.size()*sizeof(uint32_t), &v[0]);
 }
 
-void NRE_GL3_API::setIndexBufferMemoryData(std::size_t id, const std::vector<uint32_t>& v, NRE_GPU_BUFFER_USAGE buf_usage){
+void NRE_GL3_API::setIndexBufferMemoryData(std::size_t id, const std::vector<uint32_t>& v, nre::gpu::BUFFER_USAGE buf_usage){
     
     this->check_ibo_id_(id, "setIndexBufferMemoryData");
     
@@ -603,7 +603,7 @@ void NRE_GL3_API::deleteIndexBuffer(std::size_t id){
 
 //--------------------Uniform Buffer-----------------------------//
 
-void NRE_GL3_API::setUniformBufferMemory(std::size_t id, std::size_t memory_size, NRE_GPU_BUFFER_USAGE buf_usage){
+void NRE_GL3_API::setUniformBufferMemory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage){
     
     this->check_ubo_id_(id, "setUniformBufferMemory");
 
@@ -720,7 +720,7 @@ void NRE_GL3_API::deleteUniformBuffer(std::size_t id){
 
 //---------------------Vertex Layout-----------------------------//
 
-void NRE_GL3_API::setVertexLayoutFormat(std::size_t id, std::vector<NRE_GPU_VertexLayoutInput> inputs){ 
+void NRE_GL3_API::setVertexLayoutFormat(std::size_t id, std::vector<nre::gpu::vertex_layout_input> inputs){ 
     
     this->check_vao_id_(id, "setVertexlayoutFormat");
     
@@ -750,7 +750,7 @@ void NRE_GL3_API::deleteVertexLayout(std::size_t id){
 
 //-----------------------Textures and Framebuffers -------------//
 
-void NRE_GL3_API::setTextureFormat(std::size_t id, NRE_GPU_TEXTURE_TYPE type, NRE_GPU_TEXTURE_FILTER filter, uint32_t x_in, uint32_t y_in, int mipmap_count){
+void NRE_GL3_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type, nre::gpu::TEXTURE_FILTER filter, uint32_t x_in, uint32_t y_in, int mipmap_count){
     this->check_texture_id_(id, "setTextureFormat");
     
     if (this->textures[id].hasNotChanged(type, filter, x_in, y_in, mipmap_count)) return;
@@ -764,11 +764,11 @@ void NRE_GL3_API::setTextureFormat(std::size_t id, NRE_GPU_TEXTURE_TYPE type, NR
     
     glBindTexture(GL_TEXTURE_2D, this->textures[id].handle);
     glTexImage2D(GL_TEXTURE_2D, 0, teximage_internalformat_(type), x_in, y_in, 0, teximage_format_(type), teximage_type_(type), 0);
-    if (mipmap_count == 0 and filter == NRE_GPU_LINEAR){
+    if (mipmap_count == 0 and filter == nre::gpu::LINEAR){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
     } 
-    else if (mipmap_count == 0 and filter == NRE_GPU_NEAREST){
+    else if (mipmap_count == 0 and filter == nre::gpu::NEAREST){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  
     }
@@ -789,7 +789,7 @@ void NRE_GL3_API::setFrameBufferTexture(std::size_t fbo_id, std::size_t texture_
     glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[fbo_id].handle);
     glBindTexture(GL_TEXTURE_2D, this->textures[texture_id].handle);
     
-    if (this->textures[texture_id].type != NRE_GPU_DEPTHSTENCIL){
+    if (this->textures[texture_id].type != nre::gpu::DEPTHSTENCIL){
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_TEXTURE_2D, this->textures[texture_id].handle, 0);  
     }
     else {
@@ -813,7 +813,7 @@ void NRE_GL3_API::deleteTexture(std::size_t id){
     this->textures.erase(id);
 }
 
-void NRE_GL3_API::copyFrameBuffer(std::size_t src, std::size_t target, NRE_GPU_FRAMEBUFFER_COPY method){
+void NRE_GL3_API::copyFrameBuffer(std::size_t src, std::size_t target, nre::gpu::FRAMEBUFFER_COPY method){
     this->check_fbo_id_(src, "copyFrameBuffer");
     this->check_texture_id_(this->fbos[src].texture, "copyFrameBuffer");
     
@@ -829,9 +829,9 @@ void NRE_GL3_API::copyFrameBuffer(std::size_t src, std::size_t target, NRE_GPU_F
     else {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
-    if (method == NRE_GPU_FBO_COLOR){
+    if (method == nre::gpu::FBO_COLOR){
     glBlitFramebuffer(0,0, x_tmp, y_tmp, 0, 0, x_tmp, y_tmp, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    } else if (method == NRE_GPU_FBO_DEPTHSTENCIL){
+    } else if (method == nre::gpu::FBO_DEPTHSTENCIL){
         glBlitFramebuffer(0,0, x_tmp, y_tmp, 0, 0, x_tmp, y_tmp, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
     }
     else {
@@ -841,7 +841,7 @@ void NRE_GL3_API::copyFrameBuffer(std::size_t src, std::size_t target, NRE_GPU_F
     //    cout << glGetError() << endl;
 }
 
-void NRE_GL3_API::clearFrameBuffer(std::size_t id, NRE_GPU_FRAMEBUFFER_COPY clear, float alpha_value){
+void NRE_GL3_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY clear, float alpha_value){
     this->check_fbo_id_(id, "clearFrameBuffer");
     
     glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[id].handle);
@@ -849,16 +849,16 @@ void NRE_GL3_API::clearFrameBuffer(std::size_t id, NRE_GPU_FRAMEBUFFER_COPY clea
     glColorMask(1, 1, 1, 1);
     glClearColor(0.0f, 0.0f, 0.0f, alpha_value);
     
-    if (clear == NRE_GPU_FBO_ALL){
+    if (clear == nre::gpu::FBO_ALL){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
-    else if (clear == NRE_GPU_FBO_COLOR){
+    else if (clear == nre::gpu::FBO_COLOR){
         glClear(GL_COLOR_BUFFER_BIT);
     }
-    else if (clear == NRE_GPU_FBO_DEPTHSTENCIL){
+    else if (clear == nre::gpu::FBO_DEPTHSTENCIL){
         glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
-    else if (clear == NRE_GPU_FBO_COLORSTENCIL){
+    else if (clear == nre::gpu::FBO_COLORSTENCIL){
         
         glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
@@ -886,14 +886,14 @@ void NRE_GL3_API::deleteFrameBuffer(std::size_t id){
 
 //---------------------Shader Programs-----------------------------//
 
-void NRE_GL3_API::setProgramVS(std::size_t id, NRE_GPU_VertexShader vs){
+void NRE_GL3_API::setProgramVS(std::size_t id, nre::gpu::vertex_shader vs){
     this->check_prog_id_(id, "setProgramVS");
     
     this->progs[id].vs_setup = false;
     this->progs[id].setup = false;
     this->progs[id].vs = vs;
 }
-void NRE_GL3_API::setProgramFS(std::size_t id, NRE_GPU_PixelShader fs){
+void NRE_GL3_API::setProgramFS(std::size_t id, nre::gpu::pixel_shader fs){
     this->check_prog_id_(id, "setProgramFS");
     
     this->progs[id].fs_setup = false;
@@ -994,7 +994,7 @@ void NRE_GL3_API::setupProgram(std::size_t id){
         if (this->vs_db.count(this->progs[id].vs) == 0){
             
             // vertex shader does not exist, make a new entry
-            this->setProgramVS(id, this->progs[id].vs.genShader());
+            this->setProgramVS(id, this->progs[id].vs.gen_shader());
             this->vs_db[this->progs[id].vs] = this->progs[id].vs_handle;
             
         }
@@ -1011,7 +1011,7 @@ void NRE_GL3_API::setupProgram(std::size_t id){
         if (this->fs_db.count(this->progs[id].fs) == 0){
             
             // pixel (fragment) shader does not exist, make a new entry
-            this->setProgramFS(id, this->progs[id].fs.genShader());
+            this->setProgramFS(id, this->progs[id].fs.gen_shader());
             
             this->fs_db[this->progs[id].fs] = this->progs[id].fs_handle;
             this->progs[id].fs_setup = true;
@@ -1050,8 +1050,8 @@ void NRE_GL3_API::setupProgram(std::size_t id){
     
     // Technically a fragment/pixel shader is optional, but it is a must in OpenGL ES
     // This should be the case sometimes (for example in the Z_PREPASS program)
-    bool isES = NRE_GPU_ShaderBase::backend == NRE_GPU_GLES;
-    bool isUndefinedFS = this->progs[id].fs.type == NRE_GPU_FS_UNDEFINED;
+    bool isES = nre::gpu::get_api() == nre::gpu::GLES;
+    bool isUndefinedFS = this->progs[id].fs.type == nre::gpu::FS_UNDEFINED;
     
     if ( (isES) || (!isES && !isUndefinedFS))
         glAttachShader(this->progs[id].handle, this->progs[id].fs_handle);
@@ -1231,9 +1231,9 @@ void NRE_GL3_API::draw_instanced(std::size_t prog_id, std::size_t vao_id, std::s
     glDrawElementsInstanced(GL_TRIANGLES, this->ibos[ibo_id].size, GL_UNSIGNED_INT, (GLvoid*)NULL, instancecount);
 }
 
-void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
+void NRE_GL3_API::setRenderMode(nre::gpu::RENDERMODE rendermode){
     
-    if (rendermode == NRE_GPU_Z_PREPASS_BACKFACE){
+    if (rendermode == nre::gpu::Z_PREPASS_BACKFACE){
         glDisable(GL_BLEND);
         glDisable(GL_STENCIL_TEST); 
         
@@ -1246,7 +1246,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glColorMask(0, 0, 0, 0);
         glDepthMask(GL_TRUE);
     }
-    else if (rendermode == NRE_GPU_REGULAR_FRONTFACE){
+    else if (rendermode == nre::gpu::REGULAR_FRONTFACE){
         glDisable(GL_BLEND);
         glDisable(GL_STENCIL_TEST); 
         
@@ -1259,7 +1259,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glCullFace (GL_FRONT); /// cull back face
         glFrontFace (GL_CCW);
     }
-    else if (rendermode == NRE_GPU_REGULAR_BACKFACE){
+    else if (rendermode == nre::gpu::REGULAR_BACKFACE){
         glDisable(GL_BLEND);
         glDisable(GL_STENCIL_TEST); 
         
@@ -1272,7 +1272,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glCullFace (GL_BACK); /// cull back face
         glFrontFace (GL_CCW);
     }
-    else if (rendermode == NRE_GPU_AFTERPREPASS_BACKFACE){
+    else if (rendermode == nre::gpu::AFTERPREPASS_BACKFACE){
         glDisable(GL_BLEND);
         glDisable(GL_STENCIL_TEST); 
         
@@ -1285,7 +1285,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glCullFace (GL_BACK); /// cull back face
         glFrontFace (GL_CCW);
     }
-    else if (rendermode == NRE_GPU_REGULAR_BOTH){
+    else if (rendermode == nre::gpu::REGULAR_BOTH){
         glDisable(GL_BLEND);
         glDisable(GL_STENCIL_TEST); 
         
@@ -1296,7 +1296,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         
         glDisable(GL_CULL_FACE);
     }
-    else if (rendermode == NRE_GPU_FULLSCREEN_QUAD){
+    else if (rendermode == nre::gpu::FULLSCREEN_QUAD){
         glDisable(GL_BLEND);
         
         glDisable(GL_STENCIL_TEST); 
@@ -1309,7 +1309,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glCullFace (GL_BACK); /// cull back face
         glFrontFace (GL_CCW);
     }
-    else if (rendermode == NRE_GPU_LIGHT_PREPASS){
+    else if (rendermode == nre::gpu::LIGHT_PREPASS){
         glDisable(GL_BLEND);
         
         glEnable(GL_STENCIL_TEST); 
@@ -1326,7 +1326,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glCullFace (GL_BACK); /// cull back face
         glFrontFace (GL_CCW);
     }
-    else if (rendermode == NRE_GPU_LIGHT_AFTERPASS){
+    else if (rendermode == nre::gpu::LIGHT_AFTERPASS){
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_CONSTANT_COLOR);
         glBlendColor(0.25, 0.25, 0.25, 0.25);
@@ -1345,7 +1345,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glCullFace (GL_FRONT); /// cull front face
         glFrontFace (GL_CCW);
     }
-    else if (rendermode == NRE_GPU_LIGHT_PREPASS_2){
+    else if (rendermode == nre::gpu::LIGHT_PREPASS_2){
         glDisable(GL_BLEND);
         
         glEnable(GL_STENCIL_TEST); 
@@ -1364,7 +1364,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glCullFace (GL_BACK); /// cull back face
         glFrontFace (GL_CCW);
     }
-    else if (rendermode == NRE_GPU_LIGHT_AFTERPASS_RG){
+    else if (rendermode == nre::gpu::LIGHT_AFTERPASS_RG){
         glEnable(GL_BLEND);
         glBlendEquation(GL_MAX);
         
@@ -1383,7 +1383,7 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         glFrontFace (GL_CCW);
         
     }
-    else if (rendermode == NRE_GPU_LIGHT_AFTERPASS_BA){
+    else if (rendermode == nre::gpu::LIGHT_AFTERPASS_BA){
         glEnable(GL_BLEND);
         glBlendEquation(GL_MAX);
         
@@ -1405,8 +1405,8 @@ void NRE_GL3_API::setRenderMode(NRE_GPU_RENDERMODE rendermode){
         // TODO
     }
     
-    if (NRE_GPU_ShaderBase::backend != NRE_GPU_GLES){
-        if (use_wireframe){
+    if (nre::gpu::get_api() != nre::gpu::GLES){
+        if (nre::gpu::use_wireframe){
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
         else{

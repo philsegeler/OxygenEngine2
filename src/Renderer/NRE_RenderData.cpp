@@ -296,7 +296,7 @@ void NRE_Renderer::handleVGroupData(std::size_t mesh_id, std::size_t id, std::sh
         
         this->vgroups[id] = NRE_VGroupRenderData(); this->vgroups[id].id = id; this->vgroups[id].mesh_id = mesh_id;
         this->vgroups[id].bone_mat = OE_Mat4x4(1.0f);
-        this->vgroups[id].ibo = this->api->newIndexBuffer();
+        this->vgroups[id].ibo = 0;
         this->vgroups[id].material_id = mesh->data->triangle_groups[id]->material_id;        
     }
 }
@@ -445,9 +445,9 @@ void NRE_Renderer::updateMeshGPUData(){
         
         // first time buffer initialization
         if (!this->meshes[mesh.first].has_init){
-            this->meshes[mesh.first].vbo      = this->api->newVertexBuffer();
-            this->meshes[mesh.first].vao      = this->api->newVertexLayout();
-            this->meshes[mesh.first].ubo      = this->api->newUniformBuffer();
+            this->meshes[mesh.first].vbo      = nre::gpu::new_vertex_buf();
+            this->meshes[mesh.first].vao      = nre::gpu::new_vertex_layout();
+            this->meshes[mesh.first].ubo      = nre::gpu::new_uniform_buf();
             this->meshes[mesh.first].has_init = true;
         }
         
@@ -457,7 +457,7 @@ void NRE_Renderer::updateMeshGPUData(){
             
             /// vertex buffer
             this->meshes[mesh.first].mesh->data->vbo_mutex.lockMutex();
-            this->api->setVertexBufferMemoryData(this->meshes[mesh.first].vbo, this->meshes[mesh.first].mesh->data->vbo, NRE_GPU_STATIC);
+            nre::gpu::set_vertex_buf_memory_and_data(this->meshes[mesh.first].vbo, this->meshes[mesh.first].mesh->data->vbo, nre::gpu::STATIC);
             this->meshes[mesh.first].mesh->data->vbo.clear();
             this->meshes[mesh.first].mesh->data->vbo_mutex.unlockMutex();
             
@@ -465,14 +465,15 @@ void NRE_Renderer::updateMeshGPUData(){
             /// index buffers
             this->meshes[mesh.first].mesh->data->ibos_mutex.lockMutex();
             for (auto vg : mesh.second.vgroups){
-                this->api->setIndexBufferMemoryData(this->vgroups[vg].ibo, this->meshes[mesh.first].mesh->data->ibos[vg].data, NRE_GPU_STATIC);
+                this->vgroups[vg].ibo = nre::gpu::new_index_buf();
+                nre::gpu::set_index_buf_memory_and_data(this->vgroups[vg].ibo, this->meshes[mesh.first].mesh->data->ibos[vg].data, nre::gpu::STATIC);
                 this->meshes[mesh.first].mesh->data->ibos[vg].data.clear();
             }
             
             this->meshes[mesh.first].mesh->data->ibos_mutex.unlockMutex();
             
             /// vertex layout
-            typedef NRE_GPU_VertexLayoutInput VLI; // for clarity
+            typedef nre::gpu::vertex_layout_input VLI; // for clarity
             
             this->meshes[mesh.first].mesh->data->ibos.clear();
             //delete this->meshes[mesh.first].mesh->data->index_buffer;
@@ -487,7 +488,7 @@ void NRE_Renderer::updateMeshGPUData(){
                 this->meshes[mesh.first].vao_input.push_back(VLI(this->meshes[mesh.first].vbo, 6+2*i, 2, 6+this->meshes[mesh.first].uvmaps*2));
             }
             
-            this->api->setVertexLayoutFormat(this->meshes[mesh.first].vao, this->meshes[mesh.first].vao_input);
+            nre::gpu::set_vertex_layout_format(this->meshes[mesh.first].vao, this->meshes[mesh.first].vao_input);
             this->meshes[mesh.first].vao_initialized = true;
 
         }
@@ -517,10 +518,10 @@ void NRE_Renderer::updateMeshGPUData(){
             
             if (this->meshes[mesh.first].size != this->meshes[mesh.first].data.size()){
                 this->meshes[mesh.first].size = this->meshes[mesh.first].data.size();
-                this->api->setUniformBufferMemory(this->meshes[mesh.first].ubo, this->meshes[mesh.first].size, NRE_GPU_DYNAMIC);
+                nre::gpu::set_uniform_buf_memory(this->meshes[mesh.first].ubo, this->meshes[mesh.first].size, nre::gpu::DYNAMIC);
             }
             
-            this->api->setUniformBufferData(this->meshes[mesh.first].ubo, this->meshes[mesh.first].data, 0);
+            nre::gpu::set_uniform_buf_data(this->meshes[mesh.first].ubo, this->meshes[mesh.first].data, 0);
             
             this->meshes[mesh.first].changed = false;
         }
@@ -536,7 +537,7 @@ void NRE_Renderer::updateMaterialGPUData(){
     for (auto mat: this->materials){
         
         if (!this->materials[mat.first].has_init){
-            this->materials[mat.first].ubo = this->api->newUniformBuffer();
+            this->materials[mat.first].ubo = nre::gpu::new_uniform_buf();
             this->materials[mat.first].has_init = true;
         }
         
@@ -544,10 +545,10 @@ void NRE_Renderer::updateMaterialGPUData(){
             
             if (this->materials[mat.first].size != this->materials[mat.first].data.size()){
                 this->materials[mat.first].size = this->materials[mat.first].data.size();
-                this->api->setUniformBufferMemory(this->materials[mat.first].ubo, this->materials[mat.first].size, NRE_GPU_DYNAMIC);
+                nre::gpu::set_uniform_buf_memory(this->materials[mat.first].ubo, this->materials[mat.first].size, nre::gpu::DYNAMIC);
             }
             
-            this->api->setUniformBufferData(this->materials[mat.first].ubo, this->materials[mat.first].data, 0);
+            nre::gpu::set_uniform_buf_data(this->materials[mat.first].ubo, this->materials[mat.first].data, 0);
             this->materials[mat.first].changed = false;
         }
     }
@@ -562,17 +563,17 @@ void NRE_Renderer::updateCameraGPUData(){
     for (auto cam: this->cameras){
         
         if (!this->cameras[cam.first].has_init){
-            this->cameras[cam.first].ubo = this->api->newUniformBuffer();
+            this->cameras[cam.first].ubo = nre::gpu::new_uniform_buf();
             this->cameras[cam.first].has_init = true;
         }
         if (this->cameras[cam.first].changed){
             
             if (this->cameras[cam.first].size != this->cameras[cam.first].data.size()){
                 this->cameras[cam.first].size = this->cameras[cam.first].data.size();
-                this->api->setUniformBufferMemory(this->cameras[cam.first].ubo, this->cameras[cam.first].size, NRE_GPU_DYNAMIC);
+                nre::gpu::set_uniform_buf_memory(this->cameras[cam.first].ubo, this->cameras[cam.first].size, nre::gpu::DYNAMIC);
             }
             
-            this->api->setUniformBufferData(this->cameras[cam.first].ubo, this->cameras[cam.first].data, 0);
+            nre::gpu::set_uniform_buf_data(this->cameras[cam.first].ubo, this->cameras[cam.first].data, 0);
             this->cameras[cam.first].changed = false;
         }
     }
@@ -586,17 +587,17 @@ void NRE_Renderer::updateLightGPUData(){
     /*for (auto l: this->pt_lights){
         
         if (!this->pt_lights[l.first].has_init){
-            this->pt_lights[l.first].ubo = this->api->newUniformBuffer();
+            this->pt_lights[l.first].ubo = nre::gpu::new_uniform_buf();
             this->pt_lights[l.first].has_init = true;
         }
         if (this->pt_lights[l.first].changed){
             
             if (this->pt_lights[l.first].size != this->pt_lights[l.first].data.size()){
                 this->pt_lights[l.first].size = this->pt_lights[l.first].data.size();
-                this->api->setUniformBufferMemory(this->pt_lights[l.first].ubo, this->pt_lights[l.first].size, NRE_GPU_DYNAMIC);
+                nre::gpu::set_uniform_buf_memory(this->pt_lights[l.first].ubo, this->pt_lights[l.first].size, nre::gpu::DYNAMIC);
             }
             
-            this->api->setUniformBufferData(this->pt_lights[l.first].ubo, this->pt_lights[l.first].data, 0);
+            nre::gpu::set_uniform_buf_data(this->pt_lights[l.first].ubo, this->pt_lights[l.first].data, 0);
             this->pt_lights[l.first].changed = false;
         }
     }*/
@@ -615,8 +616,8 @@ void NRE_Renderer::updateLightGPUData(){
     for (int i=0; i< 16*(255-count); i++){
         pt_light_data.push_back(0.0f);
     }
-    this->api->setUniformBufferMemory(this->pt_light_ubo, pt_light_data.size(), NRE_GPU_STREAM);
-    this->api->setUniformBufferData(this->pt_light_ubo, pt_light_data, 0);
+    nre::gpu::set_uniform_buf_memory(this->pt_light_ubo, pt_light_data.size(), nre::gpu::STREAM);
+    nre::gpu::set_uniform_buf_data(this->pt_light_ubo, pt_light_data, 0);
 }
 
 // deletes
@@ -624,7 +625,7 @@ void NRE_Renderer::updateLightGPUData(){
 void NRE_Renderer::deleteCamera(std::size_t id){
     
     if (this->cameras[id].ubo != 0){
-        this->api->deleteUniformBuffer(this->cameras[id].ubo);
+        nre::gpu::del_uniform_buf(this->cameras[id].ubo);
     }
     
     this->cameras.erase(id);
@@ -633,7 +634,7 @@ void NRE_Renderer::deleteCamera(std::size_t id){
 void NRE_Renderer::deleteMaterial(std::size_t id){
     
     if (this->materials[id].ubo != 0){
-        this->api->deleteUniformBuffer(this->materials[id].ubo);
+        nre::gpu::del_uniform_buf(this->materials[id].ubo);
     }
     
     this->materials.erase(id);
@@ -643,19 +644,19 @@ void NRE_Renderer::deleteMesh(std::size_t id){
     
     // delete all buffers
     if (this->meshes[id].vbo !=0){
-        this->api->deleteVertexBuffer(this->meshes[id].vbo);
+        nre::gpu::del_vertex_buf(this->meshes[id].vbo);
     }
     if (this->meshes[id].vao !=0){
-        this->api->deleteVertexLayout(this->meshes[id].vao);
+        nre::gpu::del_vertex_layout(this->meshes[id].vao);
     }
     if (this->meshes[id].ubo !=0){
-        this->api->deleteUniformBuffer(this->meshes[id].ubo);
+        nre::gpu::del_uniform_buf(this->meshes[id].ubo);
     }
     
     // delete buffers of vertex groups
     for (auto vgroup : this->meshes[id].vgroups){
         if (this->vgroups[vgroup].ibo != 0){
-            this->api->deleteIndexBuffer(this->vgroups[vgroup].ibo);
+            nre::gpu::del_index_buf(this->vgroups[vgroup].ibo);
         }
         this->vgroups.erase(vgroup);
     }    

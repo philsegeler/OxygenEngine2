@@ -72,7 +72,7 @@ struct NRE_MeshRenderData : public NRE_BaseObject{
     
     bool vao_initialized{false};
     
-    std::vector<NRE_GPU_VertexLayoutInput> vao_input;
+    std::vector<nre::gpu::vertex_layout_input> vao_input;
     
     float max_x{0.0f}, min_x{0.0f}, max_y{0.0f}, min_y{0.0f}, max_z{0.0f}, min_z{0.0f}, max_radius{0.0f}, min_radius{0.0f};
     
@@ -150,13 +150,13 @@ struct NRE_ViewportRenderData : public NRE_BaseObject{
 struct NRE_RenderGroup{
     
     // data for the z prepass
-    NRE_GPU_VertexShader vs_z_prepass;
+    nre::gpu::vertex_shader vs_z_prepass;
     std::size_t     z_prepass_program{0};
     bool isZPrePassSetup{false};
     
     // data for normal render
-    NRE_GPU_VertexShader vs;
-    NRE_GPU_PixelShader fs;    
+    nre::gpu::vertex_shader vs;
+    nre::gpu::pixel_shader fs;    
     std::size_t     program{0};
     bool isSetup{false};
     

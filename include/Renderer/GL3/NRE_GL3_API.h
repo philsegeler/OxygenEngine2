@@ -8,23 +8,23 @@
 
 struct NRE_GL3_RenderBuffer{
     GLuint handle{0};
-    NRE_GPU_TEXTURE_TYPE type;
+    nre::gpu::TEXTURE_TYPE type;
     int x{0};
     int y{0};
     
-    bool hasNotChanged(NRE_GPU_TEXTURE_TYPE, int, int);
+    bool hasNotChanged(nre::gpu::TEXTURE_TYPE, int, int);
 };
 
 struct NRE_GL3_VertexBuffer{
     GLuint                  handle;
     std::size_t             size;
-    NRE_GPU_BUFFER_USAGE    usage;
+    nre::gpu::BUFFER_USAGE    usage;
 };
 
 struct NRE_GL3_IndexBuffer{
     GLuint                  handle;
     std::size_t             size;
-    NRE_GPU_BUFFER_USAGE    usage;
+    nre::gpu::BUFFER_USAGE    usage;
 };
 
 struct NRE_GL3_FrameBuffer{
@@ -37,24 +37,24 @@ struct NRE_GL3_FrameBuffer{
 
 struct NRE_GL3_Texture{
     GLuint handle;
-    NRE_GPU_TEXTURE_TYPE type;
-    NRE_GPU_TEXTURE_FILTER filter;
+    nre::gpu::TEXTURE_TYPE type;
+    nre::gpu::TEXTURE_FILTER filter;
     int x{0};
     int y{0};
     int mipmaps{0};
     
-    bool hasNotChanged(NRE_GPU_TEXTURE_TYPE, NRE_GPU_TEXTURE_FILTER, int, int, int);
+    bool hasNotChanged(nre::gpu::TEXTURE_TYPE, nre::gpu::TEXTURE_FILTER, int, int, int);
 };
 
 struct NRE_GL3_VertexArray{
     GLuint                                  handle;
-    std::vector<NRE_GPU_VertexLayoutInput>  layout;
+    std::vector<nre::gpu::vertex_layout_input>  layout;
 };
 
 struct NRE_GL3_UniformBuffer{
     GLuint                  handle;
     std::size_t             size;
-    NRE_GPU_BUFFER_USAGE    usage;
+    nre::gpu::BUFFER_USAGE    usage;
     GLint                   slot;
 };
 
@@ -67,11 +67,11 @@ struct NRE_GL3_ProgramUniformState{
 
 struct NRE_GL3_Program{
     
-    NRE_GPU_VertexShader vs;
+    nre::gpu::vertex_shader vs;
     GLuint vs_handle{0};
     bool vs_setup{false};
     
-    NRE_GPU_PixelShader fs;
+    nre::gpu::pixel_shader fs;
     GLuint fs_handle{0};
     bool fs_setup{false};
     
@@ -98,9 +98,9 @@ struct NRE_GL3_ProgramData{
     std::size_t hasUniform(std::string);
 };
 
-GLenum NRE2GL_BufferUse(NRE_GPU_BUFFER_USAGE);
+GLenum NRE2GL_BufferUse(nre::gpu::BUFFER_USAGE);
 
-class NRE_GL3_API : public NRE_GPU_API{
+class NRE_GL3_API{
 public:
     
     
@@ -123,20 +123,20 @@ public:
     std::size_t newTexture();
     std::size_t newRenderBuffer();
     
-    void setRenderBufferType(std::size_t, NRE_GPU_TEXTURE_TYPE, int, int);
+    void setRenderBufferType(std::size_t, nre::gpu::TEXTURE_TYPE, int, int);
     void setFrameBufferRenderBuffer(std::size_t, std::size_t, int);
     
-    void setVertexBufferMemory(std::size_t, std::size_t, NRE_GPU_BUFFER_USAGE);
+    void setVertexBufferMemory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
     void setVertexBufferData(std::size_t, const std::vector<float>&, std::size_t);
-    void setVertexBufferMemoryData(std::size_t, const std::vector<float>&, NRE_GPU_BUFFER_USAGE);
+    void setVertexBufferMemoryData(std::size_t, const std::vector<float>&, nre::gpu::BUFFER_USAGE);
     void deleteVertexBuffer(std::size_t);
     
-    void setIndexBufferMemory(std::size_t, std::size_t, NRE_GPU_BUFFER_USAGE);
+    void setIndexBufferMemory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
     void setIndexBufferData(std::size_t, const std::vector<uint32_t>&, std::size_t);
-    void setIndexBufferMemoryData(std::size_t, const std::vector<uint32_t>&, NRE_GPU_BUFFER_USAGE);
+    void setIndexBufferMemoryData(std::size_t, const std::vector<uint32_t>&, nre::gpu::BUFFER_USAGE);
     void deleteIndexBuffer(std::size_t);
     
-    void setUniformBufferMemory(std::size_t, std::size_t, NRE_GPU_BUFFER_USAGE);
+    void setUniformBufferMemory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
     void setUniformBufferData(std::size_t, const std::vector<float>&, std::size_t);
     void setUniformBufferData(std::size_t, const std::vector<uint32_t>&, std::size_t);
     
@@ -151,21 +151,21 @@ public:
     void setUniformBlockState(std::size_t, std::size_t, int, std::size_t, std::size_t);
     void deleteUniformBuffer(std::size_t);
     
-    void setVertexLayoutFormat(std::size_t, std::vector<NRE_GPU_VertexLayoutInput>);
+    void setVertexLayoutFormat(std::size_t, std::vector<nre::gpu::vertex_layout_input>);
     void deleteVertexLayout(std::size_t);
     
-    void setTextureFormat(std::size_t, NRE_GPU_TEXTURE_TYPE, NRE_GPU_TEXTURE_FILTER, uint32_t, uint32_t, int);
+    void setTextureFormat(std::size_t, nre::gpu::TEXTURE_TYPE, nre::gpu::TEXTURE_FILTER, uint32_t, uint32_t, int);
     void setFrameBufferTexture(std::size_t, std::size_t, int);
     void setTextureSlot(std::size_t, int);
     void deleteTexture(std::size_t);
     
-    void copyFrameBuffer(std::size_t, std::size_t, NRE_GPU_FRAMEBUFFER_COPY);
+    void copyFrameBuffer(std::size_t, std::size_t, nre::gpu::FRAMEBUFFER_COPY);
     void useFrameBuffer(std::size_t);
-    void clearFrameBuffer(std::size_t, NRE_GPU_FRAMEBUFFER_COPY, float);
+    void clearFrameBuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
     void deleteFrameBuffer(std::size_t);
     
-    void setProgramVS(std::size_t, NRE_GPU_VertexShader);
-    void setProgramFS(std::size_t, NRE_GPU_PixelShader);
+    void setProgramVS(std::size_t, nre::gpu::vertex_shader);
+    void setProgramFS(std::size_t, nre::gpu::pixel_shader);
     
     void setProgramVS(std::size_t, std::string);
     //void setProgramGS(std::size_t, FE_GPU_Shader);
@@ -184,7 +184,7 @@ public:
     void draw_instanced(std::size_t, std::size_t, std::size_t);
     void draw_instanced(std::size_t, std::size_t, std::size_t, std::size_t);
     
-    void setRenderMode(NRE_GPU_RENDERMODE);
+    void setRenderMode(nre::gpu::RENDERMODE);
     
 protected:
     
@@ -208,8 +208,8 @@ protected:
     
     std::size_t getVAOSize(std::size_t);
     
-    std::map<NRE_GPU_VertexShader,  GLuint> vs_db;
-    std::map<NRE_GPU_PixelShader,   GLuint> fs_db;
+    std::map<nre::gpu::vertex_shader,  GLuint> vs_db;
+    std::map<nre::gpu::pixel_shader,   GLuint> fs_db;
     std::map<NRE_GL3_Program,       NRE_GL3_ProgramData> prog_db;
     
 private:
@@ -235,9 +235,9 @@ private:
     
     void get_program_all_uniforms_(std::size_t);
     
-    int teximage_internalformat_(NRE_GPU_TEXTURE_TYPE);
-    int teximage_format_(NRE_GPU_TEXTURE_TYPE);
-    int teximage_type_(NRE_GPU_TEXTURE_TYPE);
+    int teximage_internalformat_(nre::gpu::TEXTURE_TYPE);
+    int teximage_format_(nre::gpu::TEXTURE_TYPE);
+    int teximage_type_(nre::gpu::TEXTURE_TYPE);
     
     // this is useful for preventing OpenGL glBind* command repetitions
     GLuint active_vbo_{0};
