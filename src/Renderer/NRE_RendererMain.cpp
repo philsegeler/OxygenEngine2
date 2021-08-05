@@ -16,14 +16,14 @@ bool NRE_Renderer::init(){
     
     
     // make sure there are no stored objects
-    /*cout << "NRE Cameras: " << this->cameras.size() << endl;
-    cout << "NRE Materials: " << this->materials.size() << endl;
-    cout << "NRE Meshes: " << this->meshes.size() << endl;
-    cout << "NRE Vgroups: " << this->vgroups.size() << endl;*/
+    /*cout << "NRE Cameras: " << data_.cameras.size() << endl;
+    cout << "NRE Materials: " << data_.materials.size() << endl;
+    cout << "NRE Meshes: " << data_.meshes.size() << endl;
+    cout << "NRE Vgroups: " << data_.vgroups.size() << endl;*/
     
     // make sure we use the right API
-    if (this->screen->restart_renderer)
-        nre::gpu::init(nre::gpu::get_api(), nre::gpu::backend_info.major, nre::gpu::backend_info.minor);
+    // it should have been initialized from the window manager
+    nre::gpu::init(nre::gpu::get_api(), nre::gpu::backend_info.major, nre::gpu::backend_info.minor);
     
     this->initOffscreenFrameBuffer();
     this->initFullscreenQuad();
@@ -143,6 +143,23 @@ void NRE_Renderer::initLightUBOProgramFBO(){
     nre::gpu::set_framebuffer_renderbuffer(this->fbo_light, this->depthrbo, 0);
 }
 
+//------------------------updateData---------------------------//
+
+bool NRE_Renderer::updateData(){
+    assert (this->world != nullptr);
+    bool temp_restart_renderer = this->screen->restart_renderer;
+    this->screen->restart_renderer = false;
+    
+    if (temp_restart_renderer){
+        this->destroy();
+        this->init();
+    }
+    
+    data_.update(temp_restart_renderer, this->render_bounding_boxes.load(std::memory_order_relaxed) or this->render_bounding_spheres.load(std::memory_order_relaxed));
+    
+    return true;
+}
+
 //------------------------updateSIngleThread-------------------//
 
 bool NRE_Renderer::updateSingleThread(){
@@ -174,42 +191,42 @@ bool NRE_Renderer::updateSingleThread(){
     // render viewport
     nre::gpu::use_wireframe = this->use_wireframe.load(std::memory_order_relaxed);
     
-    /*cout << "NRE Cameras: " << this->cameras.size() << endl;
-    cout << "NRE Materials: " << this->materials.size() << endl;
-    cout << "NRE Meshes: " << this->meshes.size() << endl;
-    cout << "NRE Vgroups: " << this->vgroups.size() << endl;*/
+    /*cout << "NRE Cameras: " << data_.cameras.size() << endl;
+    cout << "NRE Materials: " << data_.materials.size() << endl;
+    cout << "NRE Meshes: " << data_.meshes.size() << endl;
+    cout << "NRE Vgroups: " << data_.vgroups.size() << endl;*/
     
     nre::gpu::use_framebuffer(this->framebuffer);
     nre::gpu::clear_framebuffer(this->framebuffer, nre::gpu::FBO_ALL, 1.0f);
 
-    if (this->loaded_viewport != 0){
+    if (data_.loaded_viewport != 0){
 
-        auto lv = this->loaded_viewport;
+        auto lv = data_.loaded_viewport;
         
-        if (this->viewports[lv].cameras.size() == 0){
+        if (data_.viewports[lv].cameras.size() == 0){
             throw nre::incomplete_viewport(lv);
         }
         // TEMPORARY until multiple layers and cameras support is implemented
-        else if (this->viewports[lv].cameras.size() > 1){
-            throw nre::unsupported_viewport(lv, "Too many (" + to_string(this->viewports[lv].cameras.size()) + ") cameras");
+        else if (data_.viewports[lv].cameras.size() > 1){
+            throw nre::unsupported_viewport(lv, "Too many (" + to_string(data_.viewports[lv].cameras.size()) + ") cameras");
         }
         else{
             
         }
         
         // only one fullscreen camera is supported for now
-        auto camera_id = this->viewports[lv].cameras[0];
-        auto scene_id = this->cameras[camera_id].scene_id;
+        auto camera_id = data_.viewports[lv].cameras[0];
+        auto scene_id = data_.cameras[camera_id].scene_id;
         
         // draw everything required for the z prepass, which also populates the depth buffer
         nre::gpu::set_render_mode(nre::gpu::Z_PREPASS_BACKFACE);
-        for (auto x: this->scenes[scene_id].render_groups){
+        for (auto x: this->sce_ren_groups[scene_id]){
             if (x.camera == camera_id){
                 this->drawRenderGroupZPrePass(x);
-                this->scenes[scene_id].render_groups.replace(x);
+                this->sce_ren_groups[scene_id].replace(x);
             }
         }
-        this->scenes[scene_id].render_groups.update();
+        this->sce_ren_groups[scene_id].update();
         
         //sort point lights
         this->sortPointLights(scene_id, camera_id);
@@ -221,7 +238,7 @@ bool NRE_Renderer::updateSingleThread(){
         nre::gpu::set_render_mode(nre::gpu::LIGHT_PREPASS_2);
         
         nre::gpu::set_uniform_buf_state(this->pt_light_ubo, this->prog_light, 1, 0, 0);
-        nre::gpu::set_uniform_buf_state(this->cameras[camera_id].ubo, this->prog_light, 0, 0, 0);    
+        nre::gpu::set_uniform_buf_state(data_.cameras[camera_id].ubo, this->prog_light, 0, 0, 0);    
         
         int lights_count = this->pt_visible_lights.size();
         
@@ -236,13 +253,13 @@ bool NRE_Renderer::updateSingleThread(){
         // draw everything normally
         nre::gpu::use_framebuffer(this->framebuffer);
         nre::gpu::set_render_mode(nre::gpu::AFTERPREPASS_BACKFACE);
-        for (auto x: this->scenes[scene_id].render_groups){
+        for (auto x: this->sce_ren_groups[scene_id]){
             if (x.camera == camera_id){
                 this->drawRenderGroup(x);
-                this->scenes[scene_id].render_groups.replace(x);
+                this->sce_ren_groups[scene_id].replace(x);
             }
         }
-        this->scenes[scene_id].render_groups.update();
+        this->sce_ren_groups[scene_id].update();
     
         // optionally draw a bounding box/sphere for each object (in wireframe mode)
         bool temp = nre::gpu::use_wireframe;
@@ -257,13 +274,13 @@ bool NRE_Renderer::updateSingleThread(){
                 this->setupBoundingBoxProgram();
                 this->setup_bbox_prog = true;
             }
-            for (auto x: this->scenes[scene_id].render_groups){
+            for (auto x: this->sce_ren_groups[scene_id]){
                 if (x.camera == camera_id){
                     this->drawRenderGroupBoundingBox(x);
-                    this->scenes[scene_id].render_groups.replace(x);
+                    this->sce_ren_groups[scene_id].replace(x);
                 }
             }
-            this->scenes[scene_id].render_groups.update();
+            this->sce_ren_groups[scene_id].update();
         }
         if (render_spheres){
             nre::gpu::set_render_mode(nre::gpu::REGULAR_BOTH);
@@ -272,13 +289,13 @@ bool NRE_Renderer::updateSingleThread(){
                 this->setupBoundingSphereProgram();
                 this->setup_sphere_prog = true;
             }
-            for (auto x: this->scenes[scene_id].render_groups){
+            for (auto x: this->sce_ren_groups[scene_id]){
                 if (x.camera == camera_id){
                     this->drawRenderGroupBoundingSphere(x);
-                    this->scenes[scene_id].render_groups.replace(x);
+                    this->sce_ren_groups[scene_id].replace(x);
                 }
             }
-            this->scenes[scene_id].render_groups.update();
+            this->sce_ren_groups[scene_id].update();
         }
         
         nre::gpu::use_wireframe = temp;
@@ -300,7 +317,7 @@ bool NRE_Renderer::updateSingleThread(){
 void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id){
     this->pt_visible_lights.clear();
     
-    auto persp_mat = this->cameras[camera_id].perspective_mat;
+    auto persp_mat = data_.cameras[camera_id].perspective_mat;
     
     // set limit to 255 lights
     // why you ask?
@@ -309,26 +326,26 @@ void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id){
     // so i can only place up to 255 lights (light with index 0 inside the shaders symbolizes the lack of lights)
     // Thirdly, spot lights will be handed in a separate pass with another texture
     
-    for (auto l: this->scenes[scene_id].pt_lights){
+    for (auto l: data_.scenes[scene_id].pt_lights){
         
         // calculations happening in view space
-        OE_Vec4 model_pos = OE_Vec4(this->pt_lights[l].model_mat[3].x, this->pt_lights[l].model_mat[3].y, this->pt_lights[l].model_mat[3].z, 1.0f);
+        OE_Vec4 model_pos = OE_Vec4(data_.pt_lights[l].model_mat[3].x, data_.pt_lights[l].model_mat[3].y, data_.pt_lights[l].model_mat[3].z, 1.0f);
         
-        OE_Vec4 light_view_pos = this->cameras[camera_id].view_mat*model_pos;
+        OE_Vec4 light_view_pos = data_.cameras[camera_id].view_mat*model_pos;
             
-        auto light_camview_radius = light_view_pos - OE_Vec4(this->pt_lights[l].range, this->pt_lights[l].range, this->pt_lights[l].range, 0.0f);
+        auto light_camview_radius = light_view_pos - OE_Vec4(data_.pt_lights[l].range, data_.pt_lights[l].range, data_.pt_lights[l].range, 0.0f);
         
-        bool is_behind_camera = light_camview_radius.z > (-this->cameras[camera_id].near);
-        bool is_too_far_away = (light_camview_radius.z + 2*this->pt_lights[l].range) < (-this->cameras[camera_id].far);
+        bool is_behind_camera = light_camview_radius.z > (-data_.cameras[camera_id].near);
+        bool is_too_far_away = (light_camview_radius.z + 2*data_.pt_lights[l].range) < (-data_.cameras[camera_id].far);
         
         //calculations happening in clip space        
-        auto light_clip_radius_max_x = OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(this->pt_lights[l].range, 0.0f, 0.0f, 0.0f));
+        auto light_clip_radius_max_x = OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(data_.pt_lights[l].range, 0.0f, 0.0f, 0.0f));
         
-        auto light_clip_radius_min_x = OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(this->pt_lights[l].range, 0.0f, 0.0f, 0.0f));
+        auto light_clip_radius_min_x = OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(data_.pt_lights[l].range, 0.0f, 0.0f, 0.0f));
         
-        auto light_clip_radius_max_y = OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(0.0f, this->pt_lights[l].range, 0.0f, 0.0f));
+        auto light_clip_radius_max_y = OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(0.0f, data_.pt_lights[l].range, 0.0f, 0.0f));
         
-        auto light_clip_radius_min_y = OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(0.0f, this->pt_lights[l].range, 0.0f, 0.0f));
+        auto light_clip_radius_min_y = OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(0.0f, data_.pt_lights[l].range, 0.0f, 0.0f));
         
         bool is_too_left  = light_clip_radius_max_x.x < -1.02f;
         bool is_too_right = light_clip_radius_min_x.x > 1.02f;
@@ -341,7 +358,7 @@ void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id){
         // This means the scene can have many many more lights overall. All that matters
         // is what's VISIBLE
         if ((not is_behind_camera) and (not is_too_far_away) and (not is_too_left) and (not is_too_right) and (not is_too_above) and (not is_too_below)){
-        auto point_light = NRE_PointLightDrawCall(l, (this->cameras[camera_id].perspective_view_mat*this->pt_lights[l].model_mat[3])[2], 0);
+        auto point_light = NRE_PointLightDrawCall(l, (data_.cameras[camera_id].perspective_view_mat*data_.pt_lights[l].model_mat[3])[2], 0);
         this->pt_visible_lights.insert(point_light);
         
         }
@@ -359,7 +376,7 @@ void NRE_Renderer::drawRenderGroup(NRE_RenderGroup &ren_group){
         
         ren_group.vs = nre::gpu::vertex_shader();
         ren_group.vs.type = nre::gpu::VS_REGULAR;
-        ren_group.vs.num_of_uvs = this->meshes[ren_group.mesh].uvmaps;
+        ren_group.vs.num_of_uvs = data_.meshes[ren_group.mesh].uvmaps;
         
         
         // choose shading mode
@@ -383,7 +400,7 @@ void NRE_Renderer::drawRenderGroup(NRE_RenderGroup &ren_group){
                 break;
         }
         unlockMutex();
-        ren_group.fs.num_of_uvs = this->meshes[ren_group.mesh].uvmaps;
+        ren_group.fs.num_of_uvs = data_.meshes[ren_group.mesh].uvmaps;
         
         ren_group.program = nre::gpu::new_program();
         nre::gpu::set_program_vertex_shader(ren_group.program, ren_group.vs);
@@ -397,10 +414,10 @@ void NRE_Renderer::drawRenderGroup(NRE_RenderGroup &ren_group){
         }
     }
     
-    nre::gpu::set_uniform_buf_state(this->meshes[ren_group.mesh].ubo, ren_group.program, 1, 0, 0);
-    nre::gpu::set_uniform_buf_state(this->cameras[ren_group.camera].ubo, ren_group.program, 0, 0, 0);
-    nre::gpu::set_uniform_buf_state(this->materials[ren_group.material].ubo, ren_group.program, 2, 0, 0);
-    nre::gpu::draw(ren_group.program, this->meshes[ren_group.mesh].vao, this->vgroups[ren_group.vgroup].ibo);
+    nre::gpu::set_uniform_buf_state(data_.meshes[ren_group.mesh].ubo, ren_group.program, 1, 0, 0);
+    nre::gpu::set_uniform_buf_state(data_.cameras[ren_group.camera].ubo, ren_group.program, 0, 0, 0);
+    nre::gpu::set_uniform_buf_state(data_.materials[ren_group.material].ubo, ren_group.program, 2, 0, 0);
+    nre::gpu::draw(ren_group.program, data_.meshes[ren_group.mesh].vao, data_.vgroups[ren_group.vgroup].ibo);
 }
 
 void NRE_Renderer::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group){
@@ -411,7 +428,7 @@ void NRE_Renderer::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group){
         
         ren_group.vs_z_prepass = nre::gpu::vertex_shader();
         ren_group.vs_z_prepass.type = nre::gpu::VS_Z_PREPASS;
-        ren_group.vs_z_prepass.num_of_uvs = this->meshes[ren_group.mesh].uvmaps;
+        ren_group.vs_z_prepass.num_of_uvs = data_.meshes[ren_group.mesh].uvmaps;
         
         ren_group.z_prepass_program = nre::gpu::new_program();
         
@@ -422,23 +439,23 @@ void NRE_Renderer::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group){
         nre::gpu::set_program_uniform_buf_slot(ren_group.z_prepass_program, "OE_Mesh32", 1);
     }
     
-    nre::gpu::set_uniform_buf_state(this->meshes[ren_group.mesh].ubo, ren_group.z_prepass_program, 1, 0, 0);
-    nre::gpu::set_uniform_buf_state(this->cameras[ren_group.camera].ubo, ren_group.z_prepass_program, 0, 0, 0);
-    nre::gpu::draw(ren_group.z_prepass_program, this->meshes[ren_group.mesh].vao, this->vgroups[ren_group.vgroup].ibo);
+    nre::gpu::set_uniform_buf_state(data_.meshes[ren_group.mesh].ubo, ren_group.z_prepass_program, 1, 0, 0);
+    nre::gpu::set_uniform_buf_state(data_.cameras[ren_group.camera].ubo, ren_group.z_prepass_program, 0, 0, 0);
+    nre::gpu::draw(ren_group.z_prepass_program, data_.meshes[ren_group.mesh].vao, data_.vgroups[ren_group.vgroup].ibo);
     
 }
 
 void NRE_Renderer::drawRenderGroupBoundingBox(NRE_RenderGroup& ren_group){
      
-    nre::gpu::set_uniform_buf_state(this->meshes[ren_group.mesh].ubo, this->prog_bbox, 1, 0, 0);
-    nre::gpu::set_uniform_buf_state(this->cameras[ren_group.camera].ubo, this->prog_bbox, 0, 0, 0);        
+    nre::gpu::set_uniform_buf_state(data_.meshes[ren_group.mesh].ubo, this->prog_bbox, 1, 0, 0);
+    nre::gpu::set_uniform_buf_state(data_.cameras[ren_group.camera].ubo, this->prog_bbox, 0, 0, 0);        
     nre::gpu::draw(this->prog_bbox, this->vao_bbox);
 }
 
 void NRE_Renderer::drawRenderGroupBoundingSphere(NRE_RenderGroup& ren_group){
     
-    nre::gpu::set_uniform_buf_state(this->meshes[ren_group.mesh].ubo, this->prog_sphere, 1, 0, 0);
-    nre::gpu::set_uniform_buf_state(this->cameras[ren_group.camera].ubo, this->prog_sphere, 0, 0, 0);        
+    nre::gpu::set_uniform_buf_state(data_.meshes[ren_group.mesh].ubo, this->prog_sphere, 1, 0, 0);
+    nre::gpu::set_uniform_buf_state(data_.cameras[ren_group.camera].ubo, this->prog_sphere, 0, 0, 0);        
     nre::gpu::draw(this->prog_sphere, this->vao_sphere, this->ibo_sphere);
 }
 
@@ -512,41 +529,46 @@ void NRE_Renderer::setupBoundingSphereProgram(){
 void NRE_Renderer::generateDrawCalls(){
     
     // delete all remaining draw call programs from deleted scenes
-    for (auto &sce : deleted_scenes){
-        for (auto ren_group : this->scenes[sce].render_groups){
+    for (auto &sce : data_.deleted_scenes){
+        for (auto ren_group : this->sce_ren_groups[sce]){
         
             if (ren_group.z_prepass_program != 0)
                 nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0)
                 nre::gpu::del_program(ren_group.program);
         }
-        this->scenes.erase(sce);
+        data_.scenes.erase(sce);
+        this->sce_ren_groups.erase(sce);
     }
-    this->deleted_scenes.clear();
+    data_.deleted_scenes.clear();
     
-    for (auto &scene: scenes){
+    for (auto &scene: data_.scenes){
+        
+        if (!this->sce_ren_groups.count(scene.first)){
+            this->sce_ren_groups[scene.first] = NRE_DrawCallContainer();
+        }
         
         // delete remaining draw call programs from existing scenes
-        for (auto ren_group : scene.second.render_groups.to_be_deleted_){
+        for (auto ren_group : this->sce_ren_groups[scene.first].to_be_deleted_){
         
             if (ren_group.z_prepass_program != 0)
                 nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0)
                 nre::gpu::del_program(ren_group.program);
         }
-        scene.second.render_groups.cleanupPrograms();
+        this->sce_ren_groups[scene.first].cleanupPrograms();
         
         // gemerate draw calls anew
         for (auto cam : scene.second.cameras){
             for (auto mesh : scene.second.meshes){
-                for (auto vgroup : this->meshes[mesh].vgroups){
+                for (auto vgroup : data_.meshes[mesh].vgroups){
                     auto render_data = NRE_RenderGroup();
                     render_data.camera = cam;
                     render_data.vgroup = vgroup;
                     render_data.mesh = mesh;
-                    render_data.material = this->vgroups[vgroup].material_id;
-                    if (!scene.second.existsRenderGroup(render_data)){
-                        scene.second.render_groups.insert(render_data);
+                    render_data.material = data_.vgroups[vgroup].material_id;
+                    if (!this->sce_ren_groups[scene.first].contains(render_data)){
+                        this->sce_ren_groups[scene.first].insert(render_data);
                     }
                 }
             }
@@ -554,6 +576,190 @@ void NRE_Renderer::generateDrawCalls(){
     }
 }
 
+//---------------------------------Update actual GPU data------------------------------//
+
+void NRE_Renderer::updateMeshGPUData(){
+    for (auto mesh: data_.meshes){
+        
+        // first time buffer initialization
+        if (!data_.meshes[mesh.first].has_init){
+            data_.meshes[mesh.first].vbo      = nre::gpu::new_vertex_buf();
+            data_.meshes[mesh.first].vao      = nre::gpu::new_vertex_layout();
+            data_.meshes[mesh.first].ubo      = nre::gpu::new_uniform_buf();
+            data_.meshes[mesh.first].has_init = true;
+        }
+        
+        
+        // initialize data itself
+        if (!data_.meshes[mesh.first].vao_initialized){
+            
+            /// vertex buffer
+            data_.meshes[mesh.first].mesh->data->vbo_mutex.lockMutex();
+            nre::gpu::set_vertex_buf_memory_and_data(data_.meshes[mesh.first].vbo, data_.meshes[mesh.first].mesh->data->vbo, nre::gpu::STATIC);
+            data_.meshes[mesh.first].mesh->data->vbo.clear();
+            data_.meshes[mesh.first].mesh->data->vbo_mutex.unlockMutex();
+            
+            
+            /// index buffers
+            data_.meshes[mesh.first].mesh->data->ibos_mutex.lockMutex();
+            for (auto vg : mesh.second.vgroups){
+                data_.vgroups[vg].ibo = nre::gpu::new_index_buf();
+                nre::gpu::set_index_buf_memory_and_data(data_.vgroups[vg].ibo, data_.meshes[mesh.first].mesh->data->ibos[vg].data, nre::gpu::STATIC);
+                data_.meshes[mesh.first].mesh->data->ibos[vg].data.clear();
+            }
+            
+            data_.meshes[mesh.first].mesh->data->ibos_mutex.unlockMutex();
+            
+            /// vertex layout
+            typedef nre::gpu::vertex_layout_input VLI; // for clarity
+            
+            data_.meshes[mesh.first].mesh->data->ibos.clear();
+            //delete data_.meshes[mesh.first].mesh->data->index_buffer;
+            //data_.meshes[mesh.first].mesh->data->index_buffer = nullptr;
+            
+            data_.meshes[mesh.first].vao_input.clear();
+        
+            data_.meshes[mesh.first].vao_input.push_back(VLI(data_.meshes[mesh.first].vbo, 0, 3, 6+data_.meshes[mesh.first].uvmaps*2));
+            data_.meshes[mesh.first].vao_input.push_back(VLI(data_.meshes[mesh.first].vbo, 3, 3, 6+data_.meshes[mesh.first].uvmaps*2));
+        
+            for (size_t i=0; i < data_.meshes[mesh.first].uvmaps; i++){
+                data_.meshes[mesh.first].vao_input.push_back(VLI(data_.meshes[mesh.first].vbo, 6+2*i, 2, 6+data_.meshes[mesh.first].uvmaps*2));
+            }
+            
+            nre::gpu::set_vertex_layout_format(data_.meshes[mesh.first].vao, data_.meshes[mesh.first].vao_input);
+            data_.meshes[mesh.first].vao_initialized = true;
+
+        }
+        
+        // update per frame data
+        if (data_.meshes[mesh.first].changed){
+            
+            
+            data_.meshes[mesh.first].data = OE_Mat4x4ToSTDVector(data_.meshes[mesh.first].model_mat);
+            
+            // populate scaling_max_data
+            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].max_x);
+            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].max_y);
+            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].max_z);
+            
+            // final element is sphere radius candidate            
+            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].max_radius);
+            
+            // populate scaling_min_data
+            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].min_x);
+            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].min_y);
+            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].min_z);
+            
+            // final element is sphere radius candidate            
+            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].min_radius);
+            
+            
+            if (data_.meshes[mesh.first].size != data_.meshes[mesh.first].data.size()){
+                data_.meshes[mesh.first].size = data_.meshes[mesh.first].data.size();
+                nre::gpu::set_uniform_buf_memory(data_.meshes[mesh.first].ubo, data_.meshes[mesh.first].size, nre::gpu::DYNAMIC);
+            }
+            
+            nre::gpu::set_uniform_buf_data(data_.meshes[mesh.first].ubo, data_.meshes[mesh.first].data, 0);
+            
+            data_.meshes[mesh.first].changed = false;
+        }
+    }
+    
+    for (auto cam: data_.deleted_meshes){
+        this->sce_ren_groups[data_.meshes[cam].scene_id].removeMesh(cam);
+        data_.deleteMesh(cam);
+    }
+    data_.deleted_meshes.clear();    
+}
+
+void NRE_Renderer::updateMaterialGPUData(){
+    for (auto mat: data_.materials){
+        
+        if (!data_.materials[mat.first].has_init){
+            data_.materials[mat.first].ubo = nre::gpu::new_uniform_buf();
+            data_.materials[mat.first].has_init = true;
+        }
+        
+        if (data_.materials[mat.first].changed){
+            
+            if (data_.materials[mat.first].size != data_.materials[mat.first].data.size()){
+                data_.materials[mat.first].size = data_.materials[mat.first].data.size();
+                nre::gpu::set_uniform_buf_memory(data_.materials[mat.first].ubo, data_.materials[mat.first].size, nre::gpu::DYNAMIC);
+            }
+            
+            nre::gpu::set_uniform_buf_data(data_.materials[mat.first].ubo, data_.materials[mat.first].data, 0);
+            data_.materials[mat.first].changed = false;
+        }
+    }
+    
+    for (auto cam: data_.deleted_materials){
+        this->sce_ren_groups[data_.materials[cam].scene_id].removeMaterial(cam);
+        data_.deleteMaterial(cam);
+    }
+    data_.deleted_materials.clear();
+}
+
+void NRE_Renderer::updateCameraGPUData(){
+    for (auto cam: data_.cameras){
+        
+        if (!data_.cameras[cam.first].has_init){
+            data_.cameras[cam.first].ubo = nre::gpu::new_uniform_buf();
+            data_.cameras[cam.first].has_init = true;
+        }
+        if (data_.cameras[cam.first].changed){
+            
+            if (data_.cameras[cam.first].size != data_.cameras[cam.first].data.size()){
+                data_.cameras[cam.first].size = data_.cameras[cam.first].data.size();
+                nre::gpu::set_uniform_buf_memory(data_.cameras[cam.first].ubo, data_.cameras[cam.first].size, nre::gpu::DYNAMIC);
+            }
+            
+            nre::gpu::set_uniform_buf_data(data_.cameras[cam.first].ubo, data_.cameras[cam.first].data, 0);
+            data_.cameras[cam.first].changed = false;
+        }
+    }
+    
+    for (auto cam: data_.deleted_cameras){
+        this->sce_ren_groups[data_.cameras[cam].scene_id].removeCamera(cam);
+        data_.deleteCamera(cam);
+    }
+    data_.deleted_cameras.clear();
+}
+void NRE_Renderer::updateLightGPUData(){
+    /*for (auto l: data_.pt_lights){
+        
+        if (!data_.pt_lights[l.first].has_init){
+            data_.pt_lights[l.first].ubo = nre::gpu::new_uniform_buf();
+            data_.pt_lights[l.first].has_init = true;
+        }
+        if (data_.pt_lights[l.first].changed){
+            
+            if (data_.pt_lights[l.first].size != data_.pt_lights[l.first].data.size()){
+                data_.pt_lights[l.first].size = data_.pt_lights[l.first].data.size();
+                nre::gpu::set_uniform_buf_memory(data_.pt_lights[l.first].ubo, data_.pt_lights[l.first].size, nre::gpu::DYNAMIC);
+            }
+            
+            nre::gpu::set_uniform_buf_data(data_.pt_lights[l.first].ubo, data_.pt_lights[l.first].data, 0);
+            data_.pt_lights[l.first].changed = false;
+        }
+    }*/
+    std::vector<float> pt_light_data;
+    pt_light_data.reserve(16*255);
+    int count = 0;
+    for (auto l: this->pt_visible_lights){
+        pt_light_data.insert(pt_light_data.end(), data_.pt_lights[l.id].data.begin(), data_.pt_lights[l.id].data.end());
+        
+        count++;
+        if (count > 255)
+            break;
+    }
+    
+    // fill the rest with zeros since webgl complains otherwise
+    for (int i=0; i< 16*(255-count); i++){
+        pt_light_data.push_back(0.0f);
+    }
+    nre::gpu::set_uniform_buf_memory(this->pt_light_ubo, pt_light_data.size(), nre::gpu::STREAM);
+    nre::gpu::set_uniform_buf_data(this->pt_light_ubo, pt_light_data, 0);
+}
 
 bool NRE_Renderer::updateMultiThread(OE_Task*, int){
     return false;
@@ -561,17 +767,11 @@ bool NRE_Renderer::updateMultiThread(OE_Task*, int){
 
 void NRE_Renderer::destroy(){
     
-    this->cameras.clear();
-    this->materials.clear();
-    this->vgroups.clear();
-    this->meshes.clear();
-    this->dir_lights.clear();
-    this->pt_lights.clear();
-    this->scenes.clear();
-    this->viewports.clear();
-    
     this->setup_bbox_prog = false;
     this->setup_sphere_prog = false;
+    
+    data_.clear();
+    this->sce_ren_groups.clear();
     
     nre::gpu::destroy();
 }    

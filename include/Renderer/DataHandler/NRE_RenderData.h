@@ -96,17 +96,6 @@ struct NRE_PointLightRenderData : public NRE_BaseObject{
     unsigned int    size{0};
 };
 
-struct NRE_PointLightDrawCall{
-    
-    NRE_PointLightDrawCall() = default;
-    NRE_PointLightDrawCall(std::size_t, float, std::size_t);
-    std::size_t id{0};
-    float       z{0.0f};
-    std::size_t priority{0};
-    
-    bool operator > (const NRE_PointLightDrawCall&) const;
-};
-
 struct NRE_DirectionalLightRenderData : public NRE_BaseObject{
     OE_Mat4x4       model_mat;
     OE_RGBColor                 color;
@@ -118,8 +107,6 @@ struct NRE_DirectionalLightRenderData : public NRE_BaseObject{
     unsigned int    size{0};
 };
 
-struct NRE_RenderGroup;
-
 struct NRE_SceneRenderData : public NRE_BaseObject{
     
     std::set<std::size_t> cameras;
@@ -127,10 +114,6 @@ struct NRE_SceneRenderData : public NRE_BaseObject{
     std::set<std::size_t> dir_lights;
     std::set<std::size_t> pt_lights;
     std::set<std::size_t> materials;
-    
-    NRE_DrawCallContainer render_groups;
-    
-    bool existsRenderGroup(const NRE_RenderGroup&);
     
 };
 
@@ -145,31 +128,6 @@ struct NRE_ViewportRenderData : public NRE_BaseObject{
         // two floats for each layer, but only useful when there is a split screen in eye coordinates
     std::vector<float>          split_screen_positions;
     
-};
-
-struct NRE_RenderGroup{
-    
-    // data for the z prepass
-    nre::gpu::vertex_shader vs_z_prepass;
-    std::size_t     z_prepass_program{0};
-    bool isZPrePassSetup{false};
-    
-    // data for normal render
-    nre::gpu::vertex_shader vs;
-    nre::gpu::pixel_shader fs;    
-    std::size_t     program{0};
-    bool isSetup{false};
-    
-    // draw call data
-    std::size_t     camera{0};
-    std::size_t     material{0};
-    std::size_t     vgroup{0};
-    std::size_t     mesh{0};  
-    
-    std::vector<std::size_t>     lights;
-    
-    // for sorting draw calls
-    bool operator < (const NRE_RenderGroup&) const;
 };
 
 #endif // FE_MESHRENDERDATA_H

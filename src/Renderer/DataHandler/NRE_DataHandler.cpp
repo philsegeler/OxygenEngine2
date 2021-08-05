@@ -1,85 +1,12 @@
-#include <OE_Math.h>
-#include <Renderer/NRE_RendererMain.h>
+#include <Renderer/DataHandler/NRE_DataHandler.h>
 #include <OE_API.h>
 
-using namespace std;
 using namespace oe;
+using namespace std;
 
-std::vector<float> NRE_MeshRenderData::genBoundingBoxVBO(){
-    return OE_GetBoundingBoxVertexBuffer(max_x, min_x, max_y, min_y, max_z, min_z);
-}
-
-
-bool NRE_RenderGroup::operator < (const NRE_RenderGroup& other) const{
+bool NRE_DataHandler::update(bool restart_renderer, bool load_minmax_elements){
     
-    // sort by camera
-    if (this->camera < other.camera){
-        return true;
-    }
-    else if (this->camera > other.camera){
-        return false;
-    }
-    else{
-        // sort by material (program) since pipeline/texture changes
-        // are expensive
-        if (this->material < other.material){
-            return true;
-        }
-        else if (this->material > other.material){
-            return false;
-        }
-        else{
-            // sort by mesh, to minimize changing VAO
-            // and Mesh Buffers
-            if (this->mesh < other.mesh){
-                return true;
-            }
-            else if (this->mesh > other.mesh){
-                return false;
-            }
-            else{
-                // finally sort by vgroup since changing Index Buffers should be cheap
-                if (this->vgroup < other.vgroup){
-                    return true;
-                }
-                else if (this->vgroup >= other.vgroup){
-                    return false;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-bool NRE_SceneRenderData::existsRenderGroup(const NRE_RenderGroup& ren_group){
-    return this->render_groups.contains(ren_group);
-}
-
-NRE_PointLightDrawCall::NRE_PointLightDrawCall(std::size_t id_in, float z_in, std::size_t priority_in){
-    this->id = id_in;
-    this->z = z_in;
-    this->priority = priority_in;
-}
-
-bool NRE_PointLightDrawCall::operator > (const NRE_PointLightDrawCall& other) const{
-    if (this->priority == other.priority){
-        if (std::abs(this->z - other.z) < 0.0000001f){
-            return this->id > other.id;
-        }
-        else{
-            return this->z > other.z;
-        }
-    }
-    else{
-        return this->priority > other.priority;
-    }
-    return false;
-}
-
-
-bool NRE_Renderer::updateData(){
-    assert (this->world != nullptr);
-    
+    this->load_spheres_or_bboxes = load_minmax_elements;
     // add/change any missing world data
     //OE_Main->lockMutex();
     
@@ -87,13 +14,9 @@ bool NRE_Renderer::updateData(){
     
     // this regenerates the renderer database
     
-    if (this->screen->restart_renderer){
+    if (restart_renderer){
         
         //cout << OE_Main->world->to_str() << endl;
-        
-        // this also resets the GPU API resources
-        this->destroy();
-        this->init();
         
         for (auto mat : OE_World::materialsList){
             mat.flag_as_changed();
@@ -115,8 +38,6 @@ bool NRE_Renderer::updateData(){
         for (auto vpc : OE_World::viewportsList){
             vpc.flag_as_changed();
         }
-        
-        this->screen->restart_renderer = false;
     }
     
     // Update element data
@@ -157,7 +78,6 @@ bool NRE_Renderer::updateData(){
     
     for (auto mat : OE_World::materialsList.deleted()){
         if (this->materials.count(mat.id_) == 1){
-            this->scenes[this->materials[mat.id_].scene_id].render_groups.removeMaterial(mat.id_);
             this->deleted_materials.insert(mat.id_);
         }
         
@@ -166,7 +86,6 @@ bool NRE_Renderer::updateData(){
     for (auto obj : OE_World::objectsList.deleted()){
         
         if (this->meshes.count(obj.id_) == 1){
-            this->scenes[this->meshes[obj.id_].scene_id].render_groups.removeMesh(obj.id_);
             this->deleted_meshes.insert(obj.id_);
         }
         else if (this->dir_lights.count(obj.id_) == 1){
@@ -178,7 +97,6 @@ bool NRE_Renderer::updateData(){
             this->has_pt_lights_changed = true;
         }
         else if (this->cameras.count(obj.id_) == 1){
-            this->scenes[this->cameras[obj.id_].scene_id].render_groups.removeCamera(obj.id_);
             this->deleted_cameras.insert(obj.id_);
         }
         else {
@@ -208,7 +126,7 @@ bool NRE_Renderer::updateData(){
 
 //-----------------------------------Pass individual element changes synchronously as fast as possible--------//
 
-void NRE_Renderer::handleMeshData(std::size_t id, std::shared_ptr<OE_Mesh32> mesh){
+void NRE_DataHandler::handleMeshData(std::size_t id, std::shared_ptr<OE_Mesh32> mesh){
     if (this->meshes.count(id) == 0){
         
         // make sure all index and vertex buffers are generated
@@ -263,10 +181,7 @@ void NRE_Renderer::handleMeshData(std::size_t id, std::shared_ptr<OE_Mesh32> mes
     else{
         this->meshes[id].model_mat = mesh->GetModelMatrix();
         
-        bool render_bboxes = this->render_bounding_boxes.load(std::memory_order_relaxed);
-        bool render_spheres = this->render_bounding_spheres.load(std::memory_order_relaxed);
-        
-        if (render_bboxes or render_spheres){
+        if (this->load_spheres_or_bboxes){
             //---- <TEMPORARY> ----//
             // This should not be done here but in the physics engine
             mesh->calculateProperBoundingBox();
@@ -291,7 +206,7 @@ void NRE_Renderer::handleMeshData(std::size_t id, std::shared_ptr<OE_Mesh32> mes
     }
 }
 
-void NRE_Renderer::handleVGroupData(std::size_t mesh_id, std::size_t id, std::shared_ptr<OE_Mesh32> mesh){
+void NRE_DataHandler::handleVGroupData(std::size_t mesh_id, std::size_t id, std::shared_ptr<OE_Mesh32> mesh){
     if (this->vgroups.count(id) == 0){
         
         this->vgroups[id] = NRE_VGroupRenderData(); this->vgroups[id].id = id; this->vgroups[id].mesh_id = mesh_id;
@@ -301,7 +216,7 @@ void NRE_Renderer::handleVGroupData(std::size_t mesh_id, std::size_t id, std::sh
     }
 }
 
-void NRE_Renderer::handleMaterialData(std::size_t id, std::shared_ptr<OE_Material> mat){
+void NRE_DataHandler::handleMaterialData(std::size_t id, std::shared_ptr<OE_Material> mat){
     if (this->materials.count(id) == 0){
         this->materials[id] = NRE_MaterialRenderData(); this->materials[id].id = id;
     }
@@ -310,7 +225,7 @@ void NRE_Renderer::handleMaterialData(std::size_t id, std::shared_ptr<OE_Materia
     this->materials[id].changed = true;
 }
 
-void NRE_Renderer::handleCameraData(std::size_t id, std::shared_ptr<OE_Camera> camera){
+void NRE_DataHandler::handleCameraData(std::size_t id, std::shared_ptr<OE_Camera> camera){
     if (this->cameras.count(id) == 0){
         
         //setup the Uniform buffer holding the perspective/view matrix
@@ -339,7 +254,7 @@ void NRE_Renderer::handleCameraData(std::size_t id, std::shared_ptr<OE_Camera> c
     this->cameras[id].changed = true;
 }
 
-void NRE_Renderer::handleLightData(std::size_t id, std::shared_ptr<OE_Light> light){
+void NRE_DataHandler::handleLightData(std::size_t id, std::shared_ptr<OE_Light> light){
     if (light->light_type == 1){
         //POINT LIGHT
         if (this->pt_lights.count(id) == 0){
@@ -377,7 +292,7 @@ void NRE_Renderer::handleLightData(std::size_t id, std::shared_ptr<OE_Light> lig
     }
 }
 
-void NRE_Renderer::handleSceneData(std::size_t id, std::shared_ptr<OE_Scene> scene){
+void NRE_DataHandler::handleSceneData(std::size_t id, std::shared_ptr<OE_Scene> scene){
     if (this->scenes.count(id) == 0){
         this->scenes[id] = NRE_SceneRenderData(); this->scenes[id].id = id;
     }
@@ -424,7 +339,7 @@ void NRE_Renderer::handleSceneData(std::size_t id, std::shared_ptr<OE_Scene> sce
     this->scenes[id].changed = true;
 }
 
-void NRE_Renderer::handleViewportData(std::size_t id, std::shared_ptr<OE_ViewportConfig> vp_config){
+void NRE_DataHandler::handleViewportData(std::size_t id, std::shared_ptr<OE_ViewportConfig> vp_config){
     if (this->viewports.count(id) == 0){
         this->viewports[id] = NRE_ViewportRenderData(); this->viewports[id].id = id;
         this->viewports[id].has_init = true;
@@ -438,191 +353,9 @@ void NRE_Renderer::handleViewportData(std::size_t id, std::shared_ptr<OE_Viewpor
     this->viewports[id].changed = true;
 }
 
-//---------------------------------Update actual GPU data------------------------------//
-
-void NRE_Renderer::updateMeshGPUData(){
-    for (auto mesh: this->meshes){
-        
-        // first time buffer initialization
-        if (!this->meshes[mesh.first].has_init){
-            this->meshes[mesh.first].vbo      = nre::gpu::new_vertex_buf();
-            this->meshes[mesh.first].vao      = nre::gpu::new_vertex_layout();
-            this->meshes[mesh.first].ubo      = nre::gpu::new_uniform_buf();
-            this->meshes[mesh.first].has_init = true;
-        }
-        
-        
-        // initialize data itself
-        if (!this->meshes[mesh.first].vao_initialized){
-            
-            /// vertex buffer
-            this->meshes[mesh.first].mesh->data->vbo_mutex.lockMutex();
-            nre::gpu::set_vertex_buf_memory_and_data(this->meshes[mesh.first].vbo, this->meshes[mesh.first].mesh->data->vbo, nre::gpu::STATIC);
-            this->meshes[mesh.first].mesh->data->vbo.clear();
-            this->meshes[mesh.first].mesh->data->vbo_mutex.unlockMutex();
-            
-            
-            /// index buffers
-            this->meshes[mesh.first].mesh->data->ibos_mutex.lockMutex();
-            for (auto vg : mesh.second.vgroups){
-                this->vgroups[vg].ibo = nre::gpu::new_index_buf();
-                nre::gpu::set_index_buf_memory_and_data(this->vgroups[vg].ibo, this->meshes[mesh.first].mesh->data->ibos[vg].data, nre::gpu::STATIC);
-                this->meshes[mesh.first].mesh->data->ibos[vg].data.clear();
-            }
-            
-            this->meshes[mesh.first].mesh->data->ibos_mutex.unlockMutex();
-            
-            /// vertex layout
-            typedef nre::gpu::vertex_layout_input VLI; // for clarity
-            
-            this->meshes[mesh.first].mesh->data->ibos.clear();
-            //delete this->meshes[mesh.first].mesh->data->index_buffer;
-            //this->meshes[mesh.first].mesh->data->index_buffer = nullptr;
-            
-            this->meshes[mesh.first].vao_input.clear();
-        
-            this->meshes[mesh.first].vao_input.push_back(VLI(this->meshes[mesh.first].vbo, 0, 3, 6+this->meshes[mesh.first].uvmaps*2));
-            this->meshes[mesh.first].vao_input.push_back(VLI(this->meshes[mesh.first].vbo, 3, 3, 6+this->meshes[mesh.first].uvmaps*2));
-        
-            for (size_t i=0; i < this->meshes[mesh.first].uvmaps; i++){
-                this->meshes[mesh.first].vao_input.push_back(VLI(this->meshes[mesh.first].vbo, 6+2*i, 2, 6+this->meshes[mesh.first].uvmaps*2));
-            }
-            
-            nre::gpu::set_vertex_layout_format(this->meshes[mesh.first].vao, this->meshes[mesh.first].vao_input);
-            this->meshes[mesh.first].vao_initialized = true;
-
-        }
-        
-        // update per frame data
-        if (this->meshes[mesh.first].changed){
-            
-            
-            this->meshes[mesh.first].data = OE_Mat4x4ToSTDVector(this->meshes[mesh.first].model_mat);
-            
-            // populate scaling_max_data
-            this->meshes[mesh.first].data.push_back(this->meshes[mesh.first].max_x);
-            this->meshes[mesh.first].data.push_back(this->meshes[mesh.first].max_y);
-            this->meshes[mesh.first].data.push_back(this->meshes[mesh.first].max_z);
-            
-            // final element is sphere radius candidate            
-            this->meshes[mesh.first].data.push_back(this->meshes[mesh.first].max_radius);
-            
-            // populate scaling_min_data
-            this->meshes[mesh.first].data.push_back(this->meshes[mesh.first].min_x);
-            this->meshes[mesh.first].data.push_back(this->meshes[mesh.first].min_y);
-            this->meshes[mesh.first].data.push_back(this->meshes[mesh.first].min_z);
-            
-            // final element is sphere radius candidate            
-            this->meshes[mesh.first].data.push_back(this->meshes[mesh.first].min_radius);
-            
-            
-            if (this->meshes[mesh.first].size != this->meshes[mesh.first].data.size()){
-                this->meshes[mesh.first].size = this->meshes[mesh.first].data.size();
-                nre::gpu::set_uniform_buf_memory(this->meshes[mesh.first].ubo, this->meshes[mesh.first].size, nre::gpu::DYNAMIC);
-            }
-            
-            nre::gpu::set_uniform_buf_data(this->meshes[mesh.first].ubo, this->meshes[mesh.first].data, 0);
-            
-            this->meshes[mesh.first].changed = false;
-        }
-    }
-    
-    for (auto cam: this->deleted_meshes){
-        this->deleteMesh(cam);
-    }
-    this->deleted_meshes.clear();    
-}
-
-void NRE_Renderer::updateMaterialGPUData(){
-    for (auto mat: this->materials){
-        
-        if (!this->materials[mat.first].has_init){
-            this->materials[mat.first].ubo = nre::gpu::new_uniform_buf();
-            this->materials[mat.first].has_init = true;
-        }
-        
-        if (this->materials[mat.first].changed){
-            
-            if (this->materials[mat.first].size != this->materials[mat.first].data.size()){
-                this->materials[mat.first].size = this->materials[mat.first].data.size();
-                nre::gpu::set_uniform_buf_memory(this->materials[mat.first].ubo, this->materials[mat.first].size, nre::gpu::DYNAMIC);
-            }
-            
-            nre::gpu::set_uniform_buf_data(this->materials[mat.first].ubo, this->materials[mat.first].data, 0);
-            this->materials[mat.first].changed = false;
-        }
-    }
-    
-    for (auto cam: this->deleted_materials){
-        this->deleteMaterial(cam);
-    }
-    this->deleted_materials.clear();
-}
-
-void NRE_Renderer::updateCameraGPUData(){
-    for (auto cam: this->cameras){
-        
-        if (!this->cameras[cam.first].has_init){
-            this->cameras[cam.first].ubo = nre::gpu::new_uniform_buf();
-            this->cameras[cam.first].has_init = true;
-        }
-        if (this->cameras[cam.first].changed){
-            
-            if (this->cameras[cam.first].size != this->cameras[cam.first].data.size()){
-                this->cameras[cam.first].size = this->cameras[cam.first].data.size();
-                nre::gpu::set_uniform_buf_memory(this->cameras[cam.first].ubo, this->cameras[cam.first].size, nre::gpu::DYNAMIC);
-            }
-            
-            nre::gpu::set_uniform_buf_data(this->cameras[cam.first].ubo, this->cameras[cam.first].data, 0);
-            this->cameras[cam.first].changed = false;
-        }
-    }
-    
-    for (auto cam: this->deleted_cameras){
-        this->deleteCamera(cam);
-    }
-    this->deleted_cameras.clear();
-}
-void NRE_Renderer::updateLightGPUData(){
-    /*for (auto l: this->pt_lights){
-        
-        if (!this->pt_lights[l.first].has_init){
-            this->pt_lights[l.first].ubo = nre::gpu::new_uniform_buf();
-            this->pt_lights[l.first].has_init = true;
-        }
-        if (this->pt_lights[l.first].changed){
-            
-            if (this->pt_lights[l.first].size != this->pt_lights[l.first].data.size()){
-                this->pt_lights[l.first].size = this->pt_lights[l.first].data.size();
-                nre::gpu::set_uniform_buf_memory(this->pt_lights[l.first].ubo, this->pt_lights[l.first].size, nre::gpu::DYNAMIC);
-            }
-            
-            nre::gpu::set_uniform_buf_data(this->pt_lights[l.first].ubo, this->pt_lights[l.first].data, 0);
-            this->pt_lights[l.first].changed = false;
-        }
-    }*/
-    std::vector<float> pt_light_data;
-    pt_light_data.reserve(16*255);
-    int count = 0;
-    for (auto l: this->pt_visible_lights){
-        pt_light_data.insert(pt_light_data.end(), this->pt_lights[l.id].data.begin(), this->pt_lights[l.id].data.end());
-        
-        count++;
-        if (count > 255)
-            break;
-    }
-    
-    // fill the rest with zeros since webgl complains otherwise
-    for (int i=0; i< 16*(255-count); i++){
-        pt_light_data.push_back(0.0f);
-    }
-    nre::gpu::set_uniform_buf_memory(this->pt_light_ubo, pt_light_data.size(), nre::gpu::STREAM);
-    nre::gpu::set_uniform_buf_data(this->pt_light_ubo, pt_light_data, 0);
-}
-
 // deletes
 
-void NRE_Renderer::deleteCamera(std::size_t id){
+void NRE_DataHandler::deleteCamera(std::size_t id){
     
     if (this->cameras[id].ubo != 0){
         nre::gpu::del_uniform_buf(this->cameras[id].ubo);
@@ -631,7 +364,7 @@ void NRE_Renderer::deleteCamera(std::size_t id){
     this->cameras.erase(id);
 }
 
-void NRE_Renderer::deleteMaterial(std::size_t id){
+void NRE_DataHandler::deleteMaterial(std::size_t id){
     
     if (this->materials[id].ubo != 0){
         nre::gpu::del_uniform_buf(this->materials[id].ubo);
@@ -640,7 +373,7 @@ void NRE_Renderer::deleteMaterial(std::size_t id){
     this->materials.erase(id);
 }
 
-void NRE_Renderer::deleteMesh(std::size_t id){
+void NRE_DataHandler::deleteMesh(std::size_t id){
     
     // delete all buffers
     if (this->meshes[id].vbo !=0){
@@ -663,7 +396,15 @@ void NRE_Renderer::deleteMesh(std::size_t id){
     this->meshes.erase(id);
 }
 
+void NRE_DataHandler::clear(){
+    
+    this->cameras.clear();
+    this->materials.clear();
+    this->vgroups.clear();
+    this->meshes.clear();
+    this->dir_lights.clear();
+    this->pt_lights.clear();
+    this->scenes.clear();
+    this->viewports.clear();
 
-
-
-
+}

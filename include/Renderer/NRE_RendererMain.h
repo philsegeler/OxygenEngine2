@@ -1,7 +1,7 @@
 #ifndef NRE_RENDERERMAIN_H
 #define NRE_RENDERERMAIN_H
 
-#include <Renderer/NRE_RenderData.h>
+#include <Renderer/NRE_RendererUtils.h>
 #include <OE_DummyClasses.h>
 #include <Renderer/NRE_GPU_API.h>
 
@@ -15,35 +15,15 @@ public:
     bool updateData();
     
     bool updateMultiThread(OE_Task*, int);
-    void destroy();
+    void destroy();    
     
-#ifdef __EMSCRIPTEN__
-    //NRE_GPU_API* api{nullptr};
-#else
-    //std::unique_ptr<NRE_GPU_API> api{nullptr};
-#endif
-    std::size_t loaded_viewport{0};
-    std::map<std::size_t, NRE_CameraRenderData> cameras;
-    std::map<std::size_t, NRE_MaterialRenderData> materials;
-    std::map<std::size_t, NRE_VGroupRenderData> vgroups;
-    std::map<std::size_t, NRE_MeshRenderData> meshes;
+    //holds all rendering data from the engine
+    NRE_DataHandler data_;
     
-    std::map<std::size_t, NRE_DirectionalLightRenderData> dir_lights;
-    std::map<std::size_t, NRE_PointLightRenderData> pt_lights;
-    bool has_dir_lights_changed{false};
-    bool has_pt_lights_changed{false};
-    
-    std::map<std::size_t, NRE_SceneRenderData> scenes;
-    std::map<std::size_t, NRE_ViewportRenderData> viewports;    
-    
-    std::set<std::size_t> deleted_meshes;
-    std::set<std::size_t> deleted_materials;
-    std::set<std::size_t> deleted_cameras;
-    std::set<std::size_t> deleted_scenes;
-    
-    
-    // point light draw calls, framebuffer, integer texture and ubo/program
+    // normal and point light draw calls, framebuffer, integer texture and ubo/program
     std::set<NRE_PointLightDrawCall, std::greater<NRE_PointLightDrawCall>> pt_visible_lights;
+    std::map<std::size_t, NRE_DrawCallContainer> sce_ren_groups;
+    
     std::size_t pt_light_ubo{0};
     std::size_t prog_light{0};
     
@@ -75,26 +55,12 @@ public:
     bool setup_bbox_prog{false};
     bool setup_sphere_prog{false};
     
-protected:
-    
-    void handleMeshData(std::size_t, std::shared_ptr<OE_Mesh32>);
-    void handleMaterialData(std::size_t, std::shared_ptr<OE_Material>);
-    void handleCameraData(std::size_t, std::shared_ptr<OE_Camera>);
-    void handleLightData(std::size_t, std::shared_ptr<OE_Light>);
-    void handleVGroupData(std::size_t, std::size_t, std::shared_ptr<OE_Mesh32>);
-    
-    void handleSceneData(std::size_t, std::shared_ptr<OE_Scene>);
-    void handleViewportData(std::size_t,std::shared_ptr<OE_ViewportConfig>);
-    
+protected:    
     
     void updateMeshGPUData();
     void updateMaterialGPUData();
     void updateCameraGPUData();
     void updateLightGPUData();
-    
-    void deleteCamera(std::size_t);
-    void deleteMaterial(std::size_t);
-    void deleteMesh(std::size_t);
     
     void generateDrawCalls();
     void sortPointLights(std::size_t, std::size_t);

@@ -129,6 +129,10 @@ std::size_t nre::gpu::new_renderbuffer(){
 // init update destroy
 bool nre::gpu::init(SHADER_BACKEND backend_in, int major, int minor){
     
+    if (nre::gpu::api != nullptr){
+        return false;
+    }
+    
     nre::gpu::info_struct info_backend;
     info_backend.underlying_api = backend_in;
     info_backend.major = major;
