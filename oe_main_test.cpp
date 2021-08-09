@@ -173,7 +173,7 @@ int OnLoadObject(oe::task load_event_task, string event_name){
 
 int main(){
     
-    oe::init("Oxygen Engine Demo", 1280, 720, false);
+    oe::init("Oxygen Engine Demo", 800, 480, false);
     //oe::pause(20);
 	//oe::load_world_func("assets/OE_Mat_light_test.csl", &OnLoadObject);
 	//oe::load_world_func("assets/challenge_car.csl", &OnLoadObject);

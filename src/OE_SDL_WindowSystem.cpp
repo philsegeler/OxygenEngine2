@@ -24,6 +24,17 @@ OE_SDL_WindowSystem::~OE_SDL_WindowSystem(){
     
 }
 
+void OE_SDL_WindowSystem::createWindow(int x, int y){
+    if (!this->fullscreen)
+#ifndef __EMSCRIPTEN__
+        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
+#else
+        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+#endif
+    else
+        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL);
+}
+
 bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, void* data){
     
     this->title = titlea;
@@ -59,47 +70,19 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
     SDL_Init(SDL_INIT_VIDEO);
 #endif
     
-    if (!this->fullscreen)
-#ifndef __EMSCRIPTEN__
-        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
-#else
-        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-#endif
-    else
-        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL);
+    this->createWindow(x, y);
     
 #ifndef __EMSCRIPTEN__
     this->context = SDL_GL_CreateContext(this->window);
     if (context == NULL){
          cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
+         SDL_DestroyWindow(window);
+         this->createWindow(x, y);
     }
     else {
         this->finishInit();
         return true;
     }
-    
-    // Request an OpenGL 3.1 context
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    
-     this->major = 3; this->minor = 1; this->isES = false;
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
-    
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
-    
-    // Also request a depth buffer
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    
-    this->context = SDL_GL_CreateContext(this->window);
-    if (context == NULL){
-         cout << "OE WARNING: Could not initialize OpenGL 3.1 Context, " << SDL_GetError() << endl;
-    }
-    else {
-        this->finishInit();
-        return true;
-    }//*/
     
 #endif
     // Request an OpenGL ES 3.0 context
@@ -121,6 +104,8 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
     this->context = SDL_GL_CreateContext(this->window);
     if (context == NULL){
          cout << "OE WARNING: Could not initialize OpenGL ES 3.0 Context, " << SDL_GetError() << endl;
+         SDL_DestroyWindow(window);
+         this->createWindow(x, y);
     }
     else {
         this->finishInit();
@@ -148,6 +133,8 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
     this->context = SDL_GL_CreateContext(this->window);
     if (context == NULL){
          cout << "OE WARNING: Could not initialize OpenGL ES 2.0 Context, " << SDL_GetError() << endl;
+         SDL_DestroyWindow(window);
+         this->createWindow(x, y);
     }
     else {
         this->finishInit();

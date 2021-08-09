@@ -33,6 +33,7 @@ public:
 protected:
     
     void updateWindowEvents();
+    void createWindow(int, int);
 };
 
 
