@@ -57,13 +57,15 @@ public:
     
 protected:    
     
-    void updateMeshGPUData();
-    void updateMaterialGPUData();
-    void updateCameraGPUData();
-    void updateLightGPUData();
+    void initOffscreenFrameBuffer();
+    void initFullscreenQuad();
+    void initGammaCorrectionProg();
+    void initGPUSphere();
     
+    ///These two are in the NRE_RendererUtils.cpp
     void generateDrawCalls();
     void sortPointLights(std::size_t, std::size_t);
+    /////////////////////////
     
     void drawRenderGroup(NRE_RenderGroup&);
     void drawRenderGroupZPrePass(NRE_RenderGroup&);
@@ -74,10 +76,10 @@ protected:
     void setupBoundingSphereProgram();
     void initLightUBOProgramFBO();
     
-    void initOffscreenFrameBuffer();
-    void initFullscreenQuad();
-    void initGammaCorrectionProg();
-    void initGPUSphere();
+    void updateMeshGPUData();
+    void updateMaterialGPUData();
+    void updateCameraGPUData();
+    void updateLightGPUData();
 };
 
 #endif

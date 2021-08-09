@@ -19,7 +19,7 @@ int main() {
 
 
 //	csl::Interpreter interpreter;
-	std::string filename = "csl_very_large_object_test.csl";
+	std::string filename = "assets/csl_very_large_object_test.csl";
     
     oe::init();
     

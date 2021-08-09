@@ -625,10 +625,10 @@ void nre::gpu::draw_instanced(draw_call dcall, int count){
             else{
                 if (dcall.index_buf == 0)
                     //TODO: Error unimplemented function
-                    throw 6;
+                    throw nre::gpu::unimplemented_function("draw_instanced", static_cast<NRE_GL3_API*>(nre::gpu::api)->getRenderingAPI(), "No instanced range rendering supported.");
                 else
                     //TODO: Error unimplemented function
-                    throw 6;
+                    throw nre::gpu::unimplemented_function("draw_instanced", static_cast<NRE_GL3_API*>(nre::gpu::api)->getRenderingAPI(), "No instanced range rendering supported.");
             }
             break;
         default: return;

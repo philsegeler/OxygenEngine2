@@ -39,12 +39,12 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
     
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
     
-    // Request an OpenGL 3.2 core context
+    // Request an OpenGL 3.3 core context
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     
-    this->major = 3; this->minor = 2; this->isES = false;
+    this->major = 3; this->minor = 3; this->isES = false;
     
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
@@ -71,7 +71,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
 #ifndef __EMSCRIPTEN__
     this->context = SDL_GL_CreateContext(this->window);
     if (context == NULL){
-         cout << "OE WARNING: Could not initialize OpenGL 3.2 Core Context, " << SDL_GetError() << endl;
+         cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
     }
     else {
         this->finishInit();
@@ -127,6 +127,33 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
         return true;
     }
     
+    // Request an OpenGL ES 2.0 context if everything else fails
+    // If this does not work either then consider not trying to run the engine on prehistoric stuff that
+    // does not even support basic shaders. Or use a software OpenGL renderer.
+    
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    
+     this->major = 2; this->minor = 0; this->isES = true;
+     
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
+    
+    // Also request a depth buffer
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    
+    this->context = SDL_GL_CreateContext(this->window);
+    if (context == NULL){
+         cout << "OE WARNING: Could not initialize OpenGL ES 2.0 Context, " << SDL_GetError() << endl;
+    }
+    else {
+        this->finishInit();
+        return true;
+    }
+    
     return false;
 }
 
@@ -158,7 +185,11 @@ void OE_SDL_WindowSystem::finishInit(){
         nre::gpu::init(nre::gpu::GL, this->major, this->minor);
     } 
     else{
-        nre::gpu::init(nre::gpu::GLES, this->major, this->minor);
+        if (this->major != 2)
+            nre::gpu::init(nre::gpu::GLES, this->major, this->minor);
+        else{
+            nre::gpu::init(nre::gpu::GLES2, this->major, this->minor);
+        }
     }
     
     this->event_handler.init();
