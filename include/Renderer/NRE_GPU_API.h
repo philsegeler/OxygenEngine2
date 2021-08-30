@@ -156,7 +156,6 @@ namespace gpu{
     void set_program_uniform_data(std::size_t, std::string, float);
     void set_program_uniform_data(std::size_t, std::string, const std::vector<uint32_t>&);
     void set_program_uniform_data(std::size_t, std::string, const std::vector<float>&);
-    void set_program_uniform_slot(std::size_t, std::string, int);
     int  get_program_uniform_slot(std::size_t, std::string);
     
     void set_vertex_layout_format(std::size_t, std::vector<vertex_layout_input>);

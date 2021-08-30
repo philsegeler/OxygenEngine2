@@ -220,6 +220,7 @@ private:
     
     void check_prog_uniform_block_(std::size_t, const std::string&, const std::string&);
     void check_prog_uniform_(std::size_t, const std::string&, const std::string&);
+    void check_prog_uniform_property_(std::size_t, const std::string&, std::size_t, const std::string&, bool);
     void check_vao_vbo_(std::size_t, std::size_t, const std::string&);
     
     void check_fbo_id_(std::size_t, const std::string&);

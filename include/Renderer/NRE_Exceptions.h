@@ -81,6 +81,31 @@ namespace nre {
                 std::string func_;
         };
         
+        class invalid_uniform_property: public oe::renderer_error {
+            public:
+                
+                invalid_uniform_property(std::size_t id, const std::string& uniform, int length, const std::string &func, bool is_type_problem){
+                    name_ = "nre::gpu::invalid_uniform_property";
+                    id_ = std::to_string(id);
+                    func_ = func;
+                    uniform_ = uniform;
+                    length_ = std::to_string(length);
+                    is_type_problem_ = is_type_problem;
+                }
+                std::string what() const throw() {
+                    if (not is_type_problem_)
+                        return "Calling GPU API function '" + func_ + "' with uniform ID: '" + id_ + "' and mismatched vector of length '"+ length_ + "'.";
+                    else
+                        return "Calling GPU API function '" + func_ + "' with uniform ID: '" + id_ + "' and vector of length '"+ length_ + "' using the wrong type (probably array instead of vec/mat).";
+                };
+                
+                std::string id_;
+                std::string func_;
+                std::string uniform_;
+                std::string length_;
+                bool is_type_problem_;
+        };
+        
         class invalid_vertex_layout: public oe::renderer_error {
             public:
                 
@@ -256,6 +281,27 @@ namespace nre {
                 std::string func_;
                 std::string api_;
                 std::string tex_type_;
+        };
+        
+        class unsupported_rendermode: public oe::renderer_error {
+            public:
+                
+                unsupported_rendermode(const std::string &func, const std::string &api_name, const std::string& rendermode, const std::string& info){
+                    name_ = "nre::gpu::unsupported_rendermode";
+                    func_ = func;
+                    api_ = api_name;
+                    rendermode_ = rendermode;
+                    info_ = info;
+                }
+                std::string what() const throw() {
+                    return "GPU API function '" + func_ + "' in the API: '" + api_  + "' does not support '" + rendermode_ + "'. " + info_;
+                };
+                
+                std::string id_;
+                std::string func_;
+                std::string api_;
+                std::string rendermode_;
+                std::string info_;
         };
         
     };

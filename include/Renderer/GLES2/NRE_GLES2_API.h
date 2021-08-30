@@ -82,7 +82,7 @@ struct NRE_GLES2_ProgramData{
     std::size_t hasUniform(std::string);
 };
 
-GLenum NRE2GL_BufferUse(nre::gpu::BUFFER_USAGE);
+GLenum NRE2GLES2_BufferUse(nre::gpu::BUFFER_USAGE usage);
 
 class NRE_GLES2_API{
 public:
@@ -119,7 +119,8 @@ public:
     
     void setProgramTextureSlot(std::size_t, std::string, int);
     void setProgramUniformData(std::size_t, std::string, uint32_t);
-    void setProgramUniformData(std::size_t, std::string, std::vector<uint32_t>);
+    void setProgramUniformData(std::size_t, std::string, float);
+    void setProgramUniformData(std::size_t, std::string, const std::vector<float>&);
     int  getProgramUniformSlot(std::size_t, std::string);
     
     void setVertexLayoutFormat(std::size_t, std::vector<nre::gpu::vertex_layout_input>);
@@ -146,14 +147,7 @@ public:
     void setupProgram(std::size_t);
     void deleteProgram(std::size_t);
     
-    void draw(std::size_t, std::size_t, int, int);
-    void draw(std::size_t, std::size_t);
-    
-    void draw(std::size_t, std::size_t, std::size_t, int, int);
-    void draw(std::size_t, std::size_t, std::size_t);
-    
-    void draw_instanced(std::size_t, std::size_t, std::size_t);
-    void draw_instanced(std::size_t, std::size_t, std::size_t, std::size_t);
+    void draw(nre::gpu::draw_call);
     
     void setRenderMode(nre::gpu::RENDERMODE);
     
@@ -195,6 +189,7 @@ private:
     
     void check_prog_uniform_block_(std::size_t, const std::string&, const std::string&);
     void check_prog_uniform_(std::size_t, const std::string&, const std::string&);
+    void check_prog_uniform_property_(std::size_t, const std::string&, std::size_t, const std::string&, bool);
     void check_vao_vbo_(std::size_t, std::size_t, const std::string&);
     
     void check_fbo_id_(std::size_t, const std::string&);

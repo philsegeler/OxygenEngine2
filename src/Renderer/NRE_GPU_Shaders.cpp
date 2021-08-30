@@ -1,4 +1,5 @@
 #include <Renderer/GL3/NRE_GL3_Shaders.h>
+#include <Renderer/GLES2/NRE_GLES2_Shaders.h>
 #include <Renderer/NRE_GPU_API.h>
 #include <iostream>
 #include <sstream>
@@ -36,6 +37,9 @@ void nre::gpu::shader_base::init(SHADER_BACKEND backend, int major, int minor){
         else {
             cout << "WTF" << endl;
         }
+    }
+    else if (backend == GLES2){
+        nre::gpu::shader_base::shader_prefix = "#version 100 es \n";
     }
     else {
         cout << "Undefined NRE GPU Shader backend. Nothing is rendered" << endl;
@@ -91,7 +95,10 @@ bool nre::gpu::vertex_shader::operator == (const nre::gpu::vertex_shader& other)
 std::string nre::gpu::vertex_shader::gen_shader(){
     if (nre::gpu::get_api() == GL || nre::gpu::get_api() == GLES)
         return NRE_GenGL3VertexShader(*this);
-    return "";
+    else if (nre::gpu::get_api() == GLES)
+        return NRE_GenGLES2VertexShader(*this);
+    else
+        return "";
 }
 
 std::string nre::gpu::vertex_shader::info(){
@@ -148,6 +155,10 @@ bool nre::gpu::pixel_shader::operator< (const nre::gpu::pixel_shader& other) con
 std::string nre::gpu::pixel_shader::gen_shader(){
     if (nre::gpu::get_api() == GL || nre::gpu::get_api() == GLES)
         return NRE_GenGL3PixelShader(*this);
+    else if (nre::gpu::get_api() == GLES)
+        return NRE_GenGLES2PixelShader(*this);
+    else
+        return "";
     return "";
 }
 

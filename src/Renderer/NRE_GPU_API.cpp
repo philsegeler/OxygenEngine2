@@ -1,5 +1,6 @@
 #include <Renderer/NRE_GPU_API.h>
 #include <Renderer/GL3/NRE_GL3_API.h>
+#include <Renderer/GLES2/NRE_GLES2_API.h>
 
 uint32_t nre::gpu::x = 0;
 uint32_t nre::gpu::y = 0;
@@ -43,7 +44,8 @@ std::size_t nre::gpu::new_vertex_buf(){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->newVertexBuffer();
-            
+        case GLES2:
+            return static_cast<NRE_GLES2_API*>(nre::gpu::api)->newVertexBuffer();
         default:
             return 0;
     }
@@ -54,6 +56,8 @@ std::size_t nre::gpu::new_program(){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->newProgram();
+        case GLES2:
+            return static_cast<NRE_GLES2_API*>(nre::gpu::api)->newProgram();
             
         default:
             return 0;
@@ -65,7 +69,8 @@ std::size_t nre::gpu::new_vertex_layout(){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->newVertexLayout();
-            
+        case GLES2:
+            return static_cast<NRE_GLES2_API*>(nre::gpu::api)->newVertexLayout();
         default:
             return 0;
     }
@@ -76,6 +81,8 @@ std::size_t nre::gpu::new_index_buf(){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->newIndexBuffer();
+        case GLES2:
+            return static_cast<NRE_GLES2_API*>(nre::gpu::api)->newIndexBuffer();
             
         default:
             return 0;
@@ -87,7 +94,8 @@ std::size_t nre::gpu::new_uniform_buf(){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->newUniformBuffer();
-            
+        case GLES2:
+            throw nre::gpu::unimplemented_function("new_uniform_buf", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default:
             return 0;
     }
@@ -98,6 +106,8 @@ std::size_t nre::gpu::new_framebuffer(){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->newFrameBuffer();
+        case GLES2:
+            return static_cast<NRE_GLES2_API*>(nre::gpu::api)->newFrameBuffer();
             
         default:
             return 0;
@@ -109,7 +119,8 @@ std::size_t nre::gpu::new_texture(){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->newTexture();
-            
+        case GLES2:
+            return static_cast<NRE_GLES2_API*>(nre::gpu::api)->newTexture();
         default:
             return 0;
     }
@@ -120,6 +131,8 @@ std::size_t nre::gpu::new_renderbuffer(){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->newRenderBuffer();
+        case GLES2:
+            return static_cast<NRE_GLES2_API*>(nre::gpu::api)->newRenderBuffer();
             
         default:
             return 0;
@@ -147,6 +160,9 @@ bool nre::gpu::init(SHADER_BACKEND backend_in, int major, int minor){
         case GLES:
              nre::gpu::api = static_cast<void*>(new NRE_GL3_API());
              break;
+        case GLES2:
+             nre::gpu::api = static_cast<void*>(new NRE_GLES2_API());
+             break;
         default: return false;
     }
     
@@ -160,6 +176,9 @@ void nre::gpu::update(uint32_t x, uint32_t y){
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->update(x, y);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->update(x, y);
+             break;
         default: return;
     }
 }
@@ -170,6 +189,11 @@ void nre::gpu::destroy(){
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->destroy();
              delete static_cast<NRE_GL3_API*>(nre::gpu::api);
+             nre::gpu::api = nullptr;
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->destroy();
+             delete static_cast<NRE_GLES2_API*>(nre::gpu::api);
              nre::gpu::api = nullptr;
              break;
         default: return;
@@ -183,6 +207,9 @@ void nre::gpu::set_renderbuffer_mode(std::size_t id, nre::gpu::TEXTURE_TYPE a_ty
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setRenderBufferType(id, a_type, x, y);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setRenderBufferType(id, a_type, x, y);
+             break;
         default: return;
     }
 }
@@ -192,6 +219,9 @@ void nre::gpu::set_framebuffer_renderbuffer(std::size_t fbo_id, std::size_t rbo_
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setFrameBufferRenderBuffer(fbo_id, rbo_id, slot);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setFrameBufferRenderBuffer(fbo_id, rbo_id, slot);
              break;
         default: return;
     }
@@ -204,6 +234,9 @@ void nre::gpu::set_vertex_buf_memory(std::size_t id, std::size_t memory_size, nr
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setVertexBufferMemory(id, memory_size, buf_usage);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setVertexBufferMemory(id, memory_size, buf_usage);
+             break;
         default: return;
     }
 }
@@ -213,6 +246,9 @@ void nre::gpu::set_vertex_buf_data(std::size_t id, const std::vector<float>& dat
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setVertexBufferData(id, data, offset);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setVertexBufferData(id, data, offset);
              break;
         default: return;
     }
@@ -224,6 +260,9 @@ void nre::gpu::set_vertex_buf_memory_and_data(std::size_t id, const std::vector<
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setVertexBufferMemoryData(id, data, buf_usage);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setVertexBufferMemoryData(id, data, buf_usage);
+             break;
         default: return;
     }
 }
@@ -233,6 +272,9 @@ void nre::gpu::del_vertex_buf(std::size_t id){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->deleteVertexBuffer(id);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->deleteVertexBuffer(id);
              break;
         default: return;
     }
@@ -245,6 +287,9 @@ void nre::gpu::set_index_buf_memory(std::size_t id, std::size_t memory_size, nre
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setIndexBufferMemory(id, memory_size, buf_usage);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setIndexBufferMemory(id, memory_size, buf_usage);
+             break;
         default: return;
     }
 }
@@ -254,6 +299,9 @@ void nre::gpu::set_index_buf_data(std::size_t id, const std::vector<uint32_t>& d
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setIndexBufferData(id, data, offset);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setIndexBufferData(id, data, offset);
              break;
         default: return;
     }
@@ -265,6 +313,9 @@ void nre::gpu::set_index_buf_memory_and_data(std::size_t id, const std::vector<u
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setIndexBufferMemoryData(id, data, buf_usage);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setIndexBufferMemoryData(id, data, buf_usage);
+             break;
         default: return;
     }
 }
@@ -274,6 +325,9 @@ void nre::gpu::del_index_buf(std::size_t id){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->deleteIndexBuffer(id);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->deleteIndexBuffer(id);
              break;
         default: return;
     }
@@ -286,6 +340,8 @@ void nre::gpu::set_uniform_buf_memory(std::size_t id, std::size_t memory_size, n
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setUniformBufferMemory(id, memory_size, buf_usage);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("set_uniform_buf_memory", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default: return;
     }
 }
@@ -296,6 +352,8 @@ void nre::gpu::set_uniform_buf_data(std::size_t id, const std::vector<float>& da
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setUniformBufferData(id, data, offset);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("set_uniform_buf_data", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default: return;
     }
 }
@@ -306,6 +364,8 @@ void nre::gpu::set_uniform_buf_data(std::size_t id, const std::vector<uint32_t>&
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setUniformBufferData(id, data, offset);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("set_uniform_buf_data", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default: return;
     }
 }
@@ -317,6 +377,8 @@ void nre::gpu::set_uniform_buf_memory_and_data(std::size_t id, const std::vector
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setUniformBufferMemory(id, data.size(), buf_usage);
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setUniformBufferData(id, data, 0);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("set_uniform_buf_memory_and_data", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default: return;
     }
 }
@@ -328,6 +390,8 @@ void nre::gpu::set_uniform_buf_memory_and_data(std::size_t id, const std::vector
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setUniformBufferMemory(id, data.size(), buf_usage);
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setUniformBufferData(id, data, 0);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("set_uniform_buf_memory_and_data", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default: return;
     }
 }
@@ -338,6 +402,8 @@ void nre::gpu::del_uniform_buf(std::size_t id){
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->deleteUniformBuffer(id);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("del_uniform_buf", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default: return;
     }
 }
@@ -348,6 +414,8 @@ void nre::gpu::set_uniform_buf_state(std::size_t id, std::size_t program, int sl
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setUniformBlockState(id, program, slot, offset, length);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("set_uniform_buf_state", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default: return;
     }
 }
@@ -358,6 +426,8 @@ void nre::gpu::set_program_uniform_buf_slot(std::size_t id, std::string ubo, int
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramUniformBlockSlot(id, ubo, slot);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("set_program_uniform_buf_slot", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default: return;
     }
 }
@@ -366,7 +436,8 @@ int  nre::gpu::get_program_uniform_buf_slot(std::size_t id, std::string name){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->getProgramUniformBlockSlot(id, name);
-            
+        case GLES2:
+            throw nre::gpu::unimplemented_function("get_program_uniform_buf_slot", "OpenGL ES 2", "Uniform buffers are not supported on ES 2.");
         default:
             return -2;
     }
@@ -376,6 +447,9 @@ void nre::gpu::set_program_texture_slot(std::size_t id, std::string name, int sl
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramTextureSlot(id, name, slot);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setProgramTextureSlot(id, name, slot);
              break;
         default: return;
     }
@@ -388,6 +462,9 @@ void nre::gpu::set_program_uniform_data(std::size_t id, std::string name, uint32
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramUniformData(id, name, data);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setProgramUniformData(id, name, data);
+             break;
         default: return;
     }
 }
@@ -396,6 +473,9 @@ void nre::gpu::set_program_uniform_data(std::size_t id, std::string name, float 
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramUniformData(id, name, data);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setProgramUniformData(id, name, data);
              break;
         default: return;
     }
@@ -406,6 +486,8 @@ void nre::gpu::set_program_uniform_data(std::size_t id, std::string name, const 
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramUniformData(id, name, data);
              break;
+        case GLES2:
+             throw nre::gpu::unimplemented_function("set_program_uniform_data", "OpenGL ES 2", "Uniform integer array data is not implemented due to boredom.");
         default: return;
     }
 }
@@ -413,25 +495,22 @@ void nre::gpu::set_program_uniform_data(std::size_t id, std::string name, const 
     switch(nre::gpu::get_api()){
         case GL:
         case GLES:
-             //static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramUniformData(id, name, data);
+             throw nre::gpu::unimplemented_function("set_program_uniform_data", static_cast<NRE_GL3_API*>(nre::gpu::api)->getRenderingAPI(), "Uniform float array data is not implemented due to boredom.");
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setProgramUniformData(id, name, data);
              break;
         default: return;
     }
 }
-void nre::gpu::set_program_uniform_slot(std::size_t id, std::string name, int slot){
-    switch(nre::gpu::get_api()){
-        case GL:
-        case GLES:
-             //static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramUniformSlot(id, name, slot);
-             break;
-        default: return;
-    }
-}
+
 int  nre::gpu::get_program_uniform_slot(std::size_t id, std::string name){
     switch(nre::gpu::get_api()){
         case GL:
         case GLES:
             return static_cast<NRE_GL3_API*>(nre::gpu::api)->getProgramUniformSlot(id, name);
+        case GLES2:
+            return static_cast<NRE_GLES2_API*>(nre::gpu::api)->getProgramUniformSlot(id, name);
             
         default:
             return -2;
@@ -445,6 +524,9 @@ void nre::gpu::set_vertex_layout_format(std::size_t id, std::vector<vertex_layou
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setVertexLayoutFormat(id, vao_input);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setVertexLayoutFormat(id, vao_input);
+             break;
         default: return;
     }
 }
@@ -453,6 +535,9 @@ void nre::gpu::del_vertex_layout(std::size_t id){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->deleteVertexLayout(id);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->deleteVertexLayout(id);
              break;
         default: return;
     }
@@ -465,6 +550,9 @@ void nre::gpu::set_texture_format(std::size_t id, TEXTURE_TYPE textype, TEXTURE_
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setTextureFormat(id, textype, texfil, x, y, mipmaps);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setTextureFormat(id, textype, texfil, x, y, mipmaps);
+             break;
         default: return;
     }
 }
@@ -474,6 +562,9 @@ void nre::gpu::set_texture_slot(std::size_t id, int slot){
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setTextureSlot(id, slot);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setTextureSlot(id, slot);
+             break;
         default: return;
     }
 }
@@ -482,6 +573,9 @@ void nre::gpu::del_texture(std::size_t id){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->deleteTexture(id);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->deleteTexture(id);
              break;
         default: return;
     }
@@ -494,6 +588,9 @@ void nre::gpu::set_framebuffer_texture(std::size_t id, std::size_t tex, int slot
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setFrameBufferTexture(id, tex, slot);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setFrameBufferTexture(id, tex, slot);
+             break;
         default: return;
     }
 }
@@ -503,6 +600,8 @@ void nre::gpu::copy_framebuffer(std::size_t src, std::size_t target, FRAMEBUFFER
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->copyFrameBuffer(src, target, method);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("copy_framebuffer", "OpenGL ES 2", "Implementing this manually would give suboptimal performance on ES 2.");
         default: return;
     }
 }
@@ -511,6 +610,9 @@ void nre::gpu::use_framebuffer(std::size_t id){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->useFrameBuffer(id);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->useFrameBuffer(id);
              break;
         default: return;
     }
@@ -521,6 +623,9 @@ void nre::gpu::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY fbco
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->clearFrameBuffer(id, fbcopy, alpha);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->clearFrameBuffer(id, fbcopy, alpha);
+             break;
         default: return;
     }
 }
@@ -528,6 +633,9 @@ void nre::gpu::del_framebuffer(std::size_t id){
     switch(nre::gpu::get_api()){
         case GL:
         case GLES:
+             static_cast<NRE_GL3_API*>(nre::gpu::api)->deleteFrameBuffer(id);
+             break;
+        case GLES2:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->deleteFrameBuffer(id);
              break;
         default: return;
@@ -541,6 +649,9 @@ void nre::gpu::set_program_vertex_shader(std::size_t id, nre::gpu::vertex_shader
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramVS(id, vs);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setProgramVS(id, vs);
+             break;
         default: return;
     }
 }
@@ -549,6 +660,9 @@ void nre::gpu::set_program_pixel_shader(std::size_t id, nre::gpu::pixel_shader f
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setProgramFS(id, fs);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setProgramFS(id, fs);
              break;
         default: return;
     }
@@ -559,6 +673,9 @@ void nre::gpu::setup_program(std::size_t id){
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setupProgram(id);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setupProgram(id);
+             break;
         default: return;
     }
 }
@@ -567,6 +684,9 @@ void nre::gpu::del_program(std::size_t id){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->deleteProgram(id);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->deleteProgram(id);
              break;
         default: return;
     }
@@ -589,6 +709,7 @@ void nre::gpu::draw(nre::gpu::draw_call dcall){
                     static_cast<NRE_GL3_API*>(nre::gpu::api)->draw(dcall.program, dcall.vertex_layout, dcall.index_buf, dcall.offset, dcall.amount);
             }
             break;
+        
         default: return;
     }
 }
@@ -631,6 +752,8 @@ void nre::gpu::draw_instanced(draw_call dcall, int count){
                     throw nre::gpu::unimplemented_function("draw_instanced", static_cast<NRE_GL3_API*>(nre::gpu::api)->getRenderingAPI(), "No instanced range rendering supported.");
             }
             break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("draw_instanced", "OpenGL ES 2", "Instanced rendering is not supported.");
         default: return;
     }
 }
@@ -641,6 +764,8 @@ void nre::gpu::draw_instanced(std::size_t prog, std::size_t vao, std::size_t ibo
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->draw_instanced(prog, vao, ibo, count);
              break;
+        case GLES2:
+            throw nre::gpu::unimplemented_function("draw_instanced", "OpenGL ES 2", "Instanced rendering is not supported.");
         default: return;
     }
 }

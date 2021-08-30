@@ -21,7 +21,7 @@ public:
     bool updateEvents();
     void destroy();
     
-    SDL_Window* window;
+    SDL_Window* window{nullptr};
     SDL_GLContext context;
     
     SDL_Event event;

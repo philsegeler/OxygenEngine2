@@ -168,6 +168,10 @@ void OE_SDL_WindowSystem::finishInit(){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     SDL_GL_SwapWindow(this->window);
     
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    SDL_GL_SwapWindow(this->window);
+    
     if (!this->isES){
         nre::gpu::init(nre::gpu::GL, this->major, this->minor);
     } 
