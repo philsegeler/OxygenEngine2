@@ -262,6 +262,13 @@ void NRE_GL3_API::check_prog_id_(std::size_t id, const std::string& func){
         throw nre::gpu::invalid_program_id(id, func);
     }
 }
+
+void NRE_GL3_API::check_prog_complete_(std::size_t id, const std::string& func){
+    if (not this->progs[id].setup){
+        throw nre::gpu::incomplete_program(id, func);
+    }
+}
+
     
 void NRE_GL3_API::check_prog_uniform_block_(std::size_t id, const std::string& name, const std::string& func){
     if (this->prog_db[this->progs[id]].hasUniformBlock(name) == this->prog_db[this->progs[id]].uniform_blocks.size()){
@@ -303,6 +310,12 @@ void NRE_GL3_API::check_fbo_id_(std::size_t id, const std::string& func){
 void NRE_GL3_API::check_texture_id_(std::size_t id, const std::string& func){
     if(this->textures.count(id) == 0){
         throw nre::gpu::invalid_texture(id, func);
+    }
+}
+
+void NRE_GL3_API::check_draw_range_(std::size_t id , std::size_t length, std::size_t offset, std::size_t count, const std::string& func){
+    if( (offset + count) > length){
+        throw nre::gpu::invalid_draw_range(id, length, offset, count, func);
     }
 }
 
@@ -657,7 +670,9 @@ void NRE_GL3_API::setUniformBufferData(std::size_t id, const std::vector<uint32_
 
 void NRE_GL3_API::setProgramTextureSlot(std::size_t id, std::string name, int slot){
     this->check_prog_id_(id, "setProgramTextureSlot");
+    this->check_prog_complete_(id, "setProgramUniformData");
     this->check_prog_uniform_(id, name, "setProgramTextureSlot");
+    
     
     if (this->active_prog_ != this->progs[id].handle){
         glUseProgram(this->progs[id].handle);
@@ -674,18 +689,21 @@ void NRE_GL3_API::setProgramTextureSlot(std::size_t id, std::string name, int sl
 }
 void NRE_GL3_API::setProgramUniformData(std::size_t id, std::string name, uint32_t data){
     this->check_prog_id_(id, "setProgramUniformData");
+    this->check_prog_complete_(id, "setProgramUniformData");
     this->check_prog_uniform_(id, name, "setProgramUniformData");
     //TODO
     
 }
 void NRE_GL3_API::setProgramUniformData(std::size_t id, std::string name, std::vector<uint32_t> data){
     this->check_prog_id_(id, "setProgramUniformData");
+    this->check_prog_complete_(id, "setProgramUniformData");
     this->check_prog_uniform_(id, name, "setProgramUniformData");
     //TODO
 }
 
 int  NRE_GL3_API::getProgramUniformSlot(std::size_t id, std::string name){
     this->check_prog_id_(id, "getProgramUniformSlot");
+    this->check_prog_complete_(id, "getProgramUniformSlot");
     if (this->prog_db[this->progs[id]].hasUniform(name) != this->prog_db[this->progs[id]].uniforms.size()){
         return this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].slot;
     }
@@ -695,6 +713,7 @@ int  NRE_GL3_API::getProgramUniformSlot(std::size_t id, std::string name){
 void NRE_GL3_API::setProgramUniformBlockSlot(std::size_t id, std::string name, int slot){
     
     this->check_prog_id_(id, "setProgramUniformBlockSlot");
+    this->check_prog_complete_(id, "setProgramUniformBlockSlot");
     this->check_prog_uniform_block_(id, name, "setProgramUniformBlockSlot");
     
     this->prog_db[this->progs[id]].uniform_blocks[this->prog_db[this->progs[id]].hasUniformBlock(name)].slot = slot;
@@ -716,6 +735,7 @@ void NRE_GL3_API::setUniformBlockState(std::size_t id, std::size_t program, int 
 
 int  NRE_GL3_API::getProgramUniformBlockSlot(std::size_t id, std::string name){
     this->check_prog_id_(id, "getProgramUniformBlockSlot");
+    this->check_prog_complete_(id, "getProgramUniformBlockSlot");
     if (this->prog_db[this->progs[id]].hasUniformBlock(name) != this->prog_db[this->progs[id]].uniform_blocks.size()){
         return this->prog_db[this->progs[id]].uniform_blocks[this->prog_db[this->progs[id]].hasUniformBlock(name)].slot;
     }
@@ -926,7 +946,6 @@ void NRE_GL3_API::setProgramVS(std::size_t id, std::string data){
     
     this->progs[id].vs_setup = true;
     this->progs[id].vs_handle = shader_id;
-    this->progs[id].setup = false;
     
     /// compile and attach shader
     const char* c_str = data.c_str();
@@ -965,7 +984,6 @@ void NRE_GL3_API::setProgramFS(std::size_t id, std::string data){
     
     this->progs[id].fs_setup = true;
     this->progs[id].fs_handle = shader_id;
-    this->progs[id].setup = false;
     
     /// compile and attach shader
     const char* c_str = data.c_str();
@@ -999,8 +1017,6 @@ void NRE_GL3_API::setupProgram(std::size_t id){
     
     // ignore if the program is already setup
     if (this->progs[id].setup) return;
-    
-    this->progs[id].setup = true;
     
     // setup vertex shader
     if (!this->progs[id].vs_setup){
@@ -1041,11 +1057,7 @@ void NRE_GL3_API::setupProgram(std::size_t id){
     if (this->prog_db.count(this->progs[id]) > 0){
         
         this->progs[id].handle = this->prog_db[this->progs[id]].handle;
-        //this->progs[id].uniform_blocks.clear();
-        
-        /// get all active uniform blocks (again)
-        //this->get_program_all_uniforms_(id);
-        
+        this->progs[id].setup = true;
         return;
     }
     else {
@@ -1108,6 +1120,7 @@ void NRE_GL3_API::setupProgram(std::size_t id){
     /// get all active uniform blocks
     this->get_program_all_uniforms_(id);
     
+    this->progs[id].setup = true;
 }
 
 void NRE_GL3_API::deleteProgram(std::size_t id){
@@ -1122,9 +1135,11 @@ void NRE_GL3_API::deleteProgram(std::size_t id){
 
 void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, int offset, int count){
     
-    this->check_prog_id_(prog_id, "draw");
-    this->check_vao_id_(vao_id, "draw");
+    this->check_prog_id_(prog_id, "draw (non-indexed)");
+    this->check_vao_id_(vao_id, "draw (non-indexed)");
+    this->check_draw_range_(vao_id, this->getVAOSize(vao_id), offset, count, "draw (non-indexed)");
     this->setupProgram(prog_id);
+    
     if (this->active_prog_ != this->progs[prog_id].handle){
         glUseProgram(this->progs[prog_id].handle);
         this->active_prog_ = this->progs[prog_id].handle;
@@ -1139,8 +1154,8 @@ void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, int offset, int 
 
 void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id){
     
-    this->check_prog_id_(prog_id, "draw");
-    this->check_vao_id_(vao_id, "draw");
+    this->check_prog_id_(prog_id, "draw (non-indexed)");
+    this->check_vao_id_(vao_id, "draw (non-indexed)");
     this->setupProgram(prog_id);
     
     if (this->active_prog_ != this->progs[prog_id].handle){
@@ -1157,9 +1172,10 @@ void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id){
     
 void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id, int offset, int count){
     
-    this->check_prog_id_(prog_id, "draw");
-    this->check_vao_id_(vao_id, "draw");
-    this->check_ibo_id_(ibo_id, "draw");
+    this->check_prog_id_(prog_id, "draw (indexed)");
+    this->check_vao_id_(vao_id, "draw (indexed)");
+    this->check_ibo_id_(ibo_id, "draw (indexed)");
+    this->check_draw_range_(vao_id, this->ibos[ibo_id].size, offset, count, "draw (indexed)");
     this->setupProgram(prog_id);
     
     if (this->active_prog_ != this->progs[prog_id].handle){
@@ -1180,9 +1196,9 @@ void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_
 
 void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id){
     
-    this->check_prog_id_(prog_id, "draw");
-    this->check_vao_id_(vao_id, "draw");
-    this->check_ibo_id_(ibo_id, "draw");
+    this->check_prog_id_(prog_id, "draw (indexed)");
+    this->check_vao_id_(vao_id, "draw (indexed)");
+    this->check_ibo_id_(ibo_id, "draw (indexed)");
     this->setupProgram(prog_id);
     
     if (this->active_prog_ != this->progs[prog_id].handle){
@@ -1204,8 +1220,8 @@ void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_
 
 void NRE_GL3_API::draw_instanced(std::size_t prog_id, std::size_t vao_id, std::size_t instancecount){
     
-    this->check_prog_id_(prog_id, "draw");
-    this->check_vao_id_(vao_id, "draw");
+    this->check_prog_id_(prog_id, "draw (instanced-indexed)");
+    this->check_vao_id_(vao_id, "draw (instanced-indexed)");
     this->setupProgram(prog_id);
     
     if (this->active_prog_ != this->progs[prog_id].handle){
@@ -1222,9 +1238,9 @@ void NRE_GL3_API::draw_instanced(std::size_t prog_id, std::size_t vao_id, std::s
 
 void NRE_GL3_API::draw_instanced(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id, std::size_t instancecount){
     
-    this->check_prog_id_(prog_id, "draw");
-    this->check_vao_id_(vao_id, "draw");
-    this->check_ibo_id_(ibo_id, "draw");
+    this->check_prog_id_(prog_id, "draw (instanced-indexed)");
+    this->check_vao_id_(vao_id, "draw (instanced-indexed)");
+    this->check_ibo_id_(ibo_id, "draw (instanced-indexed)");
     this->setupProgram(prog_id);
     
     if (this->active_prog_ != this->progs[prog_id].handle){

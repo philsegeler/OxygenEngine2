@@ -217,6 +217,7 @@ private:
     
     void check_vao_id_(std::size_t, const std::string&);
     void check_prog_id_(std::size_t, const std::string&);
+    void check_prog_complete_(std::size_t, const std::string&);
     
     void check_prog_uniform_block_(std::size_t, const std::string&, const std::string&);
     void check_prog_uniform_(std::size_t, const std::string&, const std::string&);
@@ -225,6 +226,7 @@ private:
     
     void check_fbo_id_(std::size_t, const std::string&);
     void check_texture_id_(std::size_t, const std::string&);
+    void check_draw_range_(std::size_t, std::size_t, std::size_t, std::size_t, const std::string&);
     
     void get_program_all_uniforms_(std::size_t);
     

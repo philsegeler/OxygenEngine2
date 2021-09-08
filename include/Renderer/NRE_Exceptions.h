@@ -264,6 +264,44 @@ namespace nre {
                 std::string info_;
         };
         
+        class incomplete_program: public oe::renderer_error {
+            public:
+                
+                incomplete_program(std::size_t id, const std::string &func){
+                    name_ = "nre::gpu::incomplete_program";
+                    id_ = std::to_string(id);
+                    func_ = func;
+                }
+                std::string what() const throw() {
+                    return "Calling GPU API function '" + func_ + "' with incomplete shader program ID: '" + id_  + "'. Forgot to run 'setup_program' maybe?";
+                };
+                
+                std::string id_;
+                std::string func_;
+        };
+        
+        class invalid_draw_range: public oe::renderer_error {
+            public:
+                
+                invalid_draw_range(std::size_t id, std::size_t length, std::size_t offset, std::size_t count, const std::string &func){
+                    name_ = "nre::gpu::invalid_draw_range";
+                    id_ = std::to_string(id);
+                    length_ = std::to_string(length);
+                    offset_ = std::to_string(offset);
+                    count_ = std::to_string(count);
+                    func_ = func;
+                }
+                std::string what() const throw() {
+                    return "Calling GPU API function '" + func_ + "' with vertex layout ID: '" + id_  + "'. Count '" + count_ + "' plus offset '" + offset_ +"' are out of range. Max allowed range (offset + count) is '" + length_ + "'.";
+                };
+                
+                std::string id_;
+                std::string func_;
+                std::string count_;
+                std::string offset_;
+                std::string length_;
+        };
+        
         class unsupported_texture: public oe::renderer_error {
             public:
                 

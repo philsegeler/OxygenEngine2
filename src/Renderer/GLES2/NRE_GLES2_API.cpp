@@ -164,6 +164,12 @@ void NRE_GLES2_API::check_prog_id_(std::size_t id, const std::string& func){
     }
 }
 
+void NRE_GLES2_API::check_prog_complete_(std::size_t id, const std::string& func){
+    if (not this->progs[id].setup){
+        throw nre::gpu::incomplete_program(id, func);
+    }
+}
+
 void NRE_GLES2_API::check_prog_uniform_(std::size_t id, const std::string& name, const std::string& func){
     if (this->prog_db[this->progs[id]].hasUniform(name) == this->prog_db[this->progs[id]].uniforms.size()){
         throw nre::gpu::invalid_program_uniform(id, name, func);
@@ -172,12 +178,12 @@ void NRE_GLES2_API::check_prog_uniform_(std::size_t id, const std::string& name,
 
 void NRE_GLES2_API::check_prog_uniform_property_(std::size_t id, const std::string& name, std::size_t length, const std::string& func, bool is_type_problem){
     auto uniform_typ = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
-    bool is_vec2 = (uniform_typ == GL_FLOAT_VEC2) and length == 2;
-    bool is_vec3 = (uniform_typ == GL_FLOAT_VEC3) and length == 3;
-    bool is_vec4 = (uniform_typ == GL_FLOAT_VEC4) and length == 4;
-    bool is_mat2 = (uniform_typ == GL_FLOAT_MAT2) and length == 4;
-    bool is_mat3 = (uniform_typ == GL_FLOAT_MAT3) and length == 9;
-    bool is_mat4 = (uniform_typ == GL_FLOAT_MAT4) and length == 16;
+    bool is_vec2 = (uniform_typ == GL_FLOAT_VEC2) and (length == 2);
+    bool is_vec3 = (uniform_typ == GL_FLOAT_VEC3) and (length == 3);
+    bool is_vec4 = (uniform_typ == GL_FLOAT_VEC4) and (length == 4);
+    bool is_mat2 = (uniform_typ == GL_FLOAT_MAT2) and (length == 4);
+    bool is_mat3 = (uniform_typ == GL_FLOAT_MAT3) and (length == 9);
+    bool is_mat4 = (uniform_typ == GL_FLOAT_MAT4) and (length == 16);
     if (is_vec2 or is_vec3 or is_vec4 or is_mat2 or is_mat3 or is_mat4){
         throw nre::gpu::invalid_uniform_property(id, name, length, func, is_type_problem);
     }
@@ -198,6 +204,12 @@ void NRE_GLES2_API::check_fbo_id_(std::size_t id, const std::string& func){
 void NRE_GLES2_API::check_texture_id_(std::size_t id, const std::string& func){
     if(this->textures.count(id) == 0){
         throw nre::gpu::invalid_texture(id, func);
+    }
+}
+
+void NRE_GLES2_API::check_draw_range_(std::size_t id , std::size_t length, std::size_t offset, std::size_t count, const std::string& func){
+    if( (offset + count) > length){
+        throw nre::gpu::invalid_draw_range(id, length, offset, count, func);
     }
 }
 
@@ -487,6 +499,7 @@ void NRE_GLES2_API::deleteIndexBuffer(std::size_t id){
 
 void NRE_GLES2_API::setProgramTextureSlot(std::size_t id, std::string name, int slot){
     this->check_prog_id_(id, "setProgramTextureSlot");
+    this->check_prog_complete_(id, "setProgramUniformData");
     this->check_prog_uniform_(id, name, "setProgramTextureSlot");
     
     if (this->active_prog_ != this->progs[id].handle){
@@ -505,6 +518,7 @@ void NRE_GLES2_API::setProgramTextureSlot(std::size_t id, std::string name, int 
 
 void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, uint32_t data){
     this->check_prog_id_(id, "setProgramUniformData");
+    this->check_prog_complete_(id, "setProgramUniformData");
     this->check_prog_uniform_(id, name, "setProgramUniformData");
     
     if (this->active_prog_ != this->progs[id].handle){
@@ -523,6 +537,7 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, uint
 
 void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, float data){
     this->check_prog_id_(id, "setProgramUniformData");
+    this->check_prog_complete_(id, "setProgramUniformData");
     this->check_prog_uniform_(id, name, "setProgramUniformData");
     
     if (this->active_prog_ != this->progs[id].handle){
@@ -541,6 +556,7 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, floa
 
 void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, const std::vector<float>& data){
     this->check_prog_id_(id, "setProgramUniformData");
+    this->check_prog_complete_(id, "setProgramUniformData");
     this->check_prog_uniform_(id, name, "setProgramUniformData");
     this->check_prog_uniform_property_(id, name, data.size(), "setProgramUniformData", false);
     
@@ -572,6 +588,7 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, cons
 
 int  NRE_GLES2_API::getProgramUniformSlot(std::size_t id, std::string name){
     this->check_prog_id_(id, "getProgramUniformSlot");
+    this->check_prog_complete_(id, "getProgramUniformSlot");
     if (this->prog_db[this->progs[id]].hasUniform(name) != this->prog_db[this->progs[id]].uniforms.size()){
         return this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].slot;
     }
@@ -585,20 +602,9 @@ void NRE_GLES2_API::setVertexLayoutFormat(std::size_t id, std::vector<nre::gpu::
     this->check_vao_id_(id, "setVertexlayoutFormat");
     
     this->vaos[id].layout = inputs;
-    if (this->active_vao_ != this->vaos[id].handle){
-        glBindVertexArray(this->vaos[id].handle);
-        this->active_vao_ = this->vaos[id].handle;
-    }
     for(size_t x=0; x < inputs.size(); x++){
-        
         this->check_vao_vbo_(id, inputs[x].vertex_buffer, "setVertexLayoutFormat");
-        
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbos[inputs[x].vertex_buffer].handle);
-        glVertexAttribPointer(x, inputs[x].amount, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*inputs[x].stride, NRE_GLES2_VERTEXL_LAYOUT_OFFSET(sizeof(GLfloat)*static_cast<GLuint>(inputs[x].offset)));
-        glEnableVertexAttribArray(x);
-        
     }
-    this->active_vbo_ = 0;
 }
 
 void NRE_GLES2_API::deleteVertexLayout(std::size_t id){
@@ -847,8 +853,6 @@ void NRE_GLES2_API::setupProgram(std::size_t id){
     // ignore if the program is already setup
     if (this->progs[id].setup) return;
     
-    this->progs[id].setup = true;
-    
     // setup vertex shader
     if (!this->progs[id].vs_setup){
         if (this->vs_db.count(this->progs[id].vs) == 0){
@@ -888,10 +892,7 @@ void NRE_GLES2_API::setupProgram(std::size_t id){
     if (this->prog_db.count(this->progs[id]) > 0){
         
         this->progs[id].handle = this->prog_db[this->progs[id]].handle;
-        //this->progs[id].uniform_blocks.clear();
-        
-        /// get all active uniform blocks (again)
-        //this->get_program_all_uniforms_(id);
+        this->progs[id].setup = true;
         
         return;
     }
@@ -948,6 +949,8 @@ void NRE_GLES2_API::setupProgram(std::size_t id){
     /// get all active uniform blocks
     this->get_program_all_uniforms_(id);
     
+    this->progs[id].setup = true;
+    
 }
 
 void NRE_GLES2_API::deleteProgram(std::size_t id){
@@ -960,8 +963,71 @@ void NRE_GLES2_API::deleteProgram(std::size_t id){
 
 //---------------------Draw calls-----------------------------//
 
-void NRE_GLES2_API::draw(nre::gpu::draw_call draw_call_info){
+void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info){
     
+    this->check_prog_id_(dc_info.program, "draw");
+    this->check_vao_id_(dc_info.vertex_layout, "draw");
+    
+    bool is_ranged_rendering = (dc_info.offset != 0) or (dc_info.amount != 0);
+    
+    // program
+    this->setupProgram(dc_info.program);
+    if (this->active_prog_ != this->progs[dc_info.program].handle){
+        glUseProgram(this->progs[dc_info.program].handle);
+        this->active_prog_ = this->progs[dc_info.program].handle;
+    }
+    
+    // vao
+    auto vao_id = dc_info.vertex_layout;
+    if (this->active_vao_ != vao_id){
+        
+        // disable unused vertex attributes if enabled before
+        if (this->enabled_vao_attribs > this->vaos[vao_id].layout.size()){
+            for (std::size_t i = this->enabled_vao_attribs; i > this->vaos[vao_id].layout.size(); i--){
+                glDisableVertexAttribArray(i);
+            }
+        }
+        
+        for(size_t x=0; x < this->vaos[vao_id].layout.size(); x++){
+            
+            this->check_vao_vbo_(vao_id, this->vaos[vao_id].layout[x].vertex_buffer, "draw");
+            
+            glBindBuffer(GL_ARRAY_BUFFER, this->vbos[this->vaos[vao_id].layout[x].vertex_buffer].handle);
+            glVertexAttribPointer(x, this->vaos[vao_id].layout[x].amount, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*this->vaos[vao_id].layout[x].stride, NRE_GLES2_VERTEXL_LAYOUT_OFFSET(sizeof(GLfloat)*static_cast<GLuint>(this->vaos[vao_id].layout[x].offset)));
+            glEnableVertexAttribArray(x);
+            
+        }
+        this->enabled_vao_attribs = this->vaos[vao_id].layout.size();
+        this->active_vbo_ = 0;
+    
+        this->active_vao_ = vao_id;
+    }
+    
+    // optional elements handling
+    if (dc_info.index_buf != 0){
+        
+        this->check_ibo_id_(dc_info.index_buf, "draw");
+        if (this->vao_ibos_[this->active_vao_] != this->ibos[dc_info.index_buf].handle){
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[dc_info.index_buf].handle);
+            this->vao_ibos_[this->active_vao_] = this->ibos[dc_info.index_buf].handle;
+        }
+        
+        if (is_ranged_rendering){
+            glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_INT, (GLvoid*)((sizeof(uint32_t))*3*dc_info.offset));
+        }
+        else {
+            glDrawElements(GL_TRIANGLES, this->ibos[dc_info.index_buf].size, GL_UNSIGNED_INT, (GLvoid*)NULL);
+        }
+    }
+    else{
+        if (is_ranged_rendering){
+            this->check_draw_range_(vao_id, this->getVAOSize(vao_id), dc_info.offset, dc_info.amount, "draw (indexed)");
+            glDrawArrays(GL_TRIANGLES, dc_info.offset, dc_info.amount);
+        }
+        else{
+            glDrawArrays(GL_TRIANGLES, 0, this->getVAOSize(vao_id));
+        }
+    }
 }
 
 void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode){
@@ -1098,8 +1164,8 @@ void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode){
         glFrontFace (GL_CCW);
     }
     else if (rendermode == nre::gpu::LIGHT_AFTERPASS_RG){
-        glEnable(GL_BLEND);
-        glBlendEquation(GL_MAX);
+        glDisable(GL_BLEND);
+        //glBlendEquation(GL_MAX);
         
         glEnable(GL_STENCIL_TEST); 
         glStencilFunc(GL_GREATER, 2, 0xFF);
@@ -1117,8 +1183,8 @@ void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode){
         
     }
     else if (rendermode == nre::gpu::LIGHT_AFTERPASS_BA){
-        glEnable(GL_BLEND);
-        glBlendEquation(GL_MAX);
+        glDisable(GL_BLEND);
+        //glBlendEquation(GL_MAX);
         
         glEnable(GL_STENCIL_TEST); 
         glStencilFunc(GL_EQUAL, 0, 0xFF);
@@ -1138,14 +1204,6 @@ void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode){
         // TODO
     }
     
-    if (nre::gpu::get_api() != nre::gpu::GLES){
-        if (nre::gpu::use_wireframe){
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
-        else{
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
-    }
 }
 
 

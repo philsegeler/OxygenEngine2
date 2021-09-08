@@ -83,6 +83,7 @@ namespace gpu{
     struct info_struct{
         bool has_init{false};
         
+        bool has_indexed_ranged_draws{true};
         bool has_uniform_buffers{true};
         bool has_occlusion_query{true};
         bool has_cubemap_array{true};

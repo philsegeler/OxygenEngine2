@@ -130,6 +130,7 @@ void NRE_Renderer::initLightUBOProgramFBO(){
     nre::gpu::set_program_pixel_shader(this->prog_light, fs_light);
         
     nre::gpu::setup_program(this->prog_light);
+    
     nre::gpu::set_program_uniform_buf_slot(this->prog_light, "OE_Camera", 0);
     nre::gpu::set_program_uniform_buf_slot(this->prog_light, "OE_Lights", 1);
     
