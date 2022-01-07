@@ -1,3 +1,4 @@
 [submodule "assets"]
 	path = assets
-	url = https://github.com/antsouchlos/oe_assets.git
+    url = https://github.com/antsouchlos/oe_assets.git
+    update = merge
