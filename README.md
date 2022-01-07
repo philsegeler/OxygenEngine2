@@ -30,6 +30,9 @@ When the assets have changed, the submodule can be updated with the command
 $ git submodule update --remote
 ```
 
+Keep in mind that updating the assets submodule like this will automatically checkout the newest master commit,
+which means that git will detect the submodule as having changed.
+
 ### Compile on Linux
 
 Prerequisites: SDL2, meson and ninja.
