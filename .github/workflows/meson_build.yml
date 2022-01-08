@@ -20,6 +20,7 @@ jobs:
       with:
         python-version: '3.x'
     - run: pip install meson ninja
+    - run: apt-get install libxi-dev
   
     - name: Create build directory
       working-directory: ${{github.workspace}}
