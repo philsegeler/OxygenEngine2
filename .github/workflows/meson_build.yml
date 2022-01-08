@@ -19,8 +19,12 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
-    - run: pip install meson ninja
-    - run: sudo apt-get install libxi-dev
+        
+    - name: Install meson and ninja
+      run: pip install meson ninja
+      
+    - name: Install required libraries
+      run: sudo apt-get install libxi-dev && sudo apt-get install libsdl2-dev
   
     - name: Create build directory
       working-directory: ${{github.workspace}}
