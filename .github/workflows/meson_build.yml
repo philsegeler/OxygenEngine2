@@ -1,0 +1,27 @@
+name: Meson
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CC: gcc
+  CXX: g++
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+  
+    - name: Create build directory
+      working-directory: ${{github.workspace}}
+      run: CC=${{env.CC}} CXX=${{env.CXX}} meson builddir
+
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: meson compile -C builddir
+      
