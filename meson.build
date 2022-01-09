@@ -60,17 +60,10 @@ else
 endif
 
 
-#gtest_proj = subproject('gtest')
-#gtest_dep = gtest_proj.get_variable('gtest_dep')
-#gtest_dep = dependency('gtest', main: true)
-#gmock_dep = gtest_proj.get_variable('gmock_dep')
+# Unit tests
 
-#test_src = ['test/example.cpp', 'tests/gtest_all.cc']
+gtest_proj = subproject('gtest')
+gtest_dep = dependency('gtest_main')
 
-#e = executable('gtest-all', test_src, dependencies : [gtest_dep, gmock_dep,oe_dep])
-
-#test('gtest tests', e)
-
-gtest_dep = dependency('gtest', main : true)
-e = executable('testprog', 'test/example.cpp', dependencies : gtest_dep)
-test('gtest test', e)
+test_executable = executable('testprog', 'test/example.cpp', dependencies : gtest_dep)
+test('gtest test', test_executable)
