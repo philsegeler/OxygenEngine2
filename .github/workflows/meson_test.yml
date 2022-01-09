@@ -33,3 +33,8 @@ jobs:
     - name: Build
       working-directory: ${{github.workspace}}
       run: meson compile -C builddir
+
+    - name: Run tests
+      working-directory: ${{github.workspace}}
+      run: meson test -C builddir
+
