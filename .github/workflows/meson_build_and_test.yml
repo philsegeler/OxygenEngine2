@@ -11,7 +11,7 @@ env:
   CXX: g++
 
 jobs:
-  Linux build & Unit tests:
+  Linux_build_and_Unit_tests:
     runs-on: ubuntu-latest
 
     steps:

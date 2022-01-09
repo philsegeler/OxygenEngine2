@@ -11,7 +11,7 @@ env:
   CXX: g++
 
 jobs:
-  Cross build:
+  Cross_build:
     runs-on: ubuntu-latest
 
     steps:
