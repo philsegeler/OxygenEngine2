@@ -13,12 +13,7 @@
     #define CPP20
 #endif
 
-
-#ifdef CPP20
-	#include <Carbon/CSL_Lexer_cpp20.h>
-#else
-	#include <Carbon/CSL_Lexer.h>
-#endif
+#include <Carbon/CSL_Lexer.h>
 
 
 /* TODO: Fix this grammar. It is not the exact grammar the parser recognizes
