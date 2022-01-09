@@ -14,10 +14,6 @@ Originally it was an ongoing project in 2015-16, but it is stagnated and now is 
 
 ## Installation
 
-### Before compiling: Dependencies
-
-Since for testing, the `googltest` framework is used, the corresponding package has to be installed in order for the project to compile.
-
 ### Before running: Cloning the assets
 
 Since the assets needed to run the example programs are quite large, they are located
