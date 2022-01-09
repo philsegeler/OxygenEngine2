@@ -1,5 +1,5 @@
-#ifndef PARSER_HPP
-#define PARSER_HPP
+#ifndef CSL_PARSER_H_
+#define CSL_PARSER_H_
 
 #include <map>
 #include <vector>
