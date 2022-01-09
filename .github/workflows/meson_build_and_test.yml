@@ -57,7 +57,7 @@ jobs:
 
       - name: Run web cross build
         working-directory: ${{github.workspace}}
-        run: ~/emsdk/emsdk_env.sh && ${{github.workspace}}/cross_web
+        run: source ~/emsdk/emsdk_env.sh && ${{github.workspace}}/cross_web
 
       - name: Run Windows cross build
         working-directory: ${{github.workspace}}
