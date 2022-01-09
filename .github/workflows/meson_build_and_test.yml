@@ -54,7 +54,7 @@ jobs:
 
       - name: Install emscripten
         working-directory: ~
-        run: git clone https://github.com/emscripten-core/emsdk.git && sudo ~/emsdk/emsdk install latest && sudo ~/emsdk/emsdk activate latest && sudo ~/emsdk/emsdk_env.sh
+        run: git clone https://github.com/emscripten-core/emsdk.git ~ && sudo ~/emsdk/emsdk install latest && sudo ~/emsdk/emsdk activate latest && sudo ~/emsdk/emsdk_env.sh
 
       - name: Run web cross build
         working-directory: ${{github.workspace}}
