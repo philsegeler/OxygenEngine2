@@ -58,3 +58,19 @@ else
     #executable('CSL_Test', sources : 'esamples/csl_main_test.cpp', dependencies : [oe_dep], win_subsystem: 'windows')
     executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep], win_subsystem: 'windows')
 endif
+
+
+#gtest_proj = subproject('gtest')
+#gtest_dep = gtest_proj.get_variable('gtest_dep')
+#gtest_dep = dependency('gtest', main: true)
+#gmock_dep = gtest_proj.get_variable('gmock_dep')
+
+#test_src = ['test/example.cpp', 'tests/gtest_all.cc']
+
+#e = executable('gtest-all', test_src, dependencies : [gtest_dep, gmock_dep,oe_dep])
+
+#test('gtest tests', e)
+
+gtest_dep = dependency('gtest', main : true)
+e = executable('testprog', 'test/example.cpp', dependencies : gtest_dep)
+test('gtest test', e)
