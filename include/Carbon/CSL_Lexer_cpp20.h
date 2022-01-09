@@ -129,7 +129,7 @@ namespace csl {
         Generic_Lexer(std::string& input) : input_(input), input_it_(input_.begin()), end_it_(input_.end()){};
 
         token next_token() {
-            if (input_it_ == end_it_)return {token_type_predef::eoi, std::string_view(*&input_it_, 0)};
+            if (input_it_ == end_it_) return {token_type_predef::eoi, std::string_view(*&input_it_, 0)};
 
             next_token_type_ = token_type_predef::undef;
 
