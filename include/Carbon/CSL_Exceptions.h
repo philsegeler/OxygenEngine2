@@ -9,17 +9,17 @@
 #define CSL_EXCEPTIONS_H_
 
 //#include <types/OE_Libs.h>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
-#include <stdexcept>
-#include <sstream>
 
 
 // Defined here, because it is needed for UnexpectedSymbolError
 // TODO: Find a better place to put this
-//namespace csl {
+// namespace csl {
 //
-//struct token {
+// struct token {
 //	enum class type {ident, string, integer, floating_point, lt, openClosingTagB,
 //							gt, open_brace, close_brace, eq, semicolon, comma, comment,
 //							slash, eos, undef};
@@ -28,7 +28,7 @@
 //	std::string_view content;
 //};
 //
-//inline const char* getTokenTypeStringRep(token::type t) {
+// inline const char* getTokenTypeStringRep(token::type t) {
 //	switch(t) {
 //		case token::type::ident:
 //			return "Identifier";
@@ -84,13 +84,13 @@
 //}
 //
 //
-//class LexerError {
+// class LexerError {
 //	public:
 //		virtual std::string what() const throw() = 0;
 //		virtual ~LexerError() = default;
 //};
 //
-//class UnknownCharacterError : LexerError {
+// class UnknownCharacterError : LexerError {
 //	public:
 //		UnknownCharacterError(char c, std::size_t lineNum, std::size_t colNum)
 //			: c_(c), lineNum_(lineNum), colNum_(colNum) {};
@@ -108,7 +108,7 @@
 //		const std::size_t colNum_;
 //};
 //
-//class InvalidInputError : LexerError {
+// class InvalidInputError : LexerError {
 //	public:
 //		InvalidInputError(std::string msg) : msg_(msg) {};
 //
@@ -125,13 +125,13 @@
 //// to be a string, which is necessary in this case in order to get a proper error message
 //// (Returning "result_ss.str().c_str()" doesn't work, since it returns a pointer to an object that
 //// gets destroyed a soon as the scope of "what()" is left, thereby basically returning garbage)
-//class ParserError {
+// class ParserError {
 //	public:
 //		virtual std::string what() const throw() = 0;
 //		virtual ~ParserError() = default;
-//};
+// };
 //
-//class UnexpectedSymbolError : ParserError {
+// class UnexpectedSymbolError : ParserError {
 //	public:
 //		UnexpectedSymbolError(std::string_view unexpected, token::type expected,
 //							const std::size_t lineNum, const std::size_t colNum)
@@ -152,18 +152,18 @@
 //		token::type expected_;
 //		const std::size_t lineNum_;
 //		const std::size_t colNum_;
-//};
+// };
 //
 //
-//class InterpreterError {
+// class InterpreterError {
 //	public:
 //		virtual std::string what() const throw() = 0;
 //		virtual ~InterpreterError() = default;
-//};
+// };
 //
 //// TODO: Find a way to get line and column number
-//template<const char *T>
-//class UnknownMemberError : InterpreterError {
+// template<const char *T>
+// class UnknownMemberError : InterpreterError {
 //	public:
 //		UnknownMemberError(std::string_view unknown) : unknown_(unknown) {};
 //
@@ -176,82 +176,82 @@
 //		}
 //	private:
 //		const std::string_view unknown_;
-//};
+// };
 //
 //// TODO: Find a way to get line and column number
-//class SemanticError : ParserError, InterpreterError {
+// class SemanticError : ParserError, InterpreterError {
 //	public:
 //		SemanticError(const char* msg) : msg_(msg) {};
 //
 //		std::string what() const throw() { return msg_; };
 //	private:
 //		const char* msg_;
-//};
+// };
 //
 //
-//inline extern char const CSL_IteratorElementString[] = "element";
-//inline extern char const CSL_IteratorAttributeString[] = "attribute";
-//inline extern char const CSL_IteratorVariableString[] = "variable";
+// inline extern char const CSL_IteratorElementString[] = "element";
+// inline extern char const CSL_IteratorAttributeString[] = "attribute";
+// inline extern char const CSL_IteratorVariableString[] = "variable";
 //
-//using UnknownMemberElementError = UnknownMemberError<CSL_IteratorElementString>;
-//using UnknownMemberAttributeError = UnknownMemberError<CSL_IteratorAttributeString>;
-//using UnknownMemberVariableError = UnknownMemberError<CSL_IteratorVariableString>;
+// using UnknownMemberElementError = UnknownMemberError<CSL_IteratorElementString>;
+// using UnknownMemberAttributeError = UnknownMemberError<CSL_IteratorAttributeString>;
+// using UnknownMemberVariableError = UnknownMemberError<CSL_IteratorVariableString>;
 //
-//}
+// }
 
-//class CSL_UnknownIDException : public std::runtime_error {
-//public:
+// class CSL_UnknownIDException : public std::runtime_error {
+// public:
 //	CSL_UnknownIDException(std::string msg) : std::runtime_error(msg) {this->msg += msg; }
 //
 //	virtual const char* what() const throw() { return msg.c_str(); }
 //
 //	virtual ~CSL_UnknownIDException() throw() {}
-//private:
+// private:
 //	std::string msg = "CSLInterpreterException: ";
-//};
+// };
 //
-//class CSL_UnexpectedTypeException : public std::runtime_error {
-//public:
+// class CSL_UnexpectedTypeException : public std::runtime_error {
+// public:
 //	CSL_UnexpectedTypeException(std::string msg): std::runtime_error(msg) { this->msg += msg; }
 //
 //	virtual const char* what() const throw() { return msg.c_str(); }
 //
 //	virtual ~CSL_UnexpectedTypeException() throw() {}
-//private:
+// private:
 //	std::string msg = "CSLInterpreterException: ";
-//};
+// };
 //
-//class CSL_UnknownTypeException : public std::runtime_error {
-//public:
+// class CSL_UnknownTypeException : public std::runtime_error {
+// public:
 //	CSL_UnknownTypeException(std::string msg) : std::runtime_error(msg) {this-> msg += msg; }
 //
 //	virtual const char* what() const throw() {return msg.c_str(); }
 //
 //	virtual ~CSL_UnknownTypeException() throw() {}
-//private:
+// private:
 //	std::string msg = "CSLInterpreterException: ";
-//};
+// };
 //
-//class CSL_UnexpectedTokenException : public std::runtime_error {
-//public:
+// class CSL_UnexpectedTokenException : public std::runtime_error {
+// public:
 //	CSL_UnexpectedTokenException(std::string msg) : std::runtime_error(msg) { this->msg += msg; }
 //
 //	virtual const char* what() const throw() { return msg.c_str(); }
 //
 //	virtual ~CSL_UnexpectedTokenException() throw() {}
-//private:
+// private:
 //	std::string msg = "CSLParserException: ";
-//};
+// };
 //
-//class CSL_UnexpectedCharacterException : public std::runtime_error {
-//public:
+// class CSL_UnexpectedCharacterException : public std::runtime_error {
+// public:
 //	CSL_UnexpectedCharacterException(std::string msg) : std::runtime_error(msg) { this->msg += msg; }
 //
 //	virtual const char* what() const throw() { return msg.c_str(); }
 //
 //	virtual ~CSL_UnexpectedCharacterException() throw() {}
-//private:
+// private:
 //	std::string msg = "CLexerException: ";
-//};
+// };
 
 #endif /* EXCEPTIONS_H_ */

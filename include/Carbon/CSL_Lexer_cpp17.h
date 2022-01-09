@@ -1,3 +1,4 @@
+#include <array>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -5,6 +6,7 @@
 
 
 namespace csl {
+
 
     /*
      *
@@ -26,18 +28,12 @@ namespace csl {
         static const token_type_t skip  = 2;
     };
 
-    template <typename T, typename U>
     struct token_def {
         token_type_t type = token_type_predef::undef;
 
-        const T condition;
-        const U action;
+        bool (*condition)(lexer_input_it&, const lexer_input_it&);
+        void (*action)(lexer_input_it&, const lexer_input_it&);
     };
-
-    // Needed for compilation with clang
-    template <typename T, typename U>
-    token_def(int, T, U) -> token_def<T, U>;
-
 
     struct token {
         token_type_t     type = token_type_predef::undef;
@@ -47,39 +43,12 @@ namespace csl {
 
     /*
      *
-     * Template metaprogramming utilities
-     *
-     */
-
-
-    template <typename... T>
-    inline void for_each(token_type_t& type, lexer_input_it& it, const lexer_input_it& end_it, T... cws);
-
-    template <typename T, typename... U>
-    inline void for_each(token_type_t& type, lexer_input_it& it, const lexer_input_it& end_it, T cw, U... cws) {
-        if (cw.condition(it, end_it)) {
-            type = cw.type;
-            it++;
-            cw.action(it, end_it);
-        }
-        else {
-            for_each(type, it, end_it, cws...);
-        }
-    }
-
-    template <>
-    inline void for_each(token_type_t& type, lexer_input_it& it, const lexer_input_it& end_it) {
-    }
-
-
-    /*
-     *
      * class Generic_Lexer
      *
      */
 
 
-    template <token_def... t_defs>
+    template <typename... T>
     class Generic_Lexer {
     public:
         class iterator {
@@ -91,7 +60,7 @@ namespace csl {
             using reference         = token&;
             using pointer           = token*;
 
-            iterator(Generic_Lexer<t_defs...>* lexer) : lexer_(lexer) {
+            iterator(Generic_Lexer<T...>* lexer) : lexer_(lexer) {
                 t_ = lexer_->next_token();
             }
             iterator(token t) : t_(t){};
@@ -121,12 +90,13 @@ namespace csl {
             }
 
         private:
-            Generic_Lexer<t_defs...>* lexer_;
-            token                     t_;
+            Generic_Lexer<T...>* lexer_;
+            token                t_;
         };
 
 
-        Generic_Lexer(std::string& input) : input_(input), input_it_(input_.begin()), end_it_(input_.end()){};
+        Generic_Lexer(std::string& input, T... t_defs)
+            : input_(input), input_it_(input_.begin()), end_it_(input_.end()), t_defs_{t_defs...} {};
 
         token next_token() {
             if (input_it_ == end_it_) return {token_type_predef::eoi, std::string_view(*&input_it_, 0)};
@@ -134,7 +104,16 @@ namespace csl {
             next_token_type_ = token_type_predef::undef;
 
             auto temp = input_it_;
-            for_each(next_token_type_, input_it_, end_it_, t_defs...);
+            for (auto t_def : t_defs_) {
+                if (t_def.condition(input_it_, end_it_)) {
+                    next_token_type_ = t_def.type;
+
+                    input_it_++;
+                    t_def.action(input_it_, end_it_);
+
+                    break;
+                }
+            }
 
             if (next_token_type_ == token_type_predef::undef) {
                 input_it_++;
@@ -142,7 +121,6 @@ namespace csl {
             else if (next_token_type_ == token_type_predef::skip) {
                 return next_token();
             }
-
 
             return {next_token_type_, std::string_view(*&temp, input_it_ - temp)};
         }
@@ -161,6 +139,7 @@ namespace csl {
             auto it = input_.begin();
             while (it != input_it_) {
                 if (*it == '\n') result++;
+
                 it++;
             }
 
@@ -177,6 +156,7 @@ namespace csl {
                 it--;
             }
 
+
             return result;
         }
 
@@ -186,6 +166,8 @@ namespace csl {
         const lexer_input_it   end_it_;
 
         token_type_t next_token_type_ = token_type_predef::undef;
+
+        const std::array<token_def, sizeof...(T)> t_defs_;
     };
 
 
