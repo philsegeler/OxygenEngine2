@@ -11,7 +11,7 @@ env:
   CXX: g++
 
 jobs:
-  build:
+  Linux build & Unit tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +24,7 @@ jobs:
       run: pip install meson ninja
       
     - name: Install required libraries
-      run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev googletest
+      run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev
   
     - name: Create build directory
       working-directory: ${{github.workspace}}
@@ -37,4 +37,3 @@ jobs:
     - name: Run tests
       working-directory: ${{github.workspace}}
       run: meson test -C builddir
-

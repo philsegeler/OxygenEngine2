@@ -1,0 +1,33 @@
+name: Meson
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CC: gcc
+  CXX: g++
+
+jobs:
+  Cross build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+
+      - name: Install meson and ninja
+        run: pip install meson ninja
+
+      - name: Install required libraries
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev emscripten mingw-w64
+
+      - name: Run web cross build
+        run: ${{github.workspace}}/cross_web
+
+      - name: Run Windows cross build
+        run: rm -rf ${{github.workspace}}/builddir && ${{github.workspace}}/cross_linux2windows
