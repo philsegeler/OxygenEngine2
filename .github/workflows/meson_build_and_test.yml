@@ -59,18 +59,18 @@ jobs:
   Windows_cross_build:
     runs-on: mmozeiko/mingw-w64
 
-      steps:
-        - uses: actions/checkout@v1
-        - uses: actions/setup-python@v1
-          with:
-            python-version: '3.x'
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
 
-        - name: Install meson and ninja
-          run: pip install meson ninja
+      - name: Install meson and ninja
+        run: pip install meson ninja
 
-        - name: Install required packages
-          run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev
+      - name: Install required packages
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev
 
-        - name: Run Windows cross build
-          working-directory: ${{github.workspace}}
-          run: ${{github.workspace}}/cross_linux2windows
+      - name: Run Windows cross build
+        working-directory: ${{github.workspace}}
+        run: ${{github.workspace}}/cross_linux2windows
