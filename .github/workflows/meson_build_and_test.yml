@@ -38,7 +38,7 @@ jobs:
       working-directory: ${{github.workspace}}
       run: meson test -C builddir
   Cross_build:
-    runs-on: emscripten/emsdk
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v1
@@ -50,26 +50,15 @@ jobs:
         run: pip install meson ninja
 
       - name: Install required packages
-        run: sudo apt-get update && sudo apt-get install -y libxi-dev
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev mingw-w64
+
+      - name: Install emscripten
+        run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk && ~/emsdk/emsdk install latest && ~/emsdk/emsdk activate latest && chmod +x ~/emsdk/emsdk_env.sh && ~/emsdk/emsdk_env.sh
 
       - name: Run web cross build
         working-directory: ${{github.workspace}}
         run: ${{github.workspace}}/cross_web
-  Windows_cross_build:
-    runs-on: mmozeiko/mingw-w64
-
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v1
-        with:
-          python-version: '3.x'
-
-      - name: Install meson and ninja
-        run: pip install meson ninja
-
-      - name: Install required packages
-        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev
 
       - name: Run Windows cross build
         working-directory: ${{github.workspace}}
-        run: ${{github.workspace}}/cross_linux2windows
+        run: rm -rf ${{github.workspace}}/builddir && ${{github.workspace}}/cross_linux2windows
