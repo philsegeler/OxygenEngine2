@@ -14,16 +14,28 @@ Originally it was an ongoing project in 2015-16, but it is stagnated and now is 
 
 ## Installation
 
-### Before running
+### Before compiling: Dependencies
 
+Since for testing, the `googltest` framework is used, the corresponding package has to be installed in order for the project to compile.
+
+### Before running: Cloning the assets
 
 Since the assets needed to run the example programs are quite large, they are located
 in a separate repositry, which is linked as a submodule. This means that before the example
 programs can be executed, the assets submodule as to be cloned:
 
 ```shell
-$ git submodule init && git submodule update
+$ git submodule init && git submodule update --remote
+$ git submodule foreach git checkout master
 ```
+
+When the assets have changed, the submodule can be updated with the command
+```shell
+$ git submodule update --remote
+```
+
+Keep in mind that updating the assets submodule like this will automatically checkout the newest master commit,
+which means that git will detect the submodule as having changed.
 
 ### Compile on Linux
 
@@ -105,7 +117,15 @@ http://localhost:6931/oe_test.html
 ```
 or wherever you put your webserver. Now the engine demo should run.
 
-### Installing the blender plugin
+## Running the tests
+
+After the project has been compiled, the tests can be run with
+
+```shell
+$ meson test -C builddir
+```
+
+## Installing the blender plugin
 
 Prerequisites: Blender (duh!)
 

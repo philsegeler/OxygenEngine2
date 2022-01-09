@@ -1,0 +1,40 @@
+name: Meson
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CC: gcc
+  CXX: g++
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+        
+    - name: Install meson and ninja
+      run: pip install meson ninja
+      
+    - name: Install required libraries
+      run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev googletest
+  
+    - name: Create build directory
+      working-directory: ${{github.workspace}}
+      run: CC=${{env.CC}} CXX=${{env.CXX}} meson builddir
+
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: meson compile -C builddir
+
+    - name: Run tests
+      working-directory: ${{github.workspace}}
+      run: meson test -C builddir
+
