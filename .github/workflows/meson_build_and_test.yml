@@ -55,6 +55,9 @@ jobs:
       - name: Install emscripten
         run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk && ~/emsdk/emsdk install latest && ~/emsdk/emsdk activate latest && chmod +x ~/emsdk/emsdk_env.sh
 
+      - name: Clone assets submodule
+        run: git submodule update --init
+        
       - name: Run web cross build
         working-directory: ${{github.workspace}}
         run: source ~/emsdk/emsdk_env.sh && ${{github.workspace}}/cross_web
