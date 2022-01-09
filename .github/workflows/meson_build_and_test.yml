@@ -37,7 +37,6 @@ jobs:
     - name: Run tests
       working-directory: ${{github.workspace}}
       run: meson test -C builddir
-  Web_cross_build:
   Cross_build:
     runs-on: emscripten/emsdk
 
