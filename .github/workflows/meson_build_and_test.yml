@@ -57,7 +57,7 @@ jobs:
 
       - name: Clone assets submodule
         run: git submodule update --init
-        
+
       - name: Run web cross build
         working-directory: ${{github.workspace}}
         run: source ~/emsdk/emsdk_env.sh && ${{github.workspace}}/cross_web
