@@ -1,0 +1,83 @@
+name: Meson
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CC: gcc
+  CXX: g++
+
+jobs:
+  Linux_build_and_Unit_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+        
+    - name: Install meson and ninja
+      run: pip install meson ninja
+      
+    - name: Install required libraries
+      run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev
+  
+    - name: Create build directory
+      working-directory: ${{github.workspace}}
+      run: CC=${{env.CC}} CXX=${{env.CXX}} meson builddir
+
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: meson compile -C builddir
+
+    - name: Run tests
+      working-directory: ${{github.workspace}}
+      run: meson test -C builddir
+      
+  Web_Cross_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+
+      - name: Install meson and ninja
+        run: pip install meson ninja
+
+      - name: Install required packages
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev
+
+      - name: Install emscripten
+        run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk && ~/emsdk/emsdk install latest && ~/emsdk/emsdk activate latest && chmod +x ~/emsdk/emsdk_env.sh
+
+      - name: Clone assets submodule
+        run: git submodule update --init
+
+      - name: Run web cross build
+        working-directory: ${{github.workspace}}
+        run: source ~/emsdk/emsdk_env.sh && ${{github.workspace}}/cross_web
+
+  Windows_Cross_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+
+      - name: Install meson and ninja
+        run: pip install meson ninja
+
+      - name: Install required packages
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev mingw-w64
+
+      - name: Run Windows cross build
+        working-directory: ${{github.workspace}}
+        run: ${{github.workspace}}/cross_linux2windows
