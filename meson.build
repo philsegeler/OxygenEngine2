@@ -67,7 +67,6 @@ endif
 # Unit tests
 
 if not meson.is_cross_build()
-    gtest_proj = subproject('gtest')
     gtest_dep = dependency('gtest_main')
 
     test_executable = executable('testprog', 'test/example.cpp', dependencies : gtest_dep)
