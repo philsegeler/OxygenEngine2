@@ -153,20 +153,20 @@ bool nre::gpu::init(SHADER_BACKEND backend_in, int major, int minor){
     nre::gpu::backend_info = info_backend;
     
     nre::gpu::shader_base::init(backend_in, major, minor);
-    nre::gpu::backend_info.has_init = true;
     
     switch(nre::gpu::get_api()){
         case GL:
         case GLES:
-             nre::gpu::api = static_cast<void*>(new NRE_GL3_API());
+             nre::gpu::api = static_cast<void*>(new NRE_GL3_API(&nre::gpu::backend_info));
              break;
         case GLES2:
-             nre::gpu::api = static_cast<void*>(new NRE_GLES2_API());
+             nre::gpu::api = static_cast<void*>(new NRE_GLES2_API(&nre::gpu::backend_info));
              break;
         default: return false;
     }
     
-    
+    nre::gpu::backend_info.has_init = true;
+
     return true;
 }
 
@@ -715,19 +715,37 @@ void nre::gpu::draw(nre::gpu::draw_call dcall){
 }
 
 void nre::gpu::draw(std::size_t prog, std::size_t vao){
+
+    nre::gpu::draw_call dcall;
+    dcall.program       = prog;
+    dcall.vertex_layout = vao;
+
     switch(nre::gpu::get_api()){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->draw(prog, vao);
              break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->draw(dcall);
+             break;
+
         default: return;
     }
 }
 void nre::gpu::draw(std::size_t prog, std::size_t vao, std::size_t ibo){
+
+    nre::gpu::draw_call dcall;
+    dcall.program       = prog;
+    dcall.vertex_layout = vao;
+    dcall.index_buf     = ibo;
+
     switch(nre::gpu::get_api()){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->draw(prog, vao, ibo);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->draw(dcall);
              break;
         default: return;
     }
@@ -775,6 +793,9 @@ void nre::gpu::set_render_mode(RENDERMODE mode){
         case GL:
         case GLES:
              static_cast<NRE_GL3_API*>(nre::gpu::api)->setRenderMode(mode);
+             break;
+        case GLES2:
+             static_cast<NRE_GLES2_API*>(nre::gpu::api)->setRenderMode(mode);
              break;
         default: return;
     }

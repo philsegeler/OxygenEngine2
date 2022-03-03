@@ -127,7 +127,7 @@ std::size_t NRE_GL3_API::getVAOSize(std::size_t id){
 }
 
 
-NRE_GL3_API::NRE_GL3_API(){
+NRE_GL3_API::NRE_GL3_API(nre::gpu::info_struct* backend_info){
     this->vao_ibos_[0] = 0;
     if(glDebugMessageCallback){
         cout << "[NRE GL API Info] Register OpenGL debug callback " << endl;
@@ -284,13 +284,13 @@ void NRE_GL3_API::check_prog_uniform_(std::size_t id, const std::string& name, c
 
 void NRE_GL3_API::check_prog_uniform_property_(std::size_t id, const std::string& name, std::size_t length, const std::string& func, bool is_type_problem){
     auto uniform_typ = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
-    bool is_vec2 = (uniform_typ == GL_FLOAT_VEC2) and length == 2;
-    bool is_vec3 = (uniform_typ == GL_FLOAT_VEC3) and length == 3;
-    bool is_vec4 = (uniform_typ == GL_FLOAT_VEC4) and length == 4;
-    bool is_mat2 = (uniform_typ == GL_FLOAT_MAT2) and length == 4;
-    bool is_mat3 = (uniform_typ == GL_FLOAT_MAT3) and length == 9;
-    bool is_mat4 = (uniform_typ == GL_FLOAT_MAT4) and length == 16;
-    if (is_vec2 or is_vec3 or is_vec4 or is_mat2 or is_mat3 or is_mat4){
+    bool is_vec2 = (uniform_typ == GL_FLOAT_VEC2) and (length >= 2);
+    bool is_vec3 = (uniform_typ == GL_FLOAT_VEC3) and (length >= 3);
+    bool is_vec4 = (uniform_typ == GL_FLOAT_VEC4) and (length >= 4);
+    bool is_mat2 = (uniform_typ == GL_FLOAT_MAT2) and (length >= 4);
+    bool is_mat3 = (uniform_typ == GL_FLOAT_MAT3) and (length >= 9);
+    bool is_mat4 = (uniform_typ == GL_FLOAT_MAT4) and (length >= 16);
+    if (not (is_vec2 or is_vec3 or is_vec4 or is_mat2 or is_mat3 or is_mat4)){
         throw nre::gpu::invalid_uniform_property(id, name, length, func, is_type_problem);
     }
 }

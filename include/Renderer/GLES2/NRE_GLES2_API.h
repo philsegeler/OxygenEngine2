@@ -87,7 +87,7 @@ GLenum NRE2GLES2_BufferUse(nre::gpu::BUFFER_USAGE usage);
 class NRE_GLES2_API{
 public:
     
-    NRE_GLES2_API();
+    NRE_GLES2_API(nre::gpu::info_struct*);
     ~NRE_GLES2_API();
     
     void update(uint32_t, uint32_t);

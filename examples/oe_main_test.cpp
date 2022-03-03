@@ -125,7 +125,7 @@ int test_task3(oe::task task){
     
     //cout << " task3";
     if (oe::is_key_just_pressed("keyboard-1")){
-        oe::load_world_func("assets/OE_Demo.csl", &OnLoadObject);
+        oe::load_world_func("assets/OE_Demo_50MB.csl", &OnLoadObject);
     }
     else if (oe::is_key_just_pressed("keyboard-2")){
         oe::load_world_func("assets/OE_Demo2.csl", &OnLoadObject);
@@ -181,7 +181,7 @@ int main(){
 	//oe::load_world_func("assets/csl_very_large_object_test.csl", &OnLoadObject);
 	//oe::load_world_func("assets/OE_VerySimple.csl", &OnLoadObject);
 	//oe::load_world_func("assets/audi_r8.csl", &OnLoadObject);
-    oe::load_world_func("assets/OE_Demo.csl", &OnLoadObject);
+    oe::load_world_func("assets/OE_Demo_50MB.csl", &OnLoadObject);
     //oe::load_world_func("assets/OE_Demo2.csl", &OnLoadObject);
 	//oe::load_world_func("assets/lights_simple.csl", &OnLoadObject);
 	//taskMgr.Start();

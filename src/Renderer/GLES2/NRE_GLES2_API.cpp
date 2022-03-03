@@ -60,9 +60,11 @@ std::size_t NRE_GLES2_API::getVAOSize(std::size_t id){
 }
 
 
-NRE_GLES2_API::NRE_GLES2_API(){
+NRE_GLES2_API::NRE_GLES2_API(nre::gpu::info_struct* backend_info){
     this->vao_ibos_[0] = 0;
-        cout << "[NRE GL API Info] glDebugMessageCallback not available" << endl;
+    cout << "[NRE GL API Info] glDebugMessageCallback not available" << endl;
+
+    //TODO: check for the right extensions
 }
 
 NRE_GLES2_API::~NRE_GLES2_API(){
@@ -178,13 +180,13 @@ void NRE_GLES2_API::check_prog_uniform_(std::size_t id, const std::string& name,
 
 void NRE_GLES2_API::check_prog_uniform_property_(std::size_t id, const std::string& name, std::size_t length, const std::string& func, bool is_type_problem){
     auto uniform_typ = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
-    bool is_vec2 = (uniform_typ == GL_FLOAT_VEC2) and (length == 2);
-    bool is_vec3 = (uniform_typ == GL_FLOAT_VEC3) and (length == 3);
-    bool is_vec4 = (uniform_typ == GL_FLOAT_VEC4) and (length == 4);
-    bool is_mat2 = (uniform_typ == GL_FLOAT_MAT2) and (length == 4);
-    bool is_mat3 = (uniform_typ == GL_FLOAT_MAT3) and (length == 9);
-    bool is_mat4 = (uniform_typ == GL_FLOAT_MAT4) and (length == 16);
-    if (is_vec2 or is_vec3 or is_vec4 or is_mat2 or is_mat3 or is_mat4){
+    bool is_vec2 = (uniform_typ == GL_FLOAT_VEC2) and (length >= 2);
+    bool is_vec3 = (uniform_typ == GL_FLOAT_VEC3) and (length >= 3);
+    bool is_vec4 = (uniform_typ == GL_FLOAT_VEC4) and (length >= 4);
+    bool is_mat2 = (uniform_typ == GL_FLOAT_MAT2) and (length >= 4);
+    bool is_mat3 = (uniform_typ == GL_FLOAT_MAT3) and (length >= 9);
+    bool is_mat4 = (uniform_typ == GL_FLOAT_MAT4) and (length >= 16);
+    if (not (is_vec2 or is_vec3 or is_vec4 or is_mat2 or is_mat3 or is_mat4)){
         throw nre::gpu::invalid_uniform_property(id, name, length, func, is_type_problem);
     }
 }
@@ -910,6 +912,17 @@ void NRE_GLES2_API::setupProgram(std::size_t id){
     glAttachShader(this->progs[id].handle, this->progs[id].vs_handle);
     glAttachShader(this->progs[id].handle, this->progs[id].fs_handle);
 
+    glBindAttribLocation(this->progs[id].handle, 0, "oe_position");
+
+    if (not (this->progs[id].vs.fullscreenQuad or (this->progs[id].vs.type == nre::gpu::VS_Z_PREPASS))){
+        glBindAttribLocation(this->progs[id].handle, 1, "oe_normals");
+        for (size_t i=0; i< this->progs[id].vs.num_of_uvs; i++){
+            std::string attrib_name = "oe_uvs" + to_string(i);
+            glBindAttribLocation(this->progs[id].handle, i+2, attrib_name.c_str());
+        }
+    }
+
+
     glLinkProgram(this->progs[id].handle);
 
 
@@ -1006,13 +1019,14 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info){
     // optional elements handling
     if (dc_info.index_buf != 0){
         
-        this->check_ibo_id_(dc_info.index_buf, "draw");
+        this->check_ibo_id_(dc_info.index_buf, "draw (indexed)");
         if (this->vao_ibos_[this->active_vao_] != this->ibos[dc_info.index_buf].handle){
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[dc_info.index_buf].handle);
             this->vao_ibos_[this->active_vao_] = this->ibos[dc_info.index_buf].handle;
         }
         
         if (is_ranged_rendering){
+            this->check_ibo_offset_length_(dc_info.index_buf, dc_info.offset + dc_info.amount, "draw (indexed)");
             glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_INT, (GLvoid*)((sizeof(uint32_t))*3*dc_info.offset));
         }
         else {
@@ -1021,7 +1035,7 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info){
     }
     else{
         if (is_ranged_rendering){
-            this->check_draw_range_(vao_id, this->getVAOSize(vao_id), dc_info.offset, dc_info.amount, "draw (indexed)");
+            this->check_draw_range_(vao_id, this->getVAOSize(vao_id), dc_info.offset, dc_info.amount, "draw");
             glDrawArrays(GL_TRIANGLES, dc_info.offset, dc_info.amount);
         }
         else{
