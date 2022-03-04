@@ -113,6 +113,7 @@ float OE_Length(OE_Vec4);
 #define OE_Lerp         glm::lerp*/
 
 std::vector<float> OE_Mat4x4ToSTDVector(OE_Mat4x4);
+std::vector<float> OE_Vec4ToSTDVector(OE_Vec4);
 OE_Mat4x4 OE_Perspective(float, float, float, float);
 
 OE_Vec4   OE_GetClipCoords(OE_Mat4x4, OE_Vec4);

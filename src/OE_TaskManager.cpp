@@ -2,6 +2,7 @@
 #include <types/OE_Libs.h>
 #include <OE_TaskManager.h>
 #include <Renderer/NRE_RendererMain.h>
+#include <Renderer/NRE_RendererLegacy.h>
 #include <OE_SDL_WindowSystem.h>
 #include <OE_API.h>
 
@@ -130,7 +131,7 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen){
     this->window_mutex.unlockMutex();
     
     this->renderer_mutex.lockMutex();
-    this->renderer = new NRE_Renderer();
+    this->renderer = new NRE_RendererLegacy();
     this->renderer->screen = this->window;
     this->tryRun_renderer_init();
     this->renderer_mutex.unlockMutex();

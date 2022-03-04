@@ -71,7 +71,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
 #endif
     
     this->createWindow(x, y);
-    
+    /*
 #ifndef __EMSCRIPTEN__
     this->context = SDL_GL_CreateContext(this->window);
     if (context == NULL){
@@ -110,7 +110,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
     else {
         this->finishInit();
         return true;
-    }
+    }//*/
     
     // Request an OpenGL ES 2.0 context if everything else fails
     // If this does not work either then consider not trying to run the engine on prehistoric stuff that

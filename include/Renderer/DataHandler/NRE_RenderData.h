@@ -22,6 +22,8 @@ struct NRE_CameraRenderData : public NRE_BaseObject{
     OE_Mat4x4       view_mat;
     OE_Mat4x4       model_mat;
     
+    OE_Vec4 get_position();
+
     float           near{0.0f};
     float           far{0.0f};
     
@@ -35,6 +37,10 @@ struct NRE_MaterialRenderData : public NRE_BaseObject{
     
     std::size_t     scene_id{0};
     
+    OE_Vec4 get_mat_diffuse();
+    float get_mat_specular_hardness();
+
+
     std::size_t     ubo{0};
     unsigned int    offset{0};
     unsigned int    size{0};
@@ -76,6 +82,8 @@ struct NRE_MeshRenderData : public NRE_BaseObject{
     
     float max_x{0.0f}, min_x{0.0f}, max_y{0.0f}, min_y{0.0f}, max_z{0.0f}, min_z{0.0f}, max_radius{0.0f}, min_radius{0.0f};
     
+    std::vector<float> get_scaling_min_data();
+    std::vector<float> get_scaling_max_data();
     std::vector<float> genBoundingBoxVBO();
     
     // the mesh is used too fetch vertices only

@@ -174,8 +174,6 @@ std::string NRE_GenGLES2VertexShader(nre::gpu::vertex_shader vs){
         
     }
 
-    
-    
     return nre::gpu::shader_base::shader_prefix + output;
 }
 
@@ -183,28 +181,28 @@ std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs){
     
     std::string output = "\n";
     
-    output.append("precision highp float; \n");
+    output.append("precision mediump float; \n");
     
     if ((fs.type == nre::gpu::FS_UNDEFINED) or (fs.type == nre::gpu::FS_SIMPLE)){
         output.append(NRE_Shader(
-            attribute vec2 position;
-            varying vec4 fragColor;
+            varying vec2 position;
             
             void main(){
-                fragColor = vec4(vec3(0.5), 1.0);
+                gl_FragColor = vec4(vec3(0.5), 1.0);
             }
         ));
         return nre::gpu::shader_base::shader_prefix + output;
     }
     else if (fs.type == nre::gpu::FS_GAMMA){
         output.append(NRE_Shader(
-            attribute vec2 position;
-            varying vec4 fragColor;
+            varying vec2 position;
             
             uniform sampler2D tex_output;
-            
+            vec4 sampled_data;
+
             void main(){
-                vec4 sampled_data = texture(tex_output, position/2.0 +0.5);
+
+                sampled_data = texture2D(tex_output, position/2.0 +0.5);
                 //for (int i=0; i <4; i++){
                 //    if (sampled_data[i] <= 0.00314){
                 //        sampled_data[i] = sampled_data[i]*12.92;
@@ -213,7 +211,7 @@ std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs){
                 //        sampled_data[i] = 1.055*pow(sampled_data[i], 1.0/2.4) - 0.055;
                 //    }
                 //}
-                fragColor = vec4(pow(sampled_data.xyz, vec3(1.0/2.2)), sampled_data.w);
+                gl_FragColor = vec4(pow(sampled_data.xyz, vec3(1.0/2.2)), sampled_data.w);
             }
         ));
         return nre::gpu::shader_base::shader_prefix + output;
@@ -221,14 +219,14 @@ std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs){
     else{}
     
     output.append(NRE_Shader(
-        attribute vec3 position;
-        attribute vec3 normals;
+        varying vec3 position;
+        varying vec3 normals;
     ));
     output.append("\n");
     
     // setup inputs
     for (size_t i=0; i< fs.num_of_uvs; i++){
-        output.append("attribute vec2 uvs" + to_string(i) + ";");
+        output.append("varying vec2 uvs" + to_string(i) + ";");
         output.append("\n");
     }
     
@@ -246,34 +244,38 @@ std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs){
         output.append(NRE_Shader(
             uniform vec4 camera_pos;
             
-            varying vec4 fragColor;
         ));
         output.append("\n");
         
         
             
         output.append(NRE_Shader(
-            
+            vec3 light_pos;
+            vec3 s;
+            vec3 v;
+            vec3 specular;
+            float sDotN;
+            vec3 dif_output;
+
             void main(){
                 
-                vec3 light_pos = vec3( camera_pos);
+                light_pos = vec3( camera_pos);
                 
-                vec3 s = normalize(light_pos-position);
-                vec3 v = normalize(-position);
+                s = normalize(light_pos-position);
+                v = normalize(-position);
                 
-                vec3 specular = vec3(0.0);
-                
-                float sDotN = abs(dot(s, normals));
+                specular = vec3(0.0);
+                sDotN = abs(dot(s, normals));
                 
                 if (sDotN > 0.0){
                     //specular = vec3(0.5);
                     specular = vec3(pow(sDotN,2.0/ mat_specular_hardness));
                 }
                 
-                vec3 dif_output = clamp(mat_diffuse.rgb*max(sDotN, 0.2), 0.0, 1.0);
+                dif_output = clamp(mat_diffuse.rgb*max(sDotN, 0.2), 0.0, 1.0);
                 
-                //fragColor = vec4(abs(normals), 1.0);
-                fragColor = vec4(dif_output, 1.0);
+                //gl_FragColor = vec4(abs(normals), 1.0);
+                gl_FragColor = vec4(dif_output, 1.0);
             }
         ));
         
@@ -282,13 +284,12 @@ std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs){
         
             output.append(NRE_Shader(
             
-            varying vec4 fragColor;
             
             //const vec3 light_pos = vec3( 13.37035561, -12.76134396, 10.10574818);
             
             void main(){
                 
-                fragColor = vec4(abs(normals), 1.0);
+                gl_FragColor = vec4(abs(normals), 1.0);
             }
             ));
         

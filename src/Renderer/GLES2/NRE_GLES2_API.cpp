@@ -1020,10 +1020,7 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info){
     if (dc_info.index_buf != 0){
         
         this->check_ibo_id_(dc_info.index_buf, "draw (indexed)");
-        if (this->vao_ibos_[this->active_vao_] != this->ibos[dc_info.index_buf].handle){
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[dc_info.index_buf].handle);
-            this->vao_ibos_[this->active_vao_] = this->ibos[dc_info.index_buf].handle;
-        }
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[dc_info.index_buf].handle);
         
         if (is_ranged_rendering){
             this->check_ibo_offset_length_(dc_info.index_buf, dc_info.offset + dc_info.amount, "draw (indexed)");
