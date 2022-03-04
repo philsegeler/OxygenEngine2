@@ -279,10 +279,10 @@ bool OE_TaskManager::tryRun_winsys_update(){
     return output;
 }
         
-void OE_TaskManager::tryRun_winsys_init(int x, int y, std::string titlea, bool fullscreen, void* params){
+void OE_TaskManager::tryRun_winsys_init(int x, int y, std::string titlea, bool fullscreen, bool use_legacy_renderer, void* params){
     
     try{
-        this->window->init(x, y, titlea, fullscreen, params);
+        this->window->init(x, y, titlea, fullscreen, use_legacy_renderer, params);
     }
     catch(oe::winsys_error &e){
         std::string error_str =  "[OE WINSYS Error] " + e.name_ + " thrown in window system initialization";

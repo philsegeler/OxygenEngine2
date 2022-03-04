@@ -15,7 +15,7 @@ OE_WindowSystemBase::~OE_WindowSystemBase(){
 
 }
 
-bool OE_WindowSystemBase::init(int x, int y, string titlea, bool isFullscreen, void* data){
+bool OE_WindowSystemBase::init(int x, int y, string titlea, bool isFullscreen, bool use_legacy_renderer, void* data){
     return true;
 }
 

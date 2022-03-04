@@ -5,18 +5,19 @@ using namespace oe;
 using namespace std;
 
 OE_TaskManager* oe::OE_Main = nullptr;
+bool oe::preinit::use_legacy_renderer = false;
 
 size_t oe::init(){    
     OE_Main = new OE_TaskManager();
-    return OE_Main->Init("Oxygen Engine Test", 800, 600, false);
+    return OE_Main->Init("Oxygen Engine Test", 800, 600, false, oe::preinit::use_legacy_renderer);
 }
 size_t oe::init(std::string title, bool fullscreen){
     OE_Main = new OE_TaskManager();
-    return OE_Main->Init(title, 800, 600, fullscreen);
+    return OE_Main->Init(title, 800, 600, fullscreen, oe::preinit::use_legacy_renderer);
 }
 size_t oe::init(std::string title, int x, int y, bool fullscreen){
     OE_Main = new OE_TaskManager();
-    return OE_Main->Init(title, x, y, fullscreen);
+    return OE_Main->Init(title, x, y, fullscreen, oe::preinit::use_legacy_renderer);
 }
 void oe::step(){
     OE_API_Helpers::checkIfInit();

@@ -123,15 +123,18 @@ OE_TaskManager::~OE_TaskManager()
  *  INIT
  * ***********************/
 
-int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen){
+int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, bool use_legacy_renderer){
     
     this->window_mutex.lockMutex();
     this->window = new OE_SDL_WindowSystem();
-    this->tryRun_winsys_init(x, y, titlea, fullscreen, nullptr);
+    this->tryRun_winsys_init(x, y, titlea, fullscreen, use_legacy_renderer, nullptr);
     this->window_mutex.unlockMutex();
     
     this->renderer_mutex.lockMutex();
-    this->renderer = new NRE_RendererLegacy();
+    if (use_legacy_renderer)
+        this->renderer = new NRE_RendererLegacy();
+    else
+        this->renderer = new NRE_Renderer();
     this->renderer->screen = this->window;
     this->tryRun_renderer_init();
     this->renderer_mutex.unlockMutex();
