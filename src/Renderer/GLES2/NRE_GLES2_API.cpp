@@ -222,9 +222,10 @@ void NRE_GLES2_API::get_program_all_uniforms_(std::size_t id){
     for(GLint ida=0; ida< numUniforms; ida++){
 
         GLint name_length=0;
-        GLuint idb = ida;
+
         
 #ifndef __EMSCRIPTEN__
+        GLuint idb = ida;
         glGetActiveUniformsiv(this->prog_db[this->progs[id]].handle, 1, &idb, GL_UNIFORM_NAME_LENGTH, &name_length);
 #else
         
@@ -254,7 +255,11 @@ int NRE_GLES2_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type){
         case nre::gpu::FLOAT:
             return GL_RGB32F;
         case nre::gpu::RGBA:
-            return GL_RGBA8;
+#ifndef __EMSCRIPTEN__
+            return GL_RGBA;
+#else
+            return GL_RGBA;
+#endif
         case nre::gpu::RGB10_A2:
             return GL_RGB10_A2;
         case nre::gpu::RGBA16F:
@@ -266,7 +271,11 @@ int NRE_GLES2_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type){
         case nre::gpu::RGBA_U8:
             return GL_RGBA8UI;
         case nre::gpu::DEPTHSTENCIL:
-            return GL_DEPTH24_STENCIL8;
+#ifndef __EMSCRIPTEN__
+            return GL_DEPTH24_STENCIL8_OES;
+#else
+            return GL_DEPTH_STENCIL;
+#endif
     };
     return GL_RGB;
 }
@@ -288,7 +297,11 @@ int NRE_GLES2_API::teximage_format_(nre::gpu::TEXTURE_TYPE type){
         case nre::gpu::RGBA_U8:
             return GL_RGBA_INTEGER;
         case nre::gpu::DEPTHSTENCIL:
+#ifndef __EMSCRIPTEN__
+            return GL_DEPTH_STENCIL_OES;
+#else
             return GL_DEPTH_STENCIL;
+#endif
     };
     return GL_RGB;
 }
@@ -310,7 +323,11 @@ int NRE_GLES2_API::teximage_type_(nre::gpu::TEXTURE_TYPE type){
         case nre::gpu::RGBA_U8:
             return GL_UNSIGNED_BYTE;
         case nre::gpu::DEPTHSTENCIL:
+#ifndef __EMSCRIPTEN__
             return GL_UNSIGNED_INT_24_8;
+#else
+            return GL_UNSIGNED_INT_24_8_OES;
+#endif
     };
     return GL_UNSIGNED_BYTE;
 }
@@ -329,7 +346,6 @@ std::size_t NRE_GLES2_API::newVertexBuffer(){
 std::size_t NRE_GLES2_API::newVertexLayout(){  
     cur_vao++;
     this->vaos[cur_vao] = NRE_GLES2_VertexArray();
-    glGenVertexArrays(1, &vaos[cur_vao].handle);
     this->vao_ibos_[vaos[cur_vao].handle] = 0;
     return cur_vao;
 }
@@ -381,6 +397,8 @@ void  NRE_GLES2_API::setRenderBufferType(std::size_t id, nre::gpu::TEXTURE_TYPE 
     
     glBindRenderbuffer(GL_RENDERBUFFER, this->rbos[id].handle);
     glRenderbufferStorage(GL_RENDERBUFFER, this->teximage_internalformat_(a_type), x, y);
+    if (glGetError() > 0)
+        cout << glGetError() << endl;
 }
 
 void  NRE_GLES2_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t rbo_id, int slot){
@@ -611,7 +629,7 @@ void NRE_GLES2_API::setVertexLayoutFormat(std::size_t id, std::vector<nre::gpu::
 
 void NRE_GLES2_API::deleteVertexLayout(std::size_t id){
     this->check_vao_id_(id, "deleteVertexLayout");
-    glDeleteVertexArrays(1, &this->vaos[id].handle);
+    //glDeleteVertexArrays(1, &this->vaos[id].handle);
     this->active_vao_ = 0;
     this->vaos.erase(id);
 }
@@ -635,10 +653,18 @@ void NRE_GLES2_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type
     if (mipmap_count == 0 and filter == nre::gpu::LINEAR){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
+#ifdef __EMSCRIPTEN__
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#endif
     } 
     else if (mipmap_count == 0 and filter == nre::gpu::NEAREST){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+#ifdef __EMSCRIPTEN__
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#endif
     }
     else{
         //TODO
@@ -673,6 +699,8 @@ void NRE_GLES2_API::setTextureSlot(std::size_t id, int slot){
     this->check_texture_id_(id, "setTextureSlot");
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, this->textures[id].handle);
+    if (glGetError() > 0)
+        cout << glGetError() << endl;
 }
 
 void NRE_GLES2_API::deleteTexture(std::size_t id){
@@ -705,8 +733,8 @@ void NRE_GLES2_API::copyFrameBuffer(std::size_t src, std::size_t target, nre::gp
     else {
         glBlitFramebuffer(0,0, x_tmp, y_tmp, 0, 0, x_tmp, y_tmp, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
     }
-    //if (glGetError() > 0)
-    //    cout << glGetError() << endl;
+    if (glGetError() > 0)
+        cout << glGetError() << endl;
 }
 
 void NRE_GLES2_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY clear, float alpha_value){
@@ -733,7 +761,8 @@ void NRE_GLES2_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY 
     else{
         
     }
-    
+    if (glGetError() > 0)
+        cout << glGetError() << endl;
 }
 
 void NRE_GLES2_API::useFrameBuffer(std::size_t id){
@@ -744,6 +773,9 @@ void NRE_GLES2_API::useFrameBuffer(std::size_t id){
     else {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+
+    if (glGetError() > 0)
+        cout << glGetError() << endl;
 }
 
 void NRE_GLES2_API::deleteFrameBuffer(std::size_t id){
@@ -963,7 +995,9 @@ void NRE_GLES2_API::setupProgram(std::size_t id){
     this->get_program_all_uniforms_(id);
     
     this->progs[id].setup = true;
-    
+
+    if (glGetError() > 0)
+        cout << glGetError() << endl;
 }
 
 void NRE_GLES2_API::deleteProgram(std::size_t id){
@@ -1039,6 +1073,8 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info){
             glDrawArrays(GL_TRIANGLES, 0, this->getVAOSize(vao_id));
         }
     }
+    if (glGetError() > 0)
+        cout << glGetError() << endl;
 }
 
 void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode){

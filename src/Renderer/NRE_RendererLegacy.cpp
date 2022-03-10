@@ -26,8 +26,11 @@ bool NRE_RendererLegacy::init(){
     nre::gpu::init(nre::gpu::get_api(), nre::gpu::backend_info.major, nre::gpu::backend_info.minor);
 
     this->initOffscreenFrameBuffer();
+
     this->initFullscreenQuad();
+
     this->initGammaCorrectionProg();
+
     this->initGPUSphere();
 
     return true;

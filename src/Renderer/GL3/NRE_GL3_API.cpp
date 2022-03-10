@@ -345,9 +345,10 @@ void NRE_GL3_API::get_program_all_uniforms_(std::size_t id){
     for(GLint ida=0; ida< numUniforms; ida++){
 
         GLint name_length=0;
-        GLuint idb = ida;
+
         
 #ifndef __EMSCRIPTEN__
+        GLuint idb = ida;
         glGetActiveUniformsiv(this->prog_db[this->progs[id]].handle, 1, &idb, GL_UNIFORM_NAME_LENGTH, &name_length);
 #else
         
