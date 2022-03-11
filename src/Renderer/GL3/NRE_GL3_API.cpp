@@ -123,12 +123,13 @@ bool NRE_GL3_RenderBuffer::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, int x_i
 
 std::size_t NRE_GL3_API::getVAOSize(std::size_t id){
     this->check_vao_id_(id, "getVAOSize");
-    return this->vbos[this->vaos[id].layout[0].vertex_buffer].size/this->vaos[id].layout[0].amount;
+    return this->vbos[this->vaos[id].layout[0].vertex_buffer].size/this->vaos[id].layout[0].stride;
 }
 
 
 NRE_GL3_API::NRE_GL3_API(nre::gpu::info_struct* backend_info){
     this->vao_ibos_[0] = 0;
+#ifndef OE_PLATFORM_WEB
     if(glDebugMessageCallback){
         cout << "[NRE GL API Info] Register OpenGL debug callback " << endl;
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -142,6 +143,7 @@ NRE_GL3_API::NRE_GL3_API(nre::gpu::info_struct* backend_info){
             true);
     }
     else
+#endif
         cout << "[NRE GL API Info] glDebugMessageCallback not available" << endl;
 }
 
@@ -201,9 +203,11 @@ void NRE_GL3_API::destroy(){
 
 std::string NRE_GL3_API::getRenderingAPI(){
     if (nre::gpu::get_api() == nre::gpu::GLES)
-        return "OpenGL ES 3";
+        return "OpenGL ES 3/WebGL 2.0";
     else if (nre::gpu::get_api() == nre::gpu::GL)
         return "OpenGL 3";
+    else if (nre::gpu::get_api() == nre::gpu::GLES2)
+        return "OpenGL ES 2/WebGL 1.0";
     else{
         return "Unknown";
     }
@@ -1434,7 +1438,7 @@ void NRE_GL3_API::setRenderMode(nre::gpu::RENDERMODE rendermode){
     else {
         // TODO
     }
-    
+#ifndef OE_PLATFORM_WEB
     if (nre::gpu::get_api() != nre::gpu::GLES){
         if (nre::gpu::use_wireframe){
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1443,6 +1447,7 @@ void NRE_GL3_API::setRenderMode(nre::gpu::RENDERMODE rendermode){
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     }
+#endif
 }
 
 

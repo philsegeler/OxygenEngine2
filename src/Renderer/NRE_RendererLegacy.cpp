@@ -38,6 +38,7 @@ bool NRE_RendererLegacy::init(){
 
 void NRE_RendererLegacy::initOffscreenFrameBuffer(){
     // setup offscreen framebuffer
+
     this->framebuffer = nre::gpu::new_framebuffer();
     this->colortexture = nre::gpu::new_texture();
     this->depthrbo = nre::gpu::new_renderbuffer();
@@ -258,7 +259,6 @@ bool NRE_RendererLegacy::updateSingleThread(){
     nre::gpu::set_texture_slot(this->colortexture, 0);
 
     nre::gpu::draw(this->gamma_cor_prog, this->vao_fullscreen_quad);
-
     return true;
 }
 

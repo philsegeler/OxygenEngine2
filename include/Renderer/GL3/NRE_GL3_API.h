@@ -3,7 +3,7 @@
 
 
 #include <Renderer/NRE_GPU_API.h>
-#include <Renderer/glad.h>
+#include <types/OE_Libs.h>
 #include <Renderer/GL3/NRE_GL3_Shaders.h>
 
 struct NRE_GL3_RenderBuffer{

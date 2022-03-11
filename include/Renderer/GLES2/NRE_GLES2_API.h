@@ -3,7 +3,7 @@
 
 
 #include <Renderer/NRE_GPU_API.h>
-#include <Renderer/glad.h>
+#include <types/OE_Libs.h>
 #include <Renderer/GLES2/NRE_GLES2_Shaders.h>
 
 struct NRE_GLES2_RenderBuffer{

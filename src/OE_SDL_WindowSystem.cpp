@@ -26,7 +26,7 @@ OE_SDL_WindowSystem::~OE_SDL_WindowSystem(){
 
 void OE_SDL_WindowSystem::createWindow(int x, int y){
     if (!this->fullscreen)
-#ifndef __EMSCRIPTEN__
+#ifndef OE_PLATFORM_WEB
         this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
 #else
         this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
@@ -40,7 +40,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
     this->title = titlea;
     this->fullscreen = isFullscreen;
     
-#ifndef __EMSCRIPTEN__
+#ifndef OE_PLATFORM_WEB
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0){
         cout << "OE ERROR: Could not initialize SDL2, " << SDL_GetError() << endl;
     }
@@ -74,7 +74,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
 
     if (not use_legacy_renderer){
 
-#ifndef __EMSCRIPTEN__
+#ifndef OE_PLATFORM_WEB
         this->context = SDL_GL_CreateContext(this->window);
         if (context == NULL){
             cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
@@ -114,7 +114,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
             return true;
         }
     }
-    
+
     // Request an OpenGL ES 2.0 context if everything else fails
     // If this does not work either then consider not trying to run the engine on prehistoric stuff that
     // does not even support basic shaders. Or use a software OpenGL renderer.
@@ -126,9 +126,10 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
      this->major = 2; this->minor = 0; this->isES = true;
      
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+#ifndef OE_PLATFORM_WEB
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
     SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
-    
+#endif
     // Also request a depth buffer
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -148,12 +149,15 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
 }
 
 void OE_SDL_WindowSystem::finishInit(){
-    
+
+#ifndef OE_PLATFORM_WEB
     if (!this->isES)
         gladLoadGLLoader(SDL_GL_GetProcAddress);
     else
         gladLoadGLES2Loader(SDL_GL_GetProcAddress);
-
+#else
+    SDL_GL_MakeCurrent(this->window, this->context);
+#endif
     printf("Vendor:   '%s'\n", glGetString(GL_VENDOR));
     printf("Renderer: '%s'\n", glGetString(GL_RENDERER));
     printf("Version:  '%s'\n", glGetString(GL_VERSION));
@@ -162,7 +166,7 @@ void OE_SDL_WindowSystem::finishInit(){
     OE_WriteToLog(string("Renderer: '") + string((const char*)glGetString(GL_RENDERER)) + "'\n");
     OE_WriteToLog(string("Version:  '") + string((const char*)glGetString(GL_VERSION)) + "'\n");
     SDL_GL_SetSwapInterval(1);
-    
+
     SDL_GetWindowSize(window, &this->resolution_x, &this->resolution_y);
     glViewport(0, 0, this->resolution_x, this->resolution_y);
     

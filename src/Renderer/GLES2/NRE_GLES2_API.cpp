@@ -56,13 +56,12 @@ bool NRE_GLES2_RenderBuffer::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, int x
 
 std::size_t NRE_GLES2_API::getVAOSize(std::size_t id){
     this->check_vao_id_(id, "getVAOSize");
-    return this->vbos[this->vaos[id].layout[0].vertex_buffer].size/this->vaos[id].layout[0].amount;
+    return this->vbos[this->vaos[id].layout[0].vertex_buffer].size/this->vaos[id].layout[0].stride;
 }
 
 
 NRE_GLES2_API::NRE_GLES2_API(nre::gpu::info_struct* backend_info){
     this->vao_ibos_[0] = 0;
-    cout << "[NRE GL API Info] glDebugMessageCallback not available" << endl;
 
     //TODO: check for the right extensions
 }
@@ -272,9 +271,9 @@ int NRE_GLES2_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type){
             return GL_RGBA8UI;
         case nre::gpu::DEPTHSTENCIL:
 #ifndef __EMSCRIPTEN__
-            return GL_DEPTH24_STENCIL8_OES;
+            return GL_DEPTH24_STENCIL8;
 #else
-            return GL_DEPTH_STENCIL;
+            return GL_DEPTH_STENCIL;;
 #endif
     };
     return GL_RGB;
@@ -326,7 +325,7 @@ int NRE_GLES2_API::teximage_type_(nre::gpu::TEXTURE_TYPE type){
 #ifndef __EMSCRIPTEN__
             return GL_UNSIGNED_INT_24_8;
 #else
-            return GL_UNSIGNED_INT_24_8_OES;
+            return GL_RGBA;
 #endif
     };
     return GL_UNSIGNED_BYTE;
@@ -398,7 +397,7 @@ void  NRE_GLES2_API::setRenderBufferType(std::size_t id, nre::gpu::TEXTURE_TYPE 
     glBindRenderbuffer(GL_RENDERBUFFER, this->rbos[id].handle);
     glRenderbufferStorage(GL_RENDERBUFFER, this->teximage_internalformat_(a_type), x, y);
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 void  NRE_GLES2_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t rbo_id, int slot){
@@ -416,7 +415,7 @@ void  NRE_GLES2_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t 
     }
     
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 //---------------------Vertex Buffer-----------------------------//
@@ -670,7 +669,7 @@ void NRE_GLES2_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type
         //TODO
     }
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 void NRE_GLES2_API::setFrameBufferTexture(std::size_t fbo_id, std::size_t texture_id, int slot){
@@ -691,7 +690,7 @@ void NRE_GLES2_API::setFrameBufferTexture(std::size_t fbo_id, std::size_t textur
     }
     
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
     
 }
 
@@ -700,7 +699,7 @@ void NRE_GLES2_API::setTextureSlot(std::size_t id, int slot){
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, this->textures[id].handle);
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 void NRE_GLES2_API::deleteTexture(std::size_t id){
@@ -734,7 +733,7 @@ void NRE_GLES2_API::copyFrameBuffer(std::size_t src, std::size_t target, nre::gp
         glBlitFramebuffer(0,0, x_tmp, y_tmp, 0, 0, x_tmp, y_tmp, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
     }
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 void NRE_GLES2_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY clear, float alpha_value){
@@ -762,7 +761,7 @@ void NRE_GLES2_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY 
         
     }
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 void NRE_GLES2_API::useFrameBuffer(std::size_t id){
@@ -775,7 +774,7 @@ void NRE_GLES2_API::useFrameBuffer(std::size_t id){
     }
 
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 void NRE_GLES2_API::deleteFrameBuffer(std::size_t id){
@@ -997,7 +996,7 @@ void NRE_GLES2_API::setupProgram(std::size_t id){
     this->progs[id].setup = true;
 
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 void NRE_GLES2_API::deleteProgram(std::size_t id){
@@ -1074,7 +1073,7 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info){
         }
     }
     if (glGetError() > 0)
-        cout << glGetError() << endl;
+        cout << "GL Error: " << glGetError() << endl;
 }
 
 void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode){

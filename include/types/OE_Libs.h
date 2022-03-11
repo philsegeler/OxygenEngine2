@@ -29,7 +29,11 @@
 #define OE_RENDERER_GLES
 
 #include <emscripten.h>
-#include <Renderer/glad.h>
+#define GL_GLEXT_PROTOTYPES 1
+#include <SDL_opengles2.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl31.h>
+#include <GLES3/gl32.h>
 #include <SDL.h>
 
 #else
@@ -38,7 +42,8 @@
 #define OE_PLATFORM_UNKNOWN
 #define OE_RENDERER_OPENGL
 
-#include <Renderer/glad.h>
+//#include <Renderer/glad.h>
+
 #include <SDL2/SDL.h>
 
 #endif
