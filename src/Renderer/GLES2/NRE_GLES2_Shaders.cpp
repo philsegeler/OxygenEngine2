@@ -131,7 +131,7 @@ std::string NRE_GenGLES2VertexShader(nre::gpu::vertex_shader vs){
                         position = temp_position.xyz;
                         gl_Position.w = 1.0;
                         gl_Position = final_mat*temp_position;
-                        
+
                         //gl_Position.z = log2(max(1e-6, 1.0 + gl_Position.w)) * Fcoef - 1.0;
                         //gl_Position.z *= gl_Position.w;
                     }
@@ -162,7 +162,7 @@ std::string NRE_GenGLES2VertexShader(nre::gpu::vertex_shader vs){
                         position = temp_position.xyz;
                         gl_Position.w = 1.0;
                         gl_Position = final_mat*temp_position;
-                        
+
                         //gl_Position.z = log2(max(1e-6, 1.0 + gl_Position.w)) * Fcoef - 1.0;
                         //gl_Position.z *= gl_Position.w;
                     }

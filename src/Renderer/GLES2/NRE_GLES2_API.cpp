@@ -72,13 +72,14 @@ NRE_GLES2_API::~NRE_GLES2_API(){
 
 void NRE_GLES2_API::update(uint32_t x_in, uint32_t y_in){
     
+
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     if (x_in != nre::gpu::x or y_in != nre::gpu::y){
         glViewport(0, 0, x_in, y_in);
         nre::gpu::x = x_in;
         nre::gpu::y = y_in;
     }
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDepthMask(GL_TRUE);
     glStencilMask(0xFF);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -98,8 +99,6 @@ void NRE_GLES2_API::destroy(){
         glDeleteRenderbuffers(1, &x.second.handle);
     for (auto x: std::exchange(vbos, {}))
         glDeleteBuffers(1, &x.second.handle);
-    for (auto x: std::exchange(vaos, {}))
-        glDeleteVertexArrays(1, &x.second.handle);
     for (auto x: std::exchange(ibos, {}))
         glDeleteBuffers(1, &x.second.handle);
     for (auto x: std::exchange(fbos, {}))
@@ -222,16 +221,10 @@ void NRE_GLES2_API::get_program_all_uniforms_(std::size_t id){
 
         GLint name_length=0;
 
-        
-#ifndef __EMSCRIPTEN__
-        GLuint idb = ida;
-        glGetActiveUniformsiv(this->prog_db[this->progs[id]].handle, 1, &idb, GL_UNIFORM_NAME_LENGTH, &name_length);
-#else
-        
         glGetProgramiv(this->prog_db[this->progs[id]].handle, GL_ACTIVE_UNIFORM_MAX_LENGTH
 , &name_length);
         //cout << "uniforms:" << ida << " name length:" << name_length << endl;
-#endif
+
         GLchar uniform_name[name_length];
         GLenum var_enum;
         GLint uniform_size;
@@ -254,7 +247,7 @@ int NRE_GLES2_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type){
         case nre::gpu::FLOAT:
             return GL_RGB32F;
         case nre::gpu::RGBA:
-#ifndef __EMSCRIPTEN__
+#ifndef OE_PLATFORM_WEB
             return GL_RGBA;
 #else
             return GL_RGBA;
@@ -270,7 +263,7 @@ int NRE_GLES2_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type){
         case nre::gpu::RGBA_U8:
             return GL_RGBA8UI;
         case nre::gpu::DEPTHSTENCIL:
-#ifndef __EMSCRIPTEN__
+#ifndef OE_PLATFORM_WEB
             return GL_DEPTH24_STENCIL8;
 #else
             return GL_DEPTH_STENCIL;;
@@ -296,7 +289,7 @@ int NRE_GLES2_API::teximage_format_(nre::gpu::TEXTURE_TYPE type){
         case nre::gpu::RGBA_U8:
             return GL_RGBA_INTEGER;
         case nre::gpu::DEPTHSTENCIL:
-#ifndef __EMSCRIPTEN__
+#ifndef OE_PLATFORM_WEB
             return GL_DEPTH_STENCIL_OES;
 #else
             return GL_DEPTH_STENCIL;
@@ -322,8 +315,8 @@ int NRE_GLES2_API::teximage_type_(nre::gpu::TEXTURE_TYPE type){
         case nre::gpu::RGBA_U8:
             return GL_UNSIGNED_BYTE;
         case nre::gpu::DEPTHSTENCIL:
-#ifndef __EMSCRIPTEN__
-            return GL_UNSIGNED_INT_24_8;
+#ifndef OE_PLATFORM_WEB
+            return GL_UNSIGNED_INT_24_8_OES;
 #else
             return GL_RGBA;
 #endif
@@ -527,7 +520,14 @@ void NRE_GLES2_API::setProgramTextureSlot(std::size_t id, std::string name, int 
     }
     auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
     if ((uniform_type_enum == GL_SAMPLER_2D) or (uniform_type_enum == GL_SAMPLER_2D_SHADOW)){
+    // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
+    // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
+    // I do not understand why they did this. It just seems slow for me for no reason
+#ifndef OE_PLATFORM_WEB
         glUniform1i(this->prog_db[this->progs[id]].hasUniform(name), slot);
+#else
+        glUniform1i(glGetUniformLocation(this->progs[id].handle, name.c_str()), slot);
+#endif
     }
     else {
         cout << "[NRE Warning] No sampler2D uniform named '" << name << "' in program ID: " << id << "." << endl;
@@ -546,7 +546,14 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, uint
     }
     auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
     if (uniform_type_enum == GL_INT){
+    // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
+    // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
+    // I do not understand why they did this. It just seems slow for me for no reason
+#ifndef OE_PLATFORM_WEB
         glUniform1i(this->prog_db[this->progs[id]].hasUniform(name), data);
+#else
+        glUniform1i(glGetUniformLocation(this->progs[id].handle, name.c_str()), data);
+#endif
     }
     else {
         cout << "[NRE Warning] No integer uniform named '" << name << "' in program ID: " << id << "." << endl;
@@ -565,7 +572,14 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, floa
     }
     auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
     if (uniform_type_enum == GL_FLOAT){
+    // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
+    // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
+    // I do not understand why they did this. It just seems slow for me for no reason
+#ifndef OE_PLATFORM_WEB
         glUniform1f(this->prog_db[this->progs[id]].hasUniform(name), data);
+#else
+        glUniform1f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data);
+#endif
     }
     else {
         cout << "[NRE Warning] No float uniform named '" << name << "' in program ID: " << id << "." << endl;
@@ -579,27 +593,52 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, cons
     this->check_prog_uniform_(id, name, "setProgramUniformData");
     this->check_prog_uniform_property_(id, name, data.size(), "setProgramUniformData", false);
     
+
     if (this->active_prog_ != this->progs[id].handle){
         glUseProgram(this->progs[id].handle);
         this->active_prog_ = this->progs[id].handle;
     }
     auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
-    
+    // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
+    // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
+    // I do not understand why they did this. It just seems slow for me for no reason
+#ifndef OE_PLATFORM_WEB
     if (uniform_type_enum == GL_FLOAT_VEC2){
-        glUniform2f(this->prog_db[this->progs[id]].hasUniform(name), data[0], data[1]);
+        glUniform2f(uniform_id, data[0], data[1]);
     }
     else if (uniform_type_enum == GL_FLOAT_VEC3){
-        glUniform3f(this->prog_db[this->progs[id]].hasUniform(name), data[0], data[1], data[2]);
+        glUniform3f(uniform_id, data[0], data[1], data[2]);
     }
     else if ((uniform_type_enum == GL_FLOAT_VEC4) or (uniform_type_enum == GL_FLOAT_MAT2)){
-        glUniform4f(this->prog_db[this->progs[id]].hasUniform(name), data[0], data[1], data[2], data[3]);
+        glUniform4f(uniform_id, data[0], data[1], data[2], data[3]);
     }
     else if (uniform_type_enum == GL_FLOAT_MAT3){
-        glUniformMatrix3fv(this->prog_db[this->progs[id]].hasUniform(name), 1, false, &data[0]);
+        glUniformMatrix3fv(uniform_id, 1, false, &data[0]);
     }
     else if (uniform_type_enum == GL_FLOAT_MAT4){
-        glUniformMatrix4fv(this->prog_db[this->progs[id]].hasUniform(name), 1, false, &data[0]);
+        //cout << "SUCCESS" << id << " " << name <<  endl;
+
+        glUniformMatrix4fv(uniform_id, 1, false, &data[0]);
     }
+#else
+    if (uniform_type_enum == GL_FLOAT_VEC2){
+        glUniform2f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data[0], data[1]);
+    }
+    else if (uniform_type_enum == GL_FLOAT_VEC3){
+        glUniform3f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data[0], data[1], data[2]);
+    }
+    else if ((uniform_type_enum == GL_FLOAT_VEC4) or (uniform_type_enum == GL_FLOAT_MAT2)){
+        glUniform4f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data[0], data[1], data[2], data[3]);
+    }
+    else if (uniform_type_enum == GL_FLOAT_MAT3){
+        glUniformMatrix3fv(glGetUniformLocation(this->progs[id].handle, name.c_str()), 1, false, &data[0]);
+    }
+    else if (uniform_type_enum == GL_FLOAT_MAT4){
+        //cout << "SUCCESS" << id << " " << name <<  endl;
+
+        glUniformMatrix4fv(glGetUniformLocation(this->progs[id].handle, name.c_str()), 1, false, &data[0]);
+    }
+#endif
     else{
         throw nre::gpu::invalid_uniform_property(id, name, data.size(), "setProgramUniformData", true);
     }
@@ -652,7 +691,7 @@ void NRE_GLES2_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type
     if (mipmap_count == 0 and filter == nre::gpu::LINEAR){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #endif
@@ -660,7 +699,7 @@ void NRE_GLES2_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type
     else if (mipmap_count == 0 and filter == nre::gpu::NEAREST){
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #endif
