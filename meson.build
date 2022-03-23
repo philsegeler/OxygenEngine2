@@ -48,7 +48,8 @@ internal_inc = include_directories('./include')
 #thread_dep = dependency('threads')
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
     sdl2_dep = dependency('sdl2')
-    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep], include_directories : internal_inc)
+    dl_dep = dependency('dl', required : false)
+    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep, dl_dep], include_directories : internal_inc)
 else
     thread_dep = dependency('threads')
     oe_lib = static_library('OxygenEngine', sources : src, dependencies : [thread_dep], include_directories : internal_inc)
