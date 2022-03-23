@@ -1,6 +1,7 @@
 #include <Renderer/NRE_GPU_API.h>
 #include <Renderer/GLES2/NRE_GLES2_API.h>
 #include <types/OE_Libs.h>
+#include <iterator>
 
 #define NRE_GLES2_VERTEXL_LAYOUT_OFFSET(i) ((GLvoid*)(i))
 
@@ -60,12 +61,49 @@ std::size_t NRE_GLES2_API::getVAOSize(std::size_t id){
 }
 
 
-NRE_GLES2_API::NRE_GLES2_API(nre::gpu::info_struct* backend_info){
+NRE_GLES2_API::NRE_GLES2_API(nre::gpu::info_struct& backend_info){
     this->vao_ibos_[0] = 0;
 
-    //TODO: check for the right extensions
-}
+    //TODO: assume no extensions by default
+    backend_info.has_indexed_ranged_draws = true;
+    backend_info.has_uniform_buffers = true;
+    backend_info.has_occlusion_query = true;
+    backend_info.has_cubemap_array = true;
+    backend_info.has_shadow_sampler = true;
+    backend_info.has_instancing = true;
+    backend_info.has_depth_textures = true;
+    backend_info.has_float_textures = true;
+    backend_info.has_float_render_targets = true;
+    backend_info.has_depth_24 = true;
 
+    //TODO: check for the right extensions
+    //glGetIntegerv(GL_NUM_EXTENSIONS, &NumberOfExtensions);
+    std::string extensions_gl = std::string((const char*)glGetString(GL_EXTENSIONS));
+    std::istringstream iss(extensions_gl);
+    std::vector<std::string> extensions_split(std::istream_iterator<std::string>{iss},
+                                 std::istream_iterator<std::string>());
+
+    for(auto extension_es : extensions_split) {
+
+        if (extension_es == "GL_OES_packed_depth_stencil")
+                has_oes_packed_depth_stencil = true;
+        else if (extension_es == "GL_OES_depth24")
+                has_oes_depth24 = true;
+        else if (extension_es == "GL_OES_depth_texture")
+                has_oes_depth_texture = true;
+        else if (extension_es == "GL_EXT_color_buffer_float")
+                has_ext_color_buffer_float = true;
+        else if (extension_es == "GL_EXT_color_buffer_half_float")
+                has_ext_color_buffer_half_float = true;
+        else if (extension_es == "GL_OES_element_index_uint")
+                has_oes_element_index_uint = true;
+        else if (extension_es == "GL_OES_texture_float")
+                has_oes_texture_float = true;
+        else
+            continue;
+    }
+    cout << "texture float " << has_oes_texture_float << endl;
+}
 NRE_GLES2_API::~NRE_GLES2_API(){
     
 }
@@ -603,6 +641,7 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, cons
     // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
     // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
+    auto uniform_id = this->prog_db[this->progs[id]].hasUniform(name);
     if (uniform_type_enum == GL_FLOAT_VEC2){
         glUniform2f(uniform_id, data[0], data[1]);
     }

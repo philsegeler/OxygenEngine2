@@ -97,7 +97,7 @@ GLenum NRE2GL_BufferUse(nre::gpu::BUFFER_USAGE);
 class NRE_GL3_API{
 public:
     
-    NRE_GL3_API(nre::gpu::info_struct*);
+    NRE_GL3_API(nre::gpu::info_struct&);
     ~NRE_GL3_API();
     
     void update(uint32_t, uint32_t);

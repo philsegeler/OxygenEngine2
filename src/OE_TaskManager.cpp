@@ -19,13 +19,13 @@ OE_ThreadStruct::~OE_ThreadStruct(){
     
 }
 
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
 std::atomic<bool> oe_threads_ready_to_start = false;
 #endif 
 
 extern "C" int oxygen_engine_update_thread(void* data){
     
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
     while (!oe_threads_ready_to_start)
         SDL_Delay(1);
 #endif
@@ -45,7 +45,7 @@ extern "C" int oxygen_engine_update_thread(void* data){
 
 extern "C" int oxygen_engine_update_unsync_thread(void* data){
     
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
     while (!oe_threads_ready_to_start)
         SDL_Delay(1);
 #endif
@@ -57,7 +57,7 @@ extern "C" int oxygen_engine_update_unsync_thread(void* data){
     OE_Main->lockMutex();
     OE_Main->finished_unsync_threadIDs.insert(actual_data->name);
     OE_Main->unlockMutex();
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
     actual_data->~OE_UnsyncThreadData();
     ::operator delete(actual_data, std::align_val_t(16));
 #else
@@ -125,13 +125,22 @@ OE_TaskManager::~OE_TaskManager()
 
 int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, bool use_legacy_renderer){
     
+    // NOTE: Windows needs ANGLE to support OpenGL ES. For now let's use the other renderer
+    // ANGLE is not easy to install as a library and use
+#ifdef OE_PLATFORM_WINDOWS
+    bool use_legacy_renderer_really = false;
+#else
+    bool use_legacy_renderer_really = use_legacy_renderer;
+#endif
+
+
     this->window_mutex.lockMutex();
     this->window = new OE_SDL_WindowSystem();
-    this->tryRun_winsys_init(x, y, titlea, fullscreen, use_legacy_renderer, nullptr);
+    this->tryRun_winsys_init(x, y, titlea, fullscreen, use_legacy_renderer_really, nullptr);
     this->window_mutex.unlockMutex();
     
     this->renderer_mutex.lockMutex();
-    if (use_legacy_renderer)
+    if (use_legacy_renderer_really)
         this->renderer = new NRE_RendererLegacy();
     else
         this->renderer = new NRE_Renderer();
@@ -157,12 +166,12 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, bool
     
     this->CreateNewThread("default");
     this->CreateNewThread("something else");
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
     
 #endif
     oe::create_unsync_thread_method("network", &OE_NetworkingBase::execute, this->network);
     
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
     oe_threads_ready_to_start = true;
 #endif
     //cout << "just ran init" << endl;
@@ -171,7 +180,7 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, bool
 
 void OE_TaskManager::CreateUnsyncThread(string thread_name, const OE_METHOD func){
     
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
     auto threaddata = new(std::align_val_t(16)) OE_UnsyncThreadData();
 #else
     auto threaddata = new OE_UnsyncThreadData();
@@ -297,7 +306,7 @@ void OE_TaskManager::Step(){
 void OE_TaskManager::Start(){
     done = false;
     // starts and maintains the game engine
-#ifdef __EMSCRIPTEN__
+#ifdef OE_PLATFORM_WEB
     emscripten_set_main_loop(&oe::step, 0, true);
 #else
     while (!(done)){

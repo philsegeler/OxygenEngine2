@@ -13,8 +13,7 @@
 * -Direct3D 9 (maybe, 5% chance to happen UPDATE 2020: ZERO chance to happen) 
 */
 
-namespace nre{
-namespace gpu{
+namespace nre{ namespace gpu{
     
     struct vertex_layout_input{
         std::size_t vertex_buffer;

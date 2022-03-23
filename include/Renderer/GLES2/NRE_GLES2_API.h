@@ -87,7 +87,7 @@ GLenum NRE2GLES2_BufferUse(nre::gpu::BUFFER_USAGE usage);
 class NRE_GLES2_API{
 public:
     
-    NRE_GLES2_API(nre::gpu::info_struct*);
+    NRE_GLES2_API(nre::gpu::info_struct&);
     ~NRE_GLES2_API();
     
     void update(uint32_t, uint32_t);
@@ -212,7 +212,22 @@ private:
     // every VAO in OpenGL stores its Index Buffer
     std::unordered_map<GLuint, GLuint> vao_ibos_;
     
-    
+    /// opengl es extensions
+    bool has_oes_packed_depth_stencil{false};
+    bool has_oes_depth24{false};
+    bool has_oes_depth_texture{false}; //webgl_depth_texture
+    bool has_ext_color_buffer_float{false};
+    bool has_ext_color_buffer_half_float{false};
+    bool has_oes_element_index_uint{false};
+    bool has_oes_texture_float{false};
+    bool has_oes_texture_float_linear{false};
+    bool has_oes_texture_half_float{false};
+    bool has_oes_texture_half_float_linear{false};
+    bool has_ext_blend_minmax{false};
+    bool has_ext_texture_filter_anisotropic{false};
+    bool has_oes_texture_npot{false};
+    bool has_ext_texture_compression_s3tc{false}; //WEBGL_compressed_texture_s3tc
+    bool has_ext_srgb{false};
     
 }; 
 

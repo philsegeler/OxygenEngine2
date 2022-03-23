@@ -127,7 +127,7 @@ std::size_t NRE_GL3_API::getVAOSize(std::size_t id){
 }
 
 
-NRE_GL3_API::NRE_GL3_API(nre::gpu::info_struct* backend_info){
+NRE_GL3_API::NRE_GL3_API(nre::gpu::info_struct& backend_info){
     this->vao_ibos_[0] = 0;
 #ifndef OE_PLATFORM_WEB
     if(glDebugMessageCallback){

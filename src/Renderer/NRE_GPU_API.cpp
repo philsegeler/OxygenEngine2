@@ -157,10 +157,10 @@ bool nre::gpu::init(SHADER_BACKEND backend_in, int major, int minor){
     switch(nre::gpu::get_api()){
         case GL:
         case GLES:
-             nre::gpu::api = static_cast<void*>(new NRE_GL3_API(&nre::gpu::backend_info));
+             nre::gpu::api = static_cast<void*>(new NRE_GL3_API(nre::gpu::backend_info));
              break;
         case GLES2:
-             nre::gpu::api = static_cast<void*>(new NRE_GLES2_API(&nre::gpu::backend_info));
+             nre::gpu::api = static_cast<void*>(new NRE_GLES2_API(nre::gpu::backend_info));
              break;
         default: return false;
     }
