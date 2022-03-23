@@ -102,7 +102,6 @@ NRE_GLES2_API::NRE_GLES2_API(nre::gpu::info_struct& backend_info){
         else
             continue;
     }
-    cout << "texture float " << has_oes_texture_float << endl;
 }
 NRE_GLES2_API::~NRE_GLES2_API(){
     
