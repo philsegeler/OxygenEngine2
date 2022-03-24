@@ -130,6 +130,9 @@ int test_task3(oe::task task){
     else if (oe::is_key_just_pressed("keyboard-2")){
         oe::load_world_func("assets/OE_Demo2.csl", &OnLoadObject);
     }
+    else if (oe::is_key_just_pressed("keyboard-3")){
+        oe::load_world_func("assets/monkeys.csl", &OnLoadObject);
+    }
     else {
     
     }
