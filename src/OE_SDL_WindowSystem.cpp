@@ -132,7 +132,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
 #endif
     // Also request a depth buffer
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
     
     this->context = SDL_GL_CreateContext(this->window);
     if (context == NULL){

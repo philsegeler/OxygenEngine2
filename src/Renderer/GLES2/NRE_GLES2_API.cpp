@@ -441,7 +441,12 @@ void  NRE_GLES2_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t 
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_RENDERBUFFER, this->rbos[rbo_id].handle);  
     }
     else {
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos[rbo_id].handle);  
+#ifdef OE_PLATFORM_WEB
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+#else
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+#endif
     }
     
     if (glGetError() > 0)
