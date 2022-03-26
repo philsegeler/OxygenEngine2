@@ -540,6 +540,10 @@ void NRE_GLES2_API::setIndexBufferMemoryData(std::size_t id, const std::vector<u
     
     this->ibos[id].size = v.size();
     this->ibos[id].usage = buf_usage;
+    if (v.size() == 0){
+        return;
+    }
+
     if (this->vao_ibos_[this->active_vao_] != this->ibos[id].handle){
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
         this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
@@ -1170,12 +1174,15 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info){
             if (this->ibos[dc_info.index_buf].type_ == GL_UNSIGNED_INT and has_oes_element_index_uint)
                 glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_INT, (GLvoid*)((sizeof(uint32_t))*3*dc_info.offset));
             else if (not has_oes_element_index_uint)
-                cout << "NRE WARNING: Draw call hidden due to too many vertices" << endl;
+                cout << "NRE WARNING: Draw call hidden due to too many vertices (no 32-bit index support)" << endl;
             else
                 glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_SHORT, (GLvoid*)((sizeof(uint16_t))*3*dc_info.offset));
         }
         else {
-            glDrawElements(GL_TRIANGLES, this->ibos[dc_info.index_buf].size, this->ibos[dc_info.index_buf].type_, (GLvoid*)NULL);
+            if ((this->ibos[dc_info.index_buf].type_ == GL_UNSIGNED_SHORT) or has_oes_element_index_uint)
+                glDrawElements(GL_TRIANGLES, this->ibos[dc_info.index_buf].size, this->ibos[dc_info.index_buf].type_, (GLvoid*)NULL);
+            else
+                cout << "NRE WARNING: Draw call hidden due to too many vertices (no 32-bit index support)" << endl;
         }
     }
     else{
