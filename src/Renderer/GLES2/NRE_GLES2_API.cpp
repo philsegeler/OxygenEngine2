@@ -99,9 +99,15 @@ NRE_GLES2_API::NRE_GLES2_API(nre::gpu::info_struct& backend_info){
                 has_oes_element_index_uint = true;
         else if (extension_es == "GL_OES_texture_float")
                 has_oes_texture_float = true;
+        else if (extension_es == "GL_OES_element_index_uint")
+                has_oes_element_index_uint = true;
         else
             continue;
     }
+#ifdef OE_PLATFORM_WEB
+    has_oes_element_index_uint = true; // always available on webgl
+#endif
+
 }
 NRE_GLES2_API::~NRE_GLES2_API(){
     
@@ -508,6 +514,7 @@ void NRE_GLES2_API::setIndexBufferMemory(std::size_t id, std::size_t memory_size
     
     this->ibos[id].size = memory_size;
     this->ibos[id].usage = buf_usage;
+    this->ibos[id].type_ = GL_UNSIGNED_INT;
     if (this->vao_ibos_[this->active_vao_] != this->ibos[id].handle){
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
         this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
@@ -537,7 +544,28 @@ void NRE_GLES2_API::setIndexBufferMemoryData(std::size_t id, const std::vector<u
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
         this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
     }
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size()*sizeof(uint32_t), &v[0], NRE2GLES2_BufferUse(buf_usage));
+    if ((*std::max_element(v.begin(), v.end()) >= 65536) and has_oes_element_index_uint){
+        // 32-bit index buffer needed
+        this->ibos[id].type_ = GL_UNSIGNED_INT;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size()*sizeof(uint32_t), &v[0], NRE2GLES2_BufferUse(buf_usage));
+    }
+    else if (not has_oes_element_index_uint){
+        cout << "NRE WARNING: 32-bit index buffers are not supported on this GPU. Please split your mesh into smaller ones." << endl;
+    }
+    else{
+        // optimization to 16-bit buffer can happen
+        this->ibos[id].type_ = GL_UNSIGNED_SHORT;
+
+        //copy to 16-bit buffer
+        std::vector<uint16_t> v_16bit;
+        v_16bit.reserve(v.size());
+        for (auto x : v){
+            v_16bit.push_back(x);
+        }
+
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size()*sizeof(uint16_t), &v_16bit[0], NRE2GLES2_BufferUse(buf_usage));
+
+    }
 }
 
 void NRE_GLES2_API::deleteIndexBuffer(std::size_t id){
@@ -1139,10 +1167,15 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info){
         
         if (is_ranged_rendering){
             this->check_ibo_offset_length_(dc_info.index_buf, dc_info.offset + dc_info.amount, "draw (indexed)");
-            glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_INT, (GLvoid*)((sizeof(uint32_t))*3*dc_info.offset));
+            if (this->ibos[dc_info.index_buf].type_ == GL_UNSIGNED_INT and has_oes_element_index_uint)
+                glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_INT, (GLvoid*)((sizeof(uint32_t))*3*dc_info.offset));
+            else if (not has_oes_element_index_uint)
+                cout << "NRE WARNING: Draw call hidden due to too many vertices" << endl;
+            else
+                glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_SHORT, (GLvoid*)((sizeof(uint16_t))*3*dc_info.offset));
         }
         else {
-            glDrawElements(GL_TRIANGLES, this->ibos[dc_info.index_buf].size, GL_UNSIGNED_INT, (GLvoid*)NULL);
+            glDrawElements(GL_TRIANGLES, this->ibos[dc_info.index_buf].size, this->ibos[dc_info.index_buf].type_, (GLvoid*)NULL);
         }
     }
     else{

@@ -24,6 +24,7 @@ struct NRE_GLES2_VertexBuffer{
 struct NRE_GLES2_IndexBuffer{
     GLuint                  handle;
     std::size_t             size;
+    GLenum                  type_{GL_UNSIGNED_INT};
     nre::gpu::BUFFER_USAGE    usage;
 };
 
