@@ -170,7 +170,8 @@ int OnLoadObject(oe::task load_event_task, string event_name){
     oe::add_task_func("test_task0", 2, &test_task0);
     oe::add_task_func("test_task2", 3, &test_task2);
     oe::add_task_func("test_task3", 4, &test_task3);
-    
+    oe::mouse_lock();
+
     return 0;
 }
 
