@@ -1,6 +1,7 @@
 #include <OE_SDL_WindowSystem.h>
 #include <types/OE_Libs.h>
 #include <iostream>
+#include <Renderer/NRE_GPU_API.h>
 
 using namespace std;
 
@@ -23,12 +24,23 @@ OE_SDL_WindowSystem::~OE_SDL_WindowSystem(){
     
 }
 
-bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, void* data){
+void OE_SDL_WindowSystem::createWindow(int x, int y){
+    if (!this->fullscreen)
+#ifndef OE_PLATFORM_WEB
+        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
+#else
+        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+#endif
+    else
+        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL);
+}
+
+bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, bool use_legacy_renderer, void* data){
     
     this->title = titlea;
     this->fullscreen = isFullscreen;
     
-#ifndef __EMSCRIPTEN__
+#ifndef OE_PLATFORM_WEB
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0){
         cout << "OE ERROR: Could not initialize SDL2, " << SDL_GetError() << endl;
     }
@@ -38,12 +50,12 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
     
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
     
-    // Request an OpenGL 3.2 core context
+    // Request an OpenGL 3.3 core context
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     
-    this->major = 3; this->minor = 2; this->isES = false;
+    this->major = 3; this->minor = 3; this->isES = false;
     
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
@@ -58,68 +70,75 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
     SDL_Init(SDL_INIT_VIDEO);
 #endif
     
-    if (!this->fullscreen)
-#ifndef __EMSCRIPTEN__
-        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE );
-#else
-        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, x, y, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    this->createWindow(x, y);
+
+    if (not use_legacy_renderer){
+
+#ifndef OE_PLATFORM_WEB
+        this->context = SDL_GL_CreateContext(this->window);
+        if (context == NULL){
+            cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
+            SDL_DestroyWindow(window);
+            this->createWindow(x, y);
+        }
+        else {
+            this->finishInit();
+            return true;
+        }
+
 #endif
-    else
-        this->window = SDL_CreateWindow(this->title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL);
-    
-#ifndef __EMSCRIPTEN__
-    this->context = SDL_GL_CreateContext(this->window);
-    if (context == NULL){
-         cout << "OE WARNING: Could not initialize OpenGL 3.2 Core Context, " << SDL_GetError() << endl;
+        // Request an OpenGL ES 3.0 context
+
+        SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+        this->major = 3; this->minor = 0; this->isES = true;
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+        SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
+
+        // Also request a depth buffer
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+        this->context = SDL_GL_CreateContext(this->window);
+        if (context == NULL){
+            cout << "OE WARNING: Could not initialize OpenGL ES 3.0 Context, " << SDL_GetError() << endl;
+            SDL_DestroyWindow(window);
+            this->createWindow(x, y);
+        }
+        else {
+            this->finishInit();
+            return true;
+        }
     }
-    else {
-        this->finishInit();
-        return true;
-    }
-    
-    // Request an OpenGL 3.1 context
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    
-     this->major = 3; this->minor = 1; this->isES = false;
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
-    
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
-    
-    // Also request a depth buffer
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    
-    this->context = SDL_GL_CreateContext(this->window);
-    if (context == NULL){
-         cout << "OE WARNING: Could not initialize OpenGL 3.1 Context, " << SDL_GetError() << endl;
-    }
-    else {
-        this->finishInit();
-        return true;
-    }//*/
-    
-#endif
-    // Request an OpenGL ES 3.0 context
+
+    // Request an OpenGL ES 2.0 context if everything else fails
+    // If this does not work either then consider not trying to run the engine on prehistoric stuff that
+    // does not even support basic shaders. Or use a software OpenGL renderer.
     
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     
-     this->major = 3; this->minor = 0; this->isES = true;
+     this->major = 2; this->minor = 0; this->isES = true;
      
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+#ifndef OE_PLATFORM_WEB
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
     SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
-    
+#endif
     // Also request a depth buffer
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
     
     this->context = SDL_GL_CreateContext(this->window);
     if (context == NULL){
-         cout << "OE WARNING: Could not initialize OpenGL ES 3.0 Context, " << SDL_GetError() << endl;
+         cout << "OE WARNING: Could not initialize OpenGL ES 2.0 Context, " << SDL_GetError() << endl;
+         SDL_DestroyWindow(window);
+         this->createWindow(x, y);
     }
     else {
         this->finishInit();
@@ -130,12 +149,15 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, v
 }
 
 void OE_SDL_WindowSystem::finishInit(){
-    
+
+#ifndef OE_PLATFORM_WEB
     if (!this->isES)
         gladLoadGLLoader(SDL_GL_GetProcAddress);
     else
         gladLoadGLES2Loader(SDL_GL_GetProcAddress);
-
+#else
+    SDL_GL_MakeCurrent(this->window, this->context);
+#endif
     printf("Vendor:   '%s'\n", glGetString(GL_VENDOR));
     printf("Renderer: '%s'\n", glGetString(GL_RENDERER));
     printf("Version:  '%s'\n", glGetString(GL_VERSION));
@@ -144,7 +166,7 @@ void OE_SDL_WindowSystem::finishInit(){
     OE_WriteToLog(string("Renderer: '") + string((const char*)glGetString(GL_RENDERER)) + "'\n");
     OE_WriteToLog(string("Version:  '") + string((const char*)glGetString(GL_VERSION)) + "'\n");
     SDL_GL_SetSwapInterval(1);
-    
+
     SDL_GetWindowSize(window, &this->resolution_x, &this->resolution_y);
     glViewport(0, 0, this->resolution_x, this->resolution_y);
     
@@ -152,6 +174,21 @@ void OE_SDL_WindowSystem::finishInit(){
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     SDL_GL_SwapWindow(this->window);
+    
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    SDL_GL_SwapWindow(this->window);
+    
+    if (!this->isES){
+        nre::gpu::init(nre::gpu::GL, this->major, this->minor);
+    } 
+    else{
+        if (this->major != 2)
+            nre::gpu::init(nre::gpu::GLES, this->major, this->minor);
+        else{
+            nre::gpu::init(nre::gpu::GLES2, this->major, this->minor);
+        }
+    }
     
     this->event_handler.init();
         

@@ -114,6 +114,8 @@ class OE_PolygonStorage32 {
 //	friend class CSL_Interpreter;
 	friend class OE_Mesh32;
 	friend class NRE_Renderer;
+	friend class NRE_RendererLegacy;
+    friend class NRE_DataHandler;
 	
 	public:
         

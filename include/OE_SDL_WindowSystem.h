@@ -9,7 +9,7 @@ public:
     OE_SDL_WindowSystem();
     ~OE_SDL_WindowSystem();
     
-    bool init(int, int, std::string, bool, void*);
+    bool init(int, int, std::string, bool, bool, void*);
     bool update();
     
     void finishInit();
@@ -21,7 +21,7 @@ public:
     bool updateEvents();
     void destroy();
     
-    SDL_Window* window;
+    SDL_Window* window{nullptr};
     SDL_GLContext context;
     
     SDL_Event event;
@@ -33,6 +33,7 @@ public:
 protected:
     
     void updateWindowEvents();
+    void createWindow(int, int);
 };
 
 

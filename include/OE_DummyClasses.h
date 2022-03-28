@@ -39,7 +39,7 @@ public:
     virtual ~OE_WindowSystemBase();
     
     
-    virtual bool init(int, int, std::string, bool, void*);
+    virtual bool init(int, int, std::string, bool, bool, void*);
     virtual bool update();
     
     virtual bool getMouseLockedState();

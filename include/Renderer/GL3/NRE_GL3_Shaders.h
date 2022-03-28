@@ -4,7 +4,7 @@
 #include <Renderer/NRE_GPU_Shaders.h>
 
 
-std::string NRE_GenGL3VertexShader(NRE_GPU_VertexShader);
-std::string NRE_GenGL3PixelShader(NRE_GPU_PixelShader);
+std::string NRE_GenGL3VertexShader(nre::gpu::vertex_shader);
+std::string NRE_GenGL3PixelShader(nre::gpu::pixel_shader);
 
 #endif

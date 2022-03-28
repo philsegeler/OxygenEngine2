@@ -75,7 +75,14 @@ namespace oe{
             const type regular = (type)4;
         };
     };
-    
+    //------------------------BLOCK-------------------------//
+    // API functions to be executed before the engine runs
+    namespace preinit{
+
+        extern bool use_legacy_renderer; //default: false
+
+    };
+
     /** Basic API functions for starting the Oxygen Engine
      *  and assigning tasks
      */

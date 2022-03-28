@@ -7,156 +7,185 @@
 #include <atomic>
 
 /** platform-specific namespaces
-  * -OpenGL ES 3.0/ OpenGL 3.2
-  * -OpenGL 4.x
-  * -OpenGL 4.5 + GL_ARB_bindless_texture (UPDATE 2020: OpenGL 3.3/ OpenGL ES 3.0 + extensions
-  * -Direct3D 9 (maybe, 5% chance to happen UPDATE 2020: ZERO chance to happen) 
-  */
+* -OpenGL ES 3.0/ OpenGL 3.2
+* -OpenGL 4.x
+* -OpenGL 4.5 + GL_ARB_bindless_texture (UPDATE 2020: OpenGL 3.3/ OpenGL ES 3.0 + extensions
+* -Direct3D 9 (maybe, 5% chance to happen UPDATE 2020: ZERO chance to happen) 
+*/
 
-struct NRE_GPU_VertexLayoutInput{
-    std::size_t vertex_buffer;
-    std::size_t offset;
-    unsigned int amount;
-    unsigned int stride;
+namespace nre{ namespace gpu{
     
-    NRE_GPU_VertexLayoutInput();
-    NRE_GPU_VertexLayoutInput(std::size_t, std::size_t, unsigned int, unsigned int);
+    struct vertex_layout_input{
+        std::size_t vertex_buffer;
+        std::size_t offset;
+        unsigned int amount;
+        unsigned int stride;
+    
+        vertex_layout_input();
+        vertex_layout_input(std::size_t, std::size_t, unsigned int, unsigned int);
+    };
+
+    enum BUFFER_USAGE{
+        DYNAMIC,
+        STATIC,
+        STREAM,
+        NO_REALLOCATION
+    };
+
+    enum RENDERMODE{
+        REGULAR_BACKFACE,
+        REGULAR_FRONTFACE,
+        LIGHT_PREPASS,
+        LIGHT_AFTERPASS,
+        LIGHT_PREPASS_2,
+        LIGHT_AFTERPASS_RG,
+        LIGHT_AFTERPASS_BA,
+        Z_PREPASS_BACKFACE,
+        AFTERPREPASS_BACKFACE,
+        REGULAR_BOTH,
+        TRANSPARENT_BACKFACE,
+        FULLSCREEN_QUAD
+    };
+
+    enum TEXTURE_TYPE{
+        FLOAT,
+        RGBA,
+        RGB10_A2,
+        RGBA16F,
+        SRGBA,
+        RGBA_U16,
+        RGBA_U8,
+        DEPTHSTENCIL
+    };
+
+    enum TEXTURE_FILTER{
+        LINEAR,
+        NEAREST
+    };
+
+    enum FRAMEBUFFER_COPY{
+        FBO_COLOR,
+        FBO_DEPTHSTENCIL,
+        FBO_COLORSTENCIL,
+        FBO_ALL
+    };
+    
+    struct draw_call{
+        std::size_t vertex_layout{0};
+        std::size_t index_buf{0};
+        std::size_t program{0};
+        int offset{0};
+        int amount{0};
+    };
+    
+    
+    struct info_struct{
+        bool has_init{false};
+        
+        bool has_indexed_ranged_draws{true};
+        bool has_uniform_buffers{true};
+        bool has_occlusion_query{true};
+        bool has_cubemap_array{true};
+        bool has_shadow_sampler{true};
+        bool has_instancing{true};
+        bool has_depth_textures{true};
+        bool has_float_textures{true};
+        bool has_float_render_targets{true};
+        bool has_depth_24{true};
+        SHADER_BACKEND underlying_api{UNDEFINED};
+        int major{2};
+        int minor{0};
+    };
+    
+    //////////////////////
+    //  all variables here
+    extern void* api;
+    extern info_struct backend_info;
+    extern std::atomic<bool>  use_wireframe;
+    
+    extern uint32_t x;
+    extern uint32_t y;
+    //////////////////////
+    
+    info_struct get_backend_info();
+    SHADER_BACKEND get_api();
+    
+    std::string get_underlying_api_name();
+    
+    
+    std::size_t new_vertex_buf();
+    std::size_t new_program();
+    std::size_t new_vertex_layout();
+    std::size_t new_index_buf();
+    std::size_t new_uniform_buf();
+    std::size_t new_framebuffer();
+    std::size_t new_texture();
+    std::size_t new_renderbuffer();
+    
+    bool init(SHADER_BACKEND,  int,  int);
+    void update(uint32_t, uint32_t);
+    void destroy();
+    
+    void set_renderbuffer_mode(std::size_t, TEXTURE_TYPE, int, int);
+    void set_framebuffer_renderbuffer(std::size_t, std::size_t, int);;
+    
+    void set_vertex_buf_memory(std::size_t, std::size_t, BUFFER_USAGE);
+    void set_vertex_buf_data(std::size_t, const std::vector<float>&, std::size_t);
+    void set_vertex_buf_memory_and_data(std::size_t, const std::vector<float>&, BUFFER_USAGE);
+    void del_vertex_buf(std::size_t);
+    
+    void set_index_buf_memory(std::size_t, std::size_t, BUFFER_USAGE);
+    void set_index_buf_data(std::size_t, const std::vector<uint32_t>&, std::size_t);
+    void set_index_buf_memory_and_data(std::size_t, const std::vector<uint32_t>&, BUFFER_USAGE);
+    void del_index_buf(std::size_t);
+    
+    void set_uniform_buf_memory(std::size_t, std::size_t, BUFFER_USAGE);
+    void set_uniform_buf_data(std::size_t, const std::vector<float>&, std::size_t);
+    void set_uniform_buf_data(std::size_t, const std::vector<uint32_t>&, std::size_t);
+    void set_uniform_buf_memory_and_data(std::size_t, const std::vector<uint32_t>&, BUFFER_USAGE);
+    void set_uniform_buf_memory_and_data(std::size_t, const std::vector<float>&, BUFFER_USAGE);
+    void del_uniform_buf(std::size_t);
+    
+    void set_uniform_buf_state(std::size_t, std::size_t, int, std::size_t, std::size_t);
+    
+    void set_program_uniform_buf_slot(std::size_t, std::string, int);
+    int  get_program_uniform_buf_slot(std::size_t, std::string);
+    
+    void set_program_texture_slot(std::size_t, std::string, int);
+    void set_program_uniform_data(std::size_t, std::string, uint32_t);
+    void set_program_uniform_data(std::size_t, std::string, float);
+    void set_program_uniform_data(std::size_t, std::string, const std::vector<uint32_t>&);
+    void set_program_uniform_data(std::size_t, std::string, const std::vector<float>&);
+    int  get_program_uniform_slot(std::size_t, std::string);
+    
+    void set_vertex_layout_format(std::size_t, std::vector<vertex_layout_input>);
+    void del_vertex_layout(std::size_t);
+    
+    void set_texture_format(std::size_t, TEXTURE_TYPE, TEXTURE_FILTER, uint32_t, uint32_t, int);
+    void set_texture_slot(std::size_t, int);
+    void del_texture(std::size_t);
+    
+    void set_framebuffer_texture(std::size_t, std::size_t, int);
+    void copy_framebuffer(std::size_t, std::size_t, FRAMEBUFFER_COPY);
+    void use_framebuffer(std::size_t);
+    void clear_framebuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
+    void del_framebuffer(std::size_t);
+    
+    void set_program_vertex_shader(std::size_t, nre::gpu::vertex_shader);
+    void set_program_pixel_shader(std::size_t, nre::gpu::pixel_shader);
+    void setup_program(std::size_t);
+    void del_program(std::size_t);
+    
+    void draw(draw_call);
+    void draw(std::size_t, std::size_t);
+    void draw(std::size_t, std::size_t, std::size_t);
+    void draw_instanced(draw_call, int);
+    void draw_instanced(std::size_t, std::size_t, std::size_t, int);
+    
+    void set_render_mode(nre::gpu::RENDERMODE);
+    
+};
 };
 
-enum NRE_GPU_BUFFER_USAGE{
-    NRE_GPU_DYNAMIC,
-    NRE_GPU_STATIC,
-    NRE_GPU_STREAM
-};
-
-enum NRE_GPU_RENDERMODE{
-    NRE_GPU_REGULAR_BACKFACE,
-    NRE_GPU_REGULAR_FRONTFACE,
-    NRE_GPU_LIGHT_PREPASS,
-    NRE_GPU_LIGHT_AFTERPASS,
-    NRE_GPU_LIGHT_PREPASS_2,
-    NRE_GPU_LIGHT_AFTERPASS_RG,
-    NRE_GPU_LIGHT_AFTERPASS_BA,
-    NRE_GPU_Z_PREPASS_BACKFACE,
-    NRE_GPU_AFTERPREPASS_BACKFACE,
-    NRE_GPU_REGULAR_BOTH,
-    NRE_GPU_TRANSPARENT_BACKFACE,
-    NRE_GPU_FULLSCREEN_QUAD
-};
-
-enum NRE_GPU_TEXTURE_TYPE{
-    NRE_GPU_FLOAT,
-    NRE_GPU_RGBA,
-    NRE_GPU_RGB10_A2,
-    NRE_GPU_RGBA16F,
-    NRE_GPU_SRGBA,
-    NRE_GPU_RGBA_U16,
-    NRE_GPU_RGBA_U8,
-    NRE_GPU_DEPTHSTENCIL
-};
-
-enum NRE_GPU_TEXTURE_FILTER{
-    NRE_GPU_LINEAR,
-    NRE_GPU_NEAREST
-};
-
-enum NRE_GPU_FRAMEBUFFER_COPY{
-    NRE_GPU_FBO_COLOR,
-    NRE_GPU_FBO_DEPTHSTENCIL,
-    NRE_GPU_FBO_COLORSTENCIL,
-    NRE_GPU_FBO_ALL
-};
-
-/** NRE_GPU_API provides a platform-independent
-  * interface for accessing the GPU on differing
-  * systems for the renderer and conserves precious
-  * development time.
-  */
-
-class NRE_GPU_API : public OE_THREAD_SAFETY_OBJECT{
-public:
-    NRE_GPU_API();
-    virtual ~NRE_GPU_API();
-    
-    virtual void update(uint32_t, uint32_t);
-    virtual void destroy();
-    
-    virtual std::string getRenderingAPI();
-    
-    virtual std::size_t newVertexBuffer();
-    virtual std::size_t newVertexLayout();
-    virtual std::size_t newIndexBuffer();
-    virtual std::size_t newProgram();
-    virtual std::size_t newUniformBuffer();
-    virtual std::size_t newFrameBuffer();
-    virtual std::size_t newTexture();
-    virtual std::size_t newRenderBuffer();
-    
-    virtual void setRenderBufferType(std::size_t, NRE_GPU_TEXTURE_TYPE, int, int);
-    virtual void setFrameBufferRenderBuffer(std::size_t, std::size_t, int);
-    
-    virtual void setVertexBufferMemory(std::size_t, std::size_t, NRE_GPU_BUFFER_USAGE);
-    virtual void setVertexBufferData(std::size_t, const std::vector<float>&, std::size_t);
-    virtual void setVertexBufferMemoryData(std::size_t, const std::vector<float>&, NRE_GPU_BUFFER_USAGE);
-    virtual void deleteVertexBuffer(std::size_t);
-    
-    virtual void setIndexBufferMemory(std::size_t, std::size_t, NRE_GPU_BUFFER_USAGE);
-    virtual void setIndexBufferData(std::size_t, const std::vector<uint32_t>&, std::size_t);
-    virtual void setIndexBufferMemoryData(std::size_t, const std::vector<uint32_t>&, NRE_GPU_BUFFER_USAGE);
-    virtual void deleteIndexBuffer(std::size_t);
-    
-    virtual void setUniformBufferMemory(std::size_t, std::size_t, NRE_GPU_BUFFER_USAGE);
-    virtual void setUniformBufferData(std::size_t, const std::vector<float>&, std::size_t);
-    virtual void setUniformBufferData(std::size_t, const std::vector<uint32_t>&, std::size_t);
-    virtual void setProgramUniformBlockSlot(std::size_t, std::string, int);
-    virtual int  getProgramUniformBlockSlot(std::size_t, std::string);
-    
-    virtual void setProgramTextureSlot(std::size_t, std::string, int);
-    virtual void setProgramUniformData(std::size_t, std::string, uint32_t);
-    virtual void setProgramUniformData(std::size_t, std::string, std::vector<uint32_t>);
-    virtual int  getProgramUniformSlot(std::size_t, std::string);
-    
-    virtual void setUniformBlockState(std::size_t, std::size_t, int, std::size_t, std::size_t);
-    virtual void deleteUniformBuffer(std::size_t);
-    
-    virtual void setVertexLayoutFormat(std::size_t, std::vector<NRE_GPU_VertexLayoutInput>);
-    virtual void deleteVertexLayout(std::size_t);
-    
-    virtual void setTextureFormat(std::size_t, NRE_GPU_TEXTURE_TYPE, NRE_GPU_TEXTURE_FILTER, uint32_t, uint32_t, int);
-    virtual void setFrameBufferTexture(std::size_t, std::size_t, int);
-    virtual void setTextureSlot(std::size_t, int);
-    virtual void deleteTexture(std::size_t);
-    
-    virtual void copyFrameBuffer(std::size_t, std::size_t, NRE_GPU_FRAMEBUFFER_COPY);
-    virtual void useFrameBuffer(std::size_t);
-    virtual void clearFrameBuffer(std::size_t, NRE_GPU_FRAMEBUFFER_COPY, float);
-    virtual void deleteFrameBuffer(std::size_t);
-    
-    virtual void setProgramVS(std::size_t, NRE_GPU_VertexShader);
-    virtual void setProgramFS(std::size_t, NRE_GPU_PixelShader);
-    
-    // WARNING: Do not use the setProgram*S with string argument directly
-    //void setProgramGS(std::size_t, FE_GPU_Shader);
-    //void setProgramTCS(std::size_t, FE_GPU_Shader);
-    //void setProgramTES(std::size_t, FE_GPU_Shader);
-    virtual void setupProgram(std::size_t);
-    virtual void deleteProgram(std::size_t);
-    
-    virtual void draw(std::size_t, std::size_t, int, int);
-    virtual void draw(std::size_t, std::size_t);
-    
-    virtual void draw(std::size_t, std::size_t, std::size_t, int, int);
-    virtual void draw(std::size_t, std::size_t, std::size_t);
-    
-    virtual void draw_instanced(std::size_t, std::size_t, std::size_t);
-    virtual void draw_instanced(std::size_t, std::size_t, std::size_t, std::size_t);
-    
-    virtual void setRenderMode(NRE_GPU_RENDERMODE);
-    
-    std::atomic<bool>           use_wireframe{false};
-    
-    uint32_t x{0};
-    uint32_t y{0};
-};
 
 #endif 

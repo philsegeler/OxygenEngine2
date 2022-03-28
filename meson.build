@@ -1,15 +1,19 @@
 project('Oxygen Engine', ['cpp', 'c'], default_options : ['cpp_std=c++17', 'buildtype=debugoptimized'])
 
-src = ['src/OE_SDL_WindowSystem.cpp',
-       'src/Renderer/glad.c',
-       'src/Renderer/GL3/NRE_GL3_API.cpp',
+src = ['src/Renderer/glad.c',
        'src/Renderer/NRE_GPU_API.cpp',
        'src/Renderer/NRE_GPU_Shaders.cpp',
-       'src/Renderer/GL3/NRE_GL3_Shaders.cpp',
        'src/Renderer/NRE_RendererMain.cpp',
-       'src/Renderer/NRE_RenderData.cpp',
+       'src/Renderer/NRE_RendererLegacy.cpp',
+       'src/Renderer/NRE_RendererUtils.cpp',
        'src/Renderer/NRE_DrawCallContainer.cpp',
-       'src/Events/OE_MutexCondition.cpp',
+       'src/Renderer/GL3/NRE_GL3_API.cpp',
+       'src/Renderer/GL3/NRE_GL3_Shaders.cpp',
+       'src/Renderer/GLES2/NRE_GLES2_API.cpp',
+       'src/Renderer/GLES2/NRE_GLES2_Shaders.cpp',
+       'src/Renderer/DataHandler/NRE_RenderData.cpp',
+       'src/Renderer/DataHandler/NRE_DataHandler.cpp',
+       'src/OE_SDL_WindowSystem.cpp',
        'src/OE_API_Helpers.cpp',
        'src/OE_API.cpp',
        'src/OE_Math.cpp',
@@ -17,6 +21,7 @@ src = ['src/OE_SDL_WindowSystem.cpp',
        'src/OE_TaskManager.cpp',
        'src/OE_Task.cpp',
        'src/OE_Error.cpp',
+       'src/Events/OE_MutexCondition.cpp',
        'src/Events/OE_EventHandler.cpp',
        'src/Events/OE_InputEventHandler.cpp',
        'src/Events/OE_EventParser.cpp',
@@ -43,7 +48,8 @@ internal_inc = include_directories('./include')
 #thread_dep = dependency('threads')
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
     sdl2_dep = dependency('sdl2')
-    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep], include_directories : internal_inc)
+    dl_dep = dependency('dl', required : false)
+    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep, dl_dep], include_directories : internal_inc)
 else
     thread_dep = dependency('threads')
     oe_lib = static_library('OxygenEngine', sources : src, dependencies : [thread_dep], include_directories : internal_inc)

@@ -101,6 +101,14 @@ std::vector<float> OE_Mat4x4ToSTDVector(OE_Mat4x4 matrix){
     return output;
 }
 
+std::vector<float> OE_Vec4ToSTDVector(OE_Vec4 vector_in){
+    vector<float> output; output.reserve(4);
+    for (int i=0; i < 4; i++){
+        output.push_back(vector_in[i]);
+    }
+    return output;
+}
+
 
 OE_Mat4x4 OE_Perspective(float fov, float aspect, float near, float far){
 

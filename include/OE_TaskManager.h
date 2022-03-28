@@ -148,7 +148,7 @@ class OE_TaskManager: public OE_MutexCondition
         
         
         // Main functions
-        int Init(std::string, int, int, bool);
+        int Init(std::string, int, int, bool, bool);
         void CreateNewThread(std::string);
         void CreateUnsyncThread(std::string, const OE_METHOD);
         void Step();
@@ -195,7 +195,7 @@ class OE_TaskManager: public OE_MutexCondition
         void tryRun_renderer_updateData();
         bool tryRun_winsys_update();
         
-        void tryRun_winsys_init(int, int, std::string, bool, void*);
+        void tryRun_winsys_init(int, int, std::string, bool, bool, void*);
         void tryRun_physics_init();
         void tryRun_renderer_init();
         void tryRun_network_init();
