@@ -45,24 +45,26 @@ src = ['src/Renderer/glad.c',
 
 internal_inc = include_directories('./include')
 
+glm_dep = dependency('glm')
+
 #thread_dep = dependency('threads')
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
     sdl2_dep = dependency('sdl2')
     dl_dep = dependency('dl', required : false)
-    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep, dl_dep], include_directories : internal_inc)
+    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep, dl_dep, glm_dep], include_directories : internal_inc)
 else
     thread_dep = dependency('threads')
-    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [thread_dep], include_directories : internal_inc)
+    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [thread_dep, glm_dep], include_directories : internal_inc)
 endif
 
 oe_dep = declare_dependency(link_with : oe_lib, include_directories : internal_inc)
 
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
-    executable('CSL_Test', sources : 'examples/csl_main_test.cpp', dependencies : [oe_dep], win_subsystem: 'windows')
-    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep], win_subsystem: 'windows')
+    executable('CSL_Test', sources : 'examples/csl_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
+    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
 else
     #executable('CSL_Test', sources : 'esamples/csl_main_test.cpp', dependencies : [oe_dep], win_subsystem: 'windows')
-    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep], win_subsystem: 'windows')
+    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
 endif
 
 
