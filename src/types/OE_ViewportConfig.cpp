@@ -1,6 +1,6 @@
-#include <types/OE_ViewportConfig.h>
-#include <types/OE_Camera.h>
-#include <types/OE_World.h>
+#include <types/viewport_config.h>
+#include <types/camera.h>
+#include <types/world.h>
 
 using namespace std;
 

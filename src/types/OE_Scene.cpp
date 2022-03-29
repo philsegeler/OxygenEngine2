@@ -1,5 +1,5 @@
-#include <types/OE_Scene.h>
-#include <types/OE_World.h>
+#include <types/scene.h>
+#include <types/world.h>
 
 using namespace std;
 

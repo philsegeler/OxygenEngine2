@@ -1,6 +1,6 @@
-#include <Renderer/NRE_GPU_API.h>
-#include <Renderer/GLES2/NRE_GLES2_API.h>
-#include <types/OE_Libs.h>
+#include <Renderer/api_gpu.h>
+#include <Renderer/GLES2/api_gles2.h>
+#include <types/libs_oe.h>
 #include <iterator>
 
 #define NRE_GLES2_VERTEXL_LAYOUT_OFFSET(i) ((GLvoid*)(i))

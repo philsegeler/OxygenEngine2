@@ -1,5 +1,5 @@
-#include <OE_Math.h>
-#include <Renderer/NRE_RendererUtils.h>
+#include <math_oe.h>
+#include <Renderer/renderer_utils.h>
 
 
 NRE_DrawCallContainer::NRE_DrawCallContainer(){    

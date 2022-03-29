@@ -1,6 +1,6 @@
-#include <types/OE_Mesh.h>
-#include <types/OE_World.h>
-#include <OE_Math.h>
+#include <types/mesh.h>
+#include <types/world.h>
+#include <math_oe.h>
 
 
 using namespace std;

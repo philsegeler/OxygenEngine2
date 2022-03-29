@@ -1,7 +1,7 @@
-#include <OE_SDL_WindowSystem.h>
-#include <types/OE_Libs.h>
+#include <winsys_sdl2.h>
+#include <types/libs_oe.h>
 #include <iostream>
-#include <Renderer/NRE_GPU_API.h>
+#include <Renderer/api_gpu.h>
 
 using namespace std;
 

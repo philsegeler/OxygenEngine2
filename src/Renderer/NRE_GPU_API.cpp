@@ -1,6 +1,6 @@
-#include <Renderer/NRE_GPU_API.h>
-#include <Renderer/GL3/NRE_GL3_API.h>
-#include <Renderer/GLES2/NRE_GLES2_API.h>
+#include <Renderer/api_gpu.h>
+#include <Renderer/GL3/api_gl3.h>
+#include <Renderer/GLES2/api_gles2.h>
 
 uint32_t nre::gpu::x = 0;
 uint32_t nre::gpu::y = 0;

@@ -1,6 +1,6 @@
-#include <OE_Math.h>
-#include <types/OE_PolygonStorage.h>
-#include <Carbon/CSL_Interpreter.h>
+#include <math_oe.h>
+#include <types/polygon_storage.h>
+#include <Carbon/interpreter.h>
 
 using namespace std;
 

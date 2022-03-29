@@ -1,7 +1,7 @@
-#include <types/OE_VertexGroup.h>
-#include <types/OE_Object.h>
-#include <types/OE_Material.h>
-#include <types/OE_World.h>
+#include <types/vertex_group.h>
+#include <types/object.h>
+#include <types/material.h>
+#include <types/world.h>
 
 using namespace std;
 

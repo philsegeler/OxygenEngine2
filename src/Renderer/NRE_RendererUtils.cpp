@@ -1,5 +1,5 @@
-#include <Renderer/NRE_RendererMain.h>
-#include <Renderer/NRE_RendererLegacy.h>
+#include <Renderer/renderer_main.h>
+#include <Renderer/renderer_legacy.h>
 
 bool NRE_RenderGroup::operator < (const NRE_RenderGroup& other) const{
     

@@ -1,5 +1,5 @@
-#include <types/OE_Material.h>
-#include <types/OE_World.h>
+#include <types/material.h>
+#include <types/world.h>
 
 using namespace std;
 

@@ -1,4 +1,4 @@
-#include <types/OE_VertexStorage.h>
+#include <types/vertex_storage.h>
 
 using namespace std;
 

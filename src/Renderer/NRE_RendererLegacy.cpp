@@ -1,5 +1,5 @@
-#include <OE_Math.h>
-#include <Renderer/NRE_RendererLegacy.h>
+#include <math_oe.h>
+#include <Renderer/renderer_legacy.h>
 #include <iostream>
 
 using namespace std;

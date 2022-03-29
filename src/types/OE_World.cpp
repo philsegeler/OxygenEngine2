@@ -1,6 +1,6 @@
-#include <OE_Math.h>
-#include <types/OE_World.h>
-#include <OE_API.h>
+#include <math_oe.h>
+#include <types/world.h>
+#include <api_oe.h>
 
 
 using namespace std;

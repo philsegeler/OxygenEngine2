@@ -1,5 +1,5 @@
-#include <types/OE_Light.h>
-#include <types/OE_World.h>
+#include <types/light.h>
+#include <types/world.h>
 
 using namespace std; 
 
