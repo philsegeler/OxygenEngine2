@@ -9,9 +9,9 @@ using namespace std;
 
 class HydrogenEngine {
 public:
-	~HydrogenEngine();
-private:
+    ~HydrogenEngine();
 
+private:
 };
 
 #endif

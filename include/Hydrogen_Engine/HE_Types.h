@@ -4,6 +4,5 @@
 using namespace std;
 
 struct AABB {
-	vector<FE_Vec4> vertices;
+    vector<FE_Vec4> vertices;
 };
-
