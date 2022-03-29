@@ -1,11 +1,11 @@
 #ifndef NRE_RENDERERLEGACY_H
 #define NRE_RENDERERLEGACY_H
 
+#include <Renderer/api_gpu.h>
 #include <Renderer/renderer_utils.h>
 #include <dummy_classes.h>
-#include <Renderer/api_gpu.h>
 
-class NRE_RendererLegacy : public OE_RendererBase{
+class NRE_RendererLegacy : public OE_RendererBase {
 public:
     NRE_RendererLegacy();
     ~NRE_RendererLegacy();
@@ -17,12 +17,12 @@ public:
     bool updateMultiThread(OE_Task*, int);
     void destroy();
 
-    //holds all rendering data from the engine
+    // holds all rendering data from the engine
     NRE_DataHandler data_;
 
     // normal and point light draw calls, framebuffer, integer texture and ubo/program
     std::set<NRE_PointLightDrawCall, std::greater<NRE_PointLightDrawCall>> pt_visible_lights;
-    std::map<std::size_t, NRE_DrawCallContainer> sce_ren_groups;
+    std::map<std::size_t, NRE_DrawCallContainer>                           sce_ren_groups;
 
     std::size_t pt_light_ubo{0};
     std::size_t prog_light{0};
@@ -56,13 +56,12 @@ public:
     bool setup_sphere_prog{false};
 
 protected:
-
     void initOffscreenFrameBuffer();
     void initFullscreenQuad();
     void initGammaCorrectionProg();
     void initGPUSphere();
 
-    ///These two are in the NRE_RendererUtils.cpp
+    /// These two are in the NRE_RendererUtils.cpp
     void generateDrawCalls();
     void sortPointLights(std::size_t, std::size_t);
     /////////////////////////

@@ -31,56 +31,48 @@
 #define FE_EPSILON 0.000001f
 #define OE_EPSILON 0.000001f
 
-namespace oe{
+namespace oe {
     const auto PI = glm::pi<float>();
 };
 
 // This is done, so that in the event we want to change the math library
 // it will be easy
 
-class OE_Vec4 : public glm::vec4{
+class OE_Vec4 : public glm::vec4 {
 public:
-    
     using glm::vec4::vec4;
-    OE_Vec4 operator + (const OE_Vec4&);
-    OE_Vec4 operator - (const OE_Vec4&);
-    
+    OE_Vec4 operator+(const OE_Vec4&);
+    OE_Vec4 operator-(const OE_Vec4&);
 };
 
-class OE_Vec3 : public glm::vec3{
+class OE_Vec3 : public glm::vec3 {
 public:
-    
     using glm::vec3::vec3;
-    
 };
 
-class OE_Mat4x4 : public glm::mat4{
+class OE_Mat4x4 : public glm::mat4 {
 public:
     using glm::mat4::mat4;
-    
-    OE_Mat4x4 operator * (const OE_Mat4x4&);
-    OE_Vec4 operator * (const OE_Vec4&);
-    
-    
+
+    OE_Mat4x4 operator*(const OE_Mat4x4&);
+    OE_Vec4   operator*(const OE_Vec4&);
 };
 
-class OE_Mat3x3: public glm::mat3{
+class OE_Mat3x3 : public glm::mat3 {
 public:
-    
     using glm::mat3::mat3;
-    
-    OE_Vec3 operator * (const OE_Vec3&);
+
+    OE_Vec3 operator*(const OE_Vec3&);
 };
 
-class OE_Quat : public glm::quat{
-public: 
-    
+class OE_Quat : public glm::quat {
+public:
     using glm::quat::quat;
-    
+
     OE_Quat(glm::quat);
-    
-    OE_Quat operator * (const OE_Quat&);
-};//*/
+
+    OE_Quat operator*(const OE_Quat&);
+}; //*/
 
 /*
 
@@ -102,8 +94,8 @@ OE_Mat4x4 OE_Translate(OE_Mat4x4, OE_Vec3);
 OE_Mat4x4 OE_Scale(OE_Mat4x4, OE_Vec3);
 
 OE_Mat4x4 OE_Quat2Mat4x4(OE_Quat);
-OE_Vec4 OE_Normalize(OE_Vec4);
-OE_Quat OE_Normalize(OE_Quat);
+OE_Vec4   OE_Normalize(OE_Vec4);
+OE_Quat   OE_Normalize(OE_Quat);
 
 float OE_Length(OE_Vec3);
 float OE_Length(OE_Vec4);
@@ -114,15 +106,15 @@ float OE_Length(OE_Vec4);
 
 std::vector<float> OE_Mat4x4ToSTDVector(OE_Mat4x4);
 std::vector<float> OE_Vec4ToSTDVector(OE_Vec4);
-OE_Mat4x4 OE_Perspective(float, float, float, float);
+OE_Mat4x4          OE_Perspective(float, float, float, float);
 
-OE_Vec4   OE_GetClipCoords(OE_Mat4x4, OE_Vec4);
+OE_Vec4 OE_GetClipCoords(OE_Mat4x4, OE_Vec4);
 
 OE_Quat OE_QuatFromAxisAngle(float, float, float, float);
 
 std::vector<float> OE_GetBoundingBoxVertexBuffer(float, float, float, float, float, float);
 
-std::vector<float> OE_GetBoundingSphereVertexBuffer(float, float, size_t);
+std::vector<float>    OE_GetBoundingSphereVertexBuffer(float, float, size_t);
 std::vector<uint32_t> OE_GetBoundingSphereIndexBuffer(float, float, size_t);
 
 #endif // FMATH_H_INCLUDED

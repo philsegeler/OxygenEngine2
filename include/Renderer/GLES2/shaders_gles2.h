@@ -7,4 +7,4 @@
 std::string NRE_GenGLES2VertexShader(nre::gpu::vertex_shader);
 std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader);
 
-#endif 
+#endif

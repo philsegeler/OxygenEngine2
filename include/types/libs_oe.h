@@ -30,11 +30,11 @@
 
 #include <emscripten.h>
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL_opengles2.h>
 #include <GLES3/gl3.h>
 #include <GLES3/gl31.h>
 #include <GLES3/gl32.h>
 #include <SDL.h>
+#include <SDL_opengles2.h>
 
 #else
 
@@ -49,30 +49,29 @@
 #endif
 
 
-#include <cassert>
-#include <array>
-#include <map>
-#include <iostream>
-#include <vector>
-#include <string>
-#include <unordered_set>
-#include <set>
-#include <unordered_map>
-#include <queue>
 #include <algorithm>
-#include <list>
-#include <fstream>
-#include <sstream>
-#include <streambuf>
-#include <typeinfo>
-#include <ctime>
+#include <array>
+#include <atomic>
+#include <bitset>
+#include <cassert>
 #include <cmath>
+#include <ctime>
 #include <exception>
+#include <fstream>
 #include <functional>
 #include <iomanip>
-#include <ctime>
-#include <bitset>
+#include <iostream>
+#include <list>
+#include <map>
 #include <memory>
-#include <atomic>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <streambuf>
+#include <string>
+#include <typeinfo>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #endif // OE_LIBS_H_INCLUDED
