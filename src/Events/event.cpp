@@ -4,7 +4,7 @@
 
 using namespace std;
 
-//bool oe::event_t::finished = false;
+// bool oe::event_t::finished = false;
 
 oe::event_t::event_t() {
     active_ = false;
@@ -22,7 +22,7 @@ void oe::event_t::set_func(const oe::event_func_type a_func) {
 
 // keyboard
 oe::keyboard_event_t::keyboard_event_t() {
-    type_    = oe::KEYBOARD_EVENT;
+    type_     = oe::KEYBOARD_EVENT;
     keystate_ = oe::BUTTON_RELEASE;
 }
 oe::keyboard_event_t::~keyboard_event_t() {
@@ -35,8 +35,8 @@ int oe::keyboard_event_t::call() {
 
 // mouse
 oe::mouse_event_t::mouse_event_t() {
-    type_      = oe::MOUSE_EVENT;
-    keystate_  = oe::BUTTON_RELEASE;
+    type_     = oe::MOUSE_EVENT;
+    keystate_ = oe::BUTTON_RELEASE;
 }
 oe::mouse_event_t::~mouse_event_t() {
 }
@@ -48,7 +48,7 @@ int oe::mouse_event_t::call() {
 
 // mouse move
 oe::mouse_move_event_t::mouse_move_event_t() {
-    type_      = oe::MOUSE_MOVE_EVENT;
+    type_ = oe::MOUSE_MOVE_EVENT;
 }
 oe::mouse_move_event_t::~mouse_move_event_t() {
 }
@@ -60,7 +60,7 @@ int oe::mouse_move_event_t::call() {
 
 // gamepad
 oe::gamepad_event_t::gamepad_event_t() {
-    type_     = oe::GAMEPAD_EVENT;
+    type_      = oe::GAMEPAD_EVENT;
     axis_      = 0;
     axismoved_ = false;
 }

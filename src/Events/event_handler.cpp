@@ -51,7 +51,7 @@ std::shared_ptr<oe::event_t> oe::event_handler_t::getIEventUNSAFE(string a_name)
 void oe::event_handler_t::createUserEvent(string a_name) {
 
     std::shared_ptr<oe::custom_event_t> event = std::make_shared<oe::custom_event_t>();
-    event->name_                          = a_name;
+    event->name_                              = a_name;
     event->set_func(&template_event_func);
 
     lockMutex();
@@ -240,18 +240,18 @@ void oe::event_handler_t::cleanup() {
     unlockMutex();
 }
 
-int oe::event_handler_t::get_mouse_x(){
+int oe::event_handler_t::get_mouse_x() {
     return mouse_x_;
 }
-int oe::event_handler_t::get_mouse_y(){
+int oe::event_handler_t::get_mouse_y() {
     return mouse_y_;
 }
-int oe::event_handler_t::get_mouse_delta_y(){
+int oe::event_handler_t::get_mouse_delta_y() {
     return mouse_delta_y_;
 }
-int oe::event_handler_t::get_mouse_delta_x(){
+int oe::event_handler_t::get_mouse_delta_x() {
     return mouse_delta_x_;
 }
-bool oe::event_handler_t::has_mouse_moved(){
+bool oe::event_handler_t::has_mouse_moved() {
     return mouse_moved_;
 }

@@ -319,8 +319,8 @@ bool OE_SDL_WindowSystem::updateEvents() {
     case SDL_MOUSEWHEEL:
 
         this->event_handler.lockMutex();
-        //mouse_mouse_wheel = event.wheel.y;
-        // fetch mouse position, since this may be needed
+        // mouse_mouse_wheel = event.wheel.y;
+        //  fetch mouse position, since this may be needed
         this->event_handler.unlockMutex();
 
         this->event_handler.broadcastIEvent("mouse-wheel");

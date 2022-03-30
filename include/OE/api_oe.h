@@ -46,7 +46,7 @@ namespace oe {
 
     // enum typedefs
 
-    typedef OE_METHOD    method_type;
+    typedef OE_METHOD method_type;
 
     namespace os {
         typedef OE_OS type;
