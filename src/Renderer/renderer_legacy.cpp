@@ -1,6 +1,6 @@
 #include <OE/Renderer/renderer_legacy.h>
-#include <iostream>
 #include <OE/math_oe.h>
+#include <iostream>
 
 using namespace std;
 
