@@ -1,8 +1,8 @@
 #ifndef OE_TCM_H
 #define OE_TCM_H
 
-#include <atomic>
 #include <OE/types/texture.h>
+#include <atomic>
 
 class OE_TCM_Texture : public CSL_WriterBase {
 public:

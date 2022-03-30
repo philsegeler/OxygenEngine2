@@ -2,8 +2,8 @@
 #define OE_SHARED_INDEX_MAP_H
 
 
-#include <OE/types/base_types.h>
 #include <OE/error_oe.h>
+#include <OE/types/base_types.h>
 #include <algorithm>
 #include <iterator>
 #include <map>

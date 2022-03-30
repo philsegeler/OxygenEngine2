@@ -1,11 +1,11 @@
 #ifndef OE_MESH_H
 #define OE_MESH_H
 
-#include <atomic>
-#include <memory>
 #include <OE/types/object.h>
 #include <OE/types/polygon_storage.h>
 #include <OE/types/tcm.h>
+#include <atomic>
+#include <memory>
 
 /* OE_Mesh32 represents a mesh with 32-bit index, which means more than 65535 unique vertex combinations are allowed.
  */

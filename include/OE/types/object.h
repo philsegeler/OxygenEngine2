@@ -1,10 +1,10 @@
 #ifndef OE_OBJECT_H
 #define OE_OBJECT_H
 
-#include <atomic>
 #include <OE/math_oe.h>
-#include <set>
 #include <OE/types/base_types.h>
+#include <atomic>
+#include <set>
 
 // NOTE:  the structure of this struct (yeah i know) is subject to change
 struct OE_ObjectData {

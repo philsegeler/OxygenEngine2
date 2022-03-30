@@ -1,11 +1,11 @@
 #ifndef OE_POLYGONSTORAGE_H
 #define OE_POLYGONSTORAGE_H
 
+#include <OE/types/vertex_group.h>
+#include <OE/types/vertex_storage.h>
 #include <bitset>
 #include <functional>
 #include <memory>
-#include <OE/types/vertex_group.h>
-#include <OE/types/vertex_storage.h>
 
 class OE_Mesh32;
 
