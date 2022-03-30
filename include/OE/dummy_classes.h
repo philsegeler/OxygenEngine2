@@ -60,7 +60,7 @@ public:
     std::atomic<bool> restart_renderer{false};
 
     // The global event handler is here and must be initialized in all sub classes
-    OE_EventHandler event_handler;
+    oe::event_handler_t event_handler;
 };
 
 /** This is a dummy class aimed to be a base class for

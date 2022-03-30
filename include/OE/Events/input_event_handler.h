@@ -7,22 +7,23 @@
 /** This class is intended to store any user inputs
  *
  */
-class OE_InputEventHandler {
-public:
-    friend class OE_EventHandler;
-    friend class OE_TaskManager;
+namespace oe{
+    class input_event_handler_t {
+    public:
+        friend class OE_EventHandler;
+        friend class OE_TaskManager;
 
-    OE_InputEventHandler();
-    ~OE_InputEventHandler();
+        input_event_handler_t();
+        ~input_event_handler_t();
 
-    void createEvents(std::map<std::string, std::shared_ptr<OE_Event>>*);
+        void createEvents(std::map<std::string, std::shared_ptr<oe::event_t>>*);
 
-    // protected:
-    std::vector<std::string>                 active_events;
-    std::unordered_map<uint8_t, std::string> mouseList;
-    ;
+        // protected:
+        std::vector<std::string>                 active_events;
+        std::unordered_map<uint8_t, std::string> mouseList;
+        ;
 
-    std::unordered_map<int, std::string> keyList;
+        std::unordered_map<int, std::string> keyList;
+    };
 };
-
 #endif // OE_INPUTEVENTHANDLER_H

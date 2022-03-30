@@ -255,9 +255,14 @@ bool OE_SDL_WindowSystem::update() {
     if (this->mouse_moved) {
         // fetch mouse position, since this IS needed
         this->event_handler.lockMutex();
-        SDL_GetMouseState(&OE_MouseEvent::x, &OE_MouseEvent::y);
-        SDL_GetRelativeMouseState(&OE_MouseEvent::delta_x, &OE_MouseEvent::delta_y);
+
+        int mouse_x, mouse_y, mouse_delta_x, mouse_delta_y;
+        SDL_GetMouseState(&mouse_x, &mouse_y);
+        SDL_GetRelativeMouseState(&mouse_delta_x, &mouse_delta_y);
+        this->event_handler.internal_update_mouse_status(mouse_x, mouse_y, mouse_delta_x, mouse_delta_y);
+
         this->event_handler.unlockMutex();
+
         this->event_handler.broadcastIEvent("mouse-motion");
     }
 
@@ -296,12 +301,6 @@ bool OE_SDL_WindowSystem::updateEvents() {
     case SDL_MOUSEBUTTONDOWN:
         for (auto key : this->event_handler.input_handler.mouseList) {
             if (this->event.button.button == key.first) {
-                // fetch mouse position, since this may be needed
-                this->event_handler.lockMutex();
-                SDL_GetMouseState(&OE_MouseEvent::x, &OE_MouseEvent::y);
-                SDL_GetRelativeMouseState(&OE_MouseEvent::delta_x, &OE_MouseEvent::delta_y);
-                this->event_handler.unlockMutex();
-
                 this->event_handler.internalBroadcastKeyDownEvent("mouse-" + key.second);
             }
         }
@@ -311,12 +310,6 @@ bool OE_SDL_WindowSystem::updateEvents() {
     case SDL_MOUSEBUTTONUP:
         for (auto key : this->event_handler.input_handler.mouseList) {
             if (this->event.button.button == key.first) {
-                // fetch mouse position, since this may be needed
-                this->event_handler.lockMutex();
-                SDL_GetMouseState(&OE_MouseEvent::x, &OE_MouseEvent::y);
-                SDL_GetRelativeMouseState(&OE_MouseEvent::delta_x, &OE_MouseEvent::delta_y);
-                this->event_handler.unlockMutex();
-
                 this->event_handler.internalBroadcastKeyUpEvent("mouse-" + key.second);
             }
         }
@@ -326,10 +319,8 @@ bool OE_SDL_WindowSystem::updateEvents() {
     case SDL_MOUSEWHEEL:
 
         this->event_handler.lockMutex();
-        OE_MouseEvent::mouse_wheel = event.wheel.y;
+        //mouse_mouse_wheel = event.wheel.y;
         // fetch mouse position, since this may be needed
-        SDL_GetMouseState(&OE_MouseEvent::x, &OE_MouseEvent::y);
-        SDL_GetRelativeMouseState(&OE_MouseEvent::delta_x, &OE_MouseEvent::delta_y);
         this->event_handler.unlockMutex();
 
         this->event_handler.broadcastIEvent("mouse-wheel");

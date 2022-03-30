@@ -4,108 +4,82 @@
 
 using namespace std;
 
-bool OE_Event::finished = false;
+//bool oe::event_t::finished = false;
 
-OE_Event::OE_Event() {
+oe::event_t::event_t() {
     active_ = false;
     name_   = "";
 }
 
-OE_Event::~OE_Event() {
+oe::event_t::~event_t() {
 }
 
-void OE_Event::setFunc(const OE_EVENTFUNC a_func) {
+void oe::event_t::set_func(const oe::event_func_type a_func) {
     lockMutex();
     func_ = a_func;
     unlockMutex();
 }
 
 // keyboard
-OE_KeyboardEvent::OE_KeyboardEvent() {
-    type_    = OE_KEYBOARD_EVENT;
-    keystate = OE_BUTTON::RELEASE;
+oe::keyboard_event_t::keyboard_event_t() {
+    type_    = oe::KEYBOARD_EVENT;
+    keystate_ = oe::BUTTON_RELEASE;
 }
-OE_KeyboardEvent::~OE_KeyboardEvent() {
+oe::keyboard_event_t::~keyboard_event_t() {
 }
 
-int OE_KeyboardEvent::call() {
+int oe::keyboard_event_t::call() {
 
     return internal_call();
 }
 
 // mouse
-int  OE_MouseEvent::x           = 0;
-int  OE_MouseEvent::y           = 0;
-int  OE_MouseEvent::delta_x     = 0;
-int  OE_MouseEvent::delta_y     = 0;
-int  OE_MouseEvent::mouse_wheel = 0;
-bool OE_MouseEvent::mousemoved  = false;
-
-OE_MouseEvent::OE_MouseEvent() {
-    type_      = OE_MOUSE_EVENT;
-    mousemoved = false;
-    keystate   = OE_BUTTON::RELEASE;
+oe::mouse_event_t::mouse_event_t() {
+    type_      = oe::MOUSE_EVENT;
+    keystate_  = oe::BUTTON_RELEASE;
 }
-OE_MouseEvent::~OE_MouseEvent() {
+oe::mouse_event_t::~mouse_event_t() {
 }
 
-int OE_MouseEvent::call() {
+int oe::mouse_event_t::call() {
+
+    return internal_call();
+}
+
+// mouse move
+oe::mouse_move_event_t::mouse_move_event_t() {
+    type_      = oe::MOUSE_MOVE_EVENT;
+}
+oe::mouse_move_event_t::~mouse_move_event_t() {
+}
+
+int oe::mouse_move_event_t::call() {
 
     return internal_call();
 }
 
 // gamepad
-OE_GamepadEvent::OE_GamepadEvent() {
-    type_     = OE_GAMEPAD_EVENT;
-    axis      = 0;
-    axismoved = false;
+oe::gamepad_event_t::gamepad_event_t() {
+    type_     = oe::GAMEPAD_EVENT;
+    axis_      = 0;
+    axismoved_ = false;
 }
-OE_GamepadEvent::~OE_GamepadEvent() {
+oe::gamepad_event_t::~gamepad_event_t() {
 }
 
-int OE_GamepadEvent::call() {
+int oe::gamepad_event_t::call() {
 
     return internal_call();
 }
 
 // custom
-OE_CustomEvent::OE_CustomEvent() {
-    type_ = OE_CUSTOM_EVENT;
+oe::custom_event_t::custom_event_t() {
+    type_ = oe::CUSTOM_EVENT;
 }
-OE_CustomEvent::~OE_CustomEvent() {
-}
-
-int OE_CustomEvent::call() {
-
-    return internal_call();
+oe::custom_event_t::~custom_event_t() {
 }
 
-// error
-OE_ErrorEvent::OE_ErrorEvent() {
-    type_ = OE_ERROR_EVENT;
-}
-OE_ErrorEvent::~OE_ErrorEvent() {
-}
-
-int OE_ErrorEvent::call() {
-
-    /***************************/
-    /// non-generic handling
-    if (this->importance == OE_FATAL) finished = true;
-
-    this->internal_call();
-
-    return 0;
-}
-
-// multiple events
-OE_EventCombo::OE_EventCombo() {
-    type_ = OE_EVENT_COMBO;
-}
-OE_EventCombo::~OE_EventCombo() {
-}
-
-int OE_EventCombo::call() {
+int oe::custom_event_t::call() {
 
     return internal_call();
 }

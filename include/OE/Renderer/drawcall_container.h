@@ -20,7 +20,7 @@ public:
     public:
         typedef std::set<NRE_RenderGroup>::iterator set_iter_t;
 
-        Iterator(NRE_DrawCallContainer&, set_iter_t);
+        Iterator(set_iter_t);
 
         Iterator&       operator++();
         Iterator        operator++(int);
@@ -35,7 +35,6 @@ public:
 
     private:
         set_iter_t             iter;
-        NRE_DrawCallContainer& db_;
     };
 
     Iterator begin();

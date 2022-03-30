@@ -112,7 +112,7 @@ bool oe::is_mouse_moved() {
 int oe::get_delta_mouse_x() {
     OE_API_Helpers::checkIfInit();
     OE_Main->window->event_handler.lockMutex();
-    int output = OE_MouseEvent::delta_x;
+    int output = OE_Main->window->event_handler.get_mouse_delta_x();
     OE_Main->window->event_handler.unlockMutex();
     return output;
 }
@@ -120,7 +120,7 @@ int oe::get_delta_mouse_x() {
 int oe::get_delta_mouse_y() {
     OE_API_Helpers::checkIfInit();
     OE_Main->window->event_handler.lockMutex();
-    int output = OE_MouseEvent::delta_y;
+    int output = OE_Main->window->event_handler.get_mouse_delta_y();
     OE_Main->window->event_handler.unlockMutex();
     return output;
 }
@@ -128,7 +128,7 @@ int oe::get_delta_mouse_y() {
 int oe::get_mouse_x() {
     OE_API_Helpers::checkIfInit();
     OE_Main->window->event_handler.lockMutex();
-    int output = OE_MouseEvent::x;
+    int output = OE_Main->window->event_handler.get_mouse_x();
     OE_Main->window->event_handler.unlockMutex();
     return output;
 }
@@ -136,14 +136,16 @@ int oe::get_mouse_x() {
 int oe::get_mouse_y() {
     OE_API_Helpers::checkIfInit();
     OE_Main->window->event_handler.lockMutex();
-    int output = OE_MouseEvent::y;
+    int output = OE_Main->window->event_handler.get_mouse_y();
     OE_Main->window->event_handler.unlockMutex();
     return output;
 }
 
 void oe::destroy_event(std::string name) {
     OE_API_Helpers::checkIfInit();
+    OE_Main->window->event_handler.lockMutex();
     OE_Main->window->event_handler.destroyIEvent(name);
+    OE_Main->window->event_handler.unlockMutex();
 }
 
 void oe::pause(int x) {

@@ -6,7 +6,7 @@
 using namespace std;
 
 // This is where events' error handling is happening
-int OE_Event::internal_call() {
+int oe::event_t::internal_call() {
     /***************************/
     /// generic handling
 

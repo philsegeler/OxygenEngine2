@@ -7,7 +7,7 @@
 
 /// TODO: INCOMPLETE (READ: NON FUNCTIONAL)
 
-
+/*
 enum OE_EVENT_PAIR_TYPE { OE_NO_COMBO = 0, OE_AND_COMBO = 1, OE_OR_COMBO = 2 };
 
 /// class intended to store a pair (or no pair) of events
@@ -23,7 +23,7 @@ protected:
     OE_EventPair*      event1;
     std::string        name;
 };
-
+*/
 
 
 #endif
