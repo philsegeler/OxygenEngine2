@@ -43,7 +43,7 @@ src = ['src/Renderer/glad.c',
        'src/types/world.cpp']
 
 
-internal_inc = include_directories('./include')
+internal_inc = include_directories('./include/OE')
 
 glm_dep = dependency('glm')
 
