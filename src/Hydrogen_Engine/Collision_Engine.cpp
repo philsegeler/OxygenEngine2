@@ -6,13 +6,12 @@
 using namespace std;
 
 Collision_Engine::~Collision_Engine() {
-
 }
 
-AABB Collision_Engine::generateAABB(FE_Mesh *object) {
-	AABB result;
+AABB Collision_Engine::generateAABB(FE_Mesh* object) {
+    AABB result;
 
-	return result;
+    return result;
 }
 
 #endif
