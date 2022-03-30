@@ -1,5 +1,5 @@
-#include <Renderer/GL3/api_gl3.h>
-#include <types/libs_oe.h>
+#include <OE/Renderer/GL3/api_gl3.h>
+#include <OE/types/libs_oe.h>
 
 #define NRE_GL3_VERTEXL_LAYOUT_OFFSET(i) ((GLvoid*)(i))
 

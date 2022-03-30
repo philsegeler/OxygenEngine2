@@ -1,9 +1,9 @@
 #ifndef OE_API_H_INCLUDED
 #define OE_API_H_INCLUDED
 
-#include <api_helpers_oe.h>
-#include <math_oe.h>
-#include <task_manager.h>
+#include <OE/api_helpers_oe.h>
+#include <OE/math_oe.h>
+#include <OE/task_manager.h>
 
 
 /*enum OE_OS : int{

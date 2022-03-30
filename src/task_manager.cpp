@@ -1,10 +1,10 @@
-#include <Renderer/renderer_legacy.h>
-#include <Renderer/renderer_main.h>
-#include <api_oe.h>
-#include <math_oe.h>
-#include <task_manager.h>
-#include <types/libs_oe.h>
-#include <winsys_sdl2.h>
+#include <OE/Renderer/renderer_legacy.h>
+#include <OE/Renderer/renderer_main.h>
+#include <OE/api_oe.h>
+#include <OE/math_oe.h>
+#include <OE/task_manager.h>
+#include <OE/types/libs_oe.h>
+#include <OE/winsys_sdl2.h>
 
 using namespace std;
 using namespace oe;

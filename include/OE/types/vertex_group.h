@@ -1,8 +1,8 @@
 #ifndef OE_VERTEXGROUP_H
 #define OE_VERTEXGROUP_H
 
+#include <OE/types/base_types.h>
 #include <memory>
-#include <types/base_types.h>
 
 /** OE_VertexGroup is a basis for groups of triangles (never mind the name being 'vertices')
  *  Each instance is assigned a material and a bone id and each instance of these usually gets their own drawcall, unless

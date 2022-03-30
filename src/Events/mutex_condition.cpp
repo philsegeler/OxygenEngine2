@@ -1,5 +1,5 @@
-#include <Events/mutex_condition.h>
-#include <types/libs_oe.h>
+#include <OE/Events/mutex_condition.h>
+#include <OE/types/libs_oe.h>
 
 #ifdef __EMSCRIPTEN__
 void OE_EmscriptenBoolConditionWrapper::operator=(bool a_val) {

@@ -3,9 +3,9 @@
 
 #include <atomic>
 #include <memory>
-#include <types/object.h>
-#include <types/polygon_storage.h>
-#include <types/tcm.h>
+#include <OE/types/object.h>
+#include <OE/types/polygon_storage.h>
+#include <OE/types/tcm.h>
 
 /* OE_Mesh32 represents a mesh with 32-bit index, which means more than 65535 unique vertex combinations are allowed.
  */

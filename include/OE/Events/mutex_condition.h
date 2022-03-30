@@ -1,7 +1,7 @@
 #ifndef OE_MUTEXCONDITION_H
 #define OE_MUTEXCONDITION_H
 
-#include <types/base_types.h>
+#include <OE/types/base_types.h>
 
 #ifdef __EMSCRIPTEN__
 struct OE_EmscriptenBoolConditionWrapper : public OE_THREAD_SAFETY_OBJECT {

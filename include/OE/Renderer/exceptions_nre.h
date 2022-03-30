@@ -1,7 +1,7 @@
 #ifndef NRE_EXCEPTIONS_H
 #define NRE_EXCEPTIONS_H
 
-#include <types/base_types.h>
+#include <OE/types/base_types.h>
 
 namespace nre {
     class not_initialized : public oe::renderer_error {

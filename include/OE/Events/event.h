@@ -1,12 +1,13 @@
 #ifndef OE_EVENT_H
 #define OE_EVENT_H
 
-#include <Events/event_parser.h>
+#include <OE/Events/event_parser.h>
+#include <OE/task.h>
 #include <atomic>
 #include <functional>
 #include <memory>
 #include <set>
-#include <task.h>
+
 
 /** Temporary documentation: (OUTDATED)
  *

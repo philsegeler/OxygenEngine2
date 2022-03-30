@@ -1,13 +1,15 @@
 #ifndef OE_SHARED_INDEX_MAP_H
 #define OE_SHARED_INDEX_MAP_H
 
+
+#include <OE/types/base_types.h>
+#include <OE/error_oe.h>
 #include <algorithm>
-#include <error_oe.h>
 #include <iterator>
 #include <map>
 #include <memory>
 #include <set>
-#include <types/base_types.h>
+
 
 
 /** New General class intended to optimize and properly parallelize accesing of

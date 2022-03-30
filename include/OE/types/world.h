@@ -1,9 +1,9 @@
 #ifndef OE_WORLD_H
 #define OE_WORLD_H
 
-#include <types/scene.h>
-#include <types/shared_index_map.h>
-#include <types/viewport_config.h>
+#include <OE/types/scene.h>
+#include <OE/types/shared_index_map.h>
+#include <OE/types/viewport_config.h>
 
 class OE_World : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
 

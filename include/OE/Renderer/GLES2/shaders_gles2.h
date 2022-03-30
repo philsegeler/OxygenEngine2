@@ -1,7 +1,7 @@
 #ifndef NRE_GLES2_SHADERS_H
 #define NRE_GLES2_SHADERS_H
 
-#include <Renderer/shaders_gpu.h>
+#include <OE/Renderer/shaders_gpu.h>
 
 
 std::string NRE_GenGLES2VertexShader(nre::gpu::vertex_shader);

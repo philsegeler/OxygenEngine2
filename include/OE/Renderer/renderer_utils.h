@@ -1,7 +1,7 @@
 #ifndef NRE_RENDERERUTILS_H
 #define NRE_RENDERERUTILS_H
 
-#include <Renderer/DataHandler/data_handler.h>
+#include <OE/Renderer/DataHandler/data_handler.h>
 
 struct NRE_RenderGroup {
 

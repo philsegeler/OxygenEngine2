@@ -1,5 +1,5 @@
-#include <api_oe.h>
-#include <dummy_classes.h>
+#include <OE/api_oe.h>
+#include <OE/dummy_classes.h>
 
 // Dummy definitions of the class methods
 // so that the classes can stand on their own and be used

@@ -1,9 +1,9 @@
 #ifndef NRE_RENDERERMAIN_H
 #define NRE_RENDERERMAIN_H
 
-#include <Renderer/api_gpu.h>
-#include <Renderer/renderer_utils.h>
-#include <dummy_classes.h>
+#include <OE/Renderer/api_gpu.h>
+#include <OE/Renderer/renderer_utils.h>
+#include <OE/dummy_classes.h>
 
 class NRE_Renderer : public OE_RendererBase {
 public:

@@ -1,10 +1,10 @@
 #ifndef NRE_GPU_API_H_INCLUDED
 #define NRE_GPU_API_H_INCLUDED
 
-#include <Renderer/exceptions_nre.h>
-#include <Renderer/shaders_gpu.h>
+#include <OE/Renderer/exceptions_nre.h>
+#include <OE/Renderer/shaders_gpu.h>
 #include <atomic>
-#include <types/base_types.h>
+#include <OE/types/base_types.h>
 
 /** platform-specific namespaces
  * -OpenGL ES 3.0/ OpenGL 3.2

@@ -3,7 +3,7 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <math_oe.h>
+#include <OE/math_oe.h>
 
 using namespace std;
 

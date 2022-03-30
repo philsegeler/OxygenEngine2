@@ -1,7 +1,7 @@
-#include <Renderer/api_gpu.h>
+#include <OE/Renderer/api_gpu.h>
 #include <iostream>
-#include <types/libs_oe.h>
-#include <winsys_sdl2.h>
+#include <OE/types/libs_oe.h>
+#include <OE/winsys_sdl2.h>
 
 using namespace std;
 

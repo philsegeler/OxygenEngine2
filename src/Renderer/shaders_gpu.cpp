@@ -1,6 +1,6 @@
-#include <Renderer/GL3/shaders_gl3.h>
-#include <Renderer/GLES2/shaders_gles2.h>
-#include <Renderer/api_gpu.h>
+#include <OE/Renderer/GL3/shaders_gl3.h>
+#include <OE/Renderer/GLES2/shaders_gles2.h>
+#include <OE/Renderer/api_gpu.h>
 #include <iostream>
 #include <sstream>
 

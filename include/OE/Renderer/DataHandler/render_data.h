@@ -1,10 +1,11 @@
 #ifndef NRE_RENDERDATA_H
 #define NRE_RENDERDATA_H
 
-#include <Renderer/api_gpu.h>
-#include <Renderer/drawcall_container.h>
+#include <OE/Renderer/api_gpu.h>
+#include <OE/Renderer/drawcall_container.h>
+#include <OE/types/world.h>
 #include <memory>
-#include <types/world.h>
+
 
 class OE_Mat4x4;
 

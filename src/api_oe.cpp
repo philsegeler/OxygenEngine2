@@ -1,5 +1,5 @@
-#include <api_oe.h>
-#include <math_oe.h>
+#include <OE/api_oe.h>
+#include <OE/math_oe.h>
 
 using namespace oe;
 using namespace std;

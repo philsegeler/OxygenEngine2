@@ -1,7 +1,7 @@
 #ifndef OE_LIGHT_H
 #define OE_LIGHT_H
 
-#include <types/object.h>
+#include <OE/types/object.h>
 
 // TODO: Subject to change
 

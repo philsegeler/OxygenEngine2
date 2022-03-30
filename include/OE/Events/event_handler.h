@@ -1,7 +1,7 @@
 #ifndef OE_EVENT_HANDLER_H
 #define OE_EVENT_HANDLER_H
 
-#include <Events/input_event_handler.h>
+#include <OE/Events/input_event_handler.h>
 
 class OE_EventHandler : public OE_THREAD_SAFETY_OBJECT {
 public:

@@ -1,7 +1,7 @@
 #ifndef OE_ERROR_INCLUDED
 #define OE_ERROR_INCLUDED
 
-#include <types/base_types.h>
+#include <OE/types/base_types.h>
 
 namespace oe {
 

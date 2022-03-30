@@ -1,8 +1,8 @@
 #ifndef OE_SDL_WINDOWSYSTEM_H
 #define OE_SDL_WINDOWSYSTEM_H
 
-#include <dummy_classes.h>
-#include <types/libs_oe.h>
+#include <OE/dummy_classes.h>
+#include <OE/types/libs_oe.h>
 
 class OE_SDL_WindowSystem : public OE_WindowSystemBase {
 public:

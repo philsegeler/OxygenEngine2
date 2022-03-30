@@ -1,7 +1,7 @@
 #ifndef NRE_GL3_SHADERS_H
 #define NRE_GL3_SHADERS_H
 
-#include <Renderer/shaders_gpu.h>
+#include <OE/Renderer/shaders_gpu.h>
 
 
 std::string NRE_GenGL3VertexShader(nre::gpu::vertex_shader);

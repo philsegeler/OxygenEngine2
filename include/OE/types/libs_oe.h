@@ -9,7 +9,7 @@
 #define OE_PLATFORM_LINUX
 #define OE_RENDERER_OPENGL
 
-#include <Renderer/glad.h>
+#include <OE/Renderer/glad.h>
 #include <SDL2/SDL.h>
 
 
@@ -20,7 +20,7 @@
 #define OE_RENDERER_OPENGL
 #define SDL_MAIN_HANDLED
 
-#include <Renderer/glad.h>
+#include <OE/Renderer/glad.h>
 #include <SDL.h>
 
 #elif defined(__EMSCRIPTEN__)

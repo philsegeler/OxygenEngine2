@@ -1,10 +1,10 @@
 #ifndef OE_DUMMYCLASSES_H
 #define OE_DUMMYCLASSES_H
 
-#include <Events/event_handler.h>
-#include <task.h>
-#include <types/base_types.h>
-#include <types/world.h>
+#include <OE/Events/event_handler.h>
+#include <OE/task.h>
+#include <OE/types/base_types.h>
+#include <OE/types/world.h>
 
 
 

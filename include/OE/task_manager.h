@@ -1,13 +1,13 @@
 #ifndef OE_TASKMANAGER_H
 #define OE_TASKMANAGER_H
 
-#include <Carbon/interpreter.h>
-#include <Events/event_handler.h>
-#include <Events/mutex_condition.h>
-#include <dummy_classes.h>
+#include <OE/Carbon/interpreter.h>
+#include <OE/Events/event_handler.h>
+#include <OE/Events/mutex_condition.h>
+#include <OE/dummy_classes.h>
 #include <queue>
-#include <task.h>
-#include <types/world.h>
+#include <OE/task.h>
+#include <OE/types/world.h>
 
 
 #ifdef __EMSCRIPTEN__

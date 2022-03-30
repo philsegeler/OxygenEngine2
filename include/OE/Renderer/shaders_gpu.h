@@ -3,7 +3,7 @@
 
 #define NRE_Shader(src) #src
 
-#include <types/base_types.h>
+#include <OE/types/base_types.h>
 
 namespace nre { namespace gpu {
 

@@ -1,8 +1,8 @@
 #ifndef OE_VIEWPORTCONFIG_H
 #define OE_VIEWPORTCONFIG_H
 
+#include <OE/types/base_types.h>
 #include <atomic>
-#include <types/base_types.h>
 
 /* OE_ViewportConfig determines how different cameras and scenes
  * are projected into the screen

@@ -2,9 +2,9 @@
 #define NRE_GL3_API_H_INCLUDED
 
 
-#include <Renderer/GL3/shaders_gl3.h>
-#include <Renderer/api_gpu.h>
-#include <types/libs_oe.h>
+#include <OE/Renderer/GL3/shaders_gl3.h>
+#include <OE/Renderer/api_gpu.h>
+#include <OE/types/libs_oe.h>
 
 struct NRE_GL3_RenderBuffer {
     GLuint                 handle{0};

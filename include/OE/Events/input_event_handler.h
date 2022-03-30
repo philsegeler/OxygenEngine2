@@ -1,7 +1,7 @@
 #ifndef OE_INPUTEVENTHANDLER_H
 #define OE_INPUTEVENTHANDLER_H
 
-#include <Events/event.h>
+#include <OE/Events/event.h>
 
 
 /** This class is intended to store any user inputs

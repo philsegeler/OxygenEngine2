@@ -2,7 +2,7 @@
 #define OE_TCM_H
 
 #include <atomic>
-#include <types/texture.h>
+#include <OE/types/texture.h>
 
 class OE_TCM_Texture : public CSL_WriterBase {
 public:

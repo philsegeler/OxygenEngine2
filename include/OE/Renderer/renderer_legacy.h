@@ -1,9 +1,9 @@
 #ifndef NRE_RENDERERLEGACY_H
 #define NRE_RENDERERLEGACY_H
 
-#include <Renderer/api_gpu.h>
-#include <Renderer/renderer_utils.h>
-#include <dummy_classes.h>
+#include <OE/Renderer/api_gpu.h>
+#include <OE/Renderer/renderer_utils.h>
+#include <OE/dummy_classes.h>
 
 class NRE_RendererLegacy : public OE_RendererBase {
 public:

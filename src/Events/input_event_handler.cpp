@@ -1,5 +1,5 @@
-#include <Events/event_handler.h> //yes not InputEventHandler for a reason
-#include <types/libs_oe.h>
+#include <OE/Events/event_handler.h> //yes not InputEventHandler for a reason
+#include <OE/types/libs_oe.h>
 
 using namespace std;
 

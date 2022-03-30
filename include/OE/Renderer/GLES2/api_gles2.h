@@ -2,9 +2,9 @@
 #define NRE_GLES2_API_H_INCLUDED
 
 
-#include <Renderer/GLES2/shaders_gles2.h>
-#include <Renderer/api_gpu.h>
-#include <types/libs_oe.h>
+#include <OE/Renderer/GLES2/shaders_gles2.h>
+#include <OE/Renderer/api_gpu.h>
+#include <OE/types/libs_oe.h>
 
 struct NRE_GLES2_RenderBuffer {
     GLuint                 handle{0};

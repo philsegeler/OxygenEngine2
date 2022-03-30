@@ -1,7 +1,7 @@
 #ifndef OE_CAMERA_H
 #define OE_CAMERA_H
 
-#include <types/object.h>
+#include <OE/types/object.h>
 
 /* OE_Camera represents a scene camera
  */

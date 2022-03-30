@@ -2,9 +2,9 @@
 #define OE_OBJECT_H
 
 #include <atomic>
-#include <math_oe.h>
+#include <OE/math_oe.h>
 #include <set>
-#include <types/base_types.h>
+#include <OE/types/base_types.h>
 
 // NOTE:  the structure of this struct (yeah i know) is subject to change
 struct OE_ObjectData {

@@ -1,7 +1,7 @@
-#include <Events/event.h>
-#include <error_oe.h>
-#include <task_manager.h>
-#include <types/libs_oe.h>
+#include <OE/Events/event.h>
+#include <OE/error_oe.h>
+#include <OE/task_manager.h>
+#include <OE/types/libs_oe.h>
 
 using namespace std;
 

@@ -4,8 +4,8 @@
 #include <bitset>
 #include <functional>
 #include <memory>
-#include <types/vertex_group.h>
-#include <types/vertex_storage.h>
+#include <OE/types/vertex_group.h>
+#include <OE/types/vertex_storage.h>
 
 class OE_Mesh32;
 

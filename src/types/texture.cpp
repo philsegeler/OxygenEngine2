@@ -1,6 +1,6 @@
-#include <types/camera.h>
-#include <types/texture.h>
-#include <types/world.h>
+#include <OE/types/camera.h>
+#include <OE/types/texture.h>
+#include <OE/types/world.h>
 
 using namespace std;
 

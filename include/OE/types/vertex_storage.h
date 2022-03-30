@@ -1,9 +1,8 @@
 #ifndef OE_VERTEXSTORAGE_H
 #define OE_VERTEXSTORAGE_H
 
+#include <OE/types/base_types.h>
 #include <cassert>
-#include <types/base_types.h>
-
 
 struct OE_UVMapElement {
     float u{0.0f};

@@ -1,7 +1,7 @@
 #ifndef OE_MATERIAL_H
 #define OE_MATERIAL_H
 
-#include <types/tcm.h>
+#include <OE/types/tcm.h>
 
 class OE_Material : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
 

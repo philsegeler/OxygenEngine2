@@ -1,12 +1,12 @@
 #ifndef OE_SCENE_H
 #define OE_SCENE_H
 
-#include <types/camera.h>
-#include <types/light.h>
-#include <types/material.h>
-#include <types/mesh.h>
-#include <types/tcm.h>
-#include <types/texture.h>
+#include <OE/types/camera.h>
+#include <OE/types/light.h>
+#include <OE/types/material.h>
+#include <OE/types/mesh.h>
+#include <OE/types/tcm.h>
+#include <OE/types/texture.h>
 
 /* OE_Scene is a collection of objects (meshes, lights, cameras, etc.)
  * textures, materials, TCMs etc.
