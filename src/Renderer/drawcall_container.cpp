@@ -9,7 +9,7 @@ NRE_DrawCallContainer::NRE_DrawCallContainer() {
 NRE_DrawCallContainer::~NRE_DrawCallContainer() {
 }
 
-NRE_DrawCallContainer::Iterator::Iterator(set_iter_t beginning) : iter(beginning){
+NRE_DrawCallContainer::Iterator::Iterator(set_iter_t beginning) : iter(beginning) {
 }
 
 NRE_DrawCallContainer::Iterator& NRE_DrawCallContainer::Iterator::operator++() {

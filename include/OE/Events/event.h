@@ -26,7 +26,7 @@
  * Philsegeler's TODO:
  * -Anything else his subsystems need
  */
-namespace oe{
+namespace oe {
 
     enum event_type {
         CUSTOM_EVENT     = 0,
@@ -49,7 +49,7 @@ namespace oe{
         friend class input_event_handler_t;
 
     public:
-        //static bool finished;
+        // static bool finished;
         event_t();
         virtual ~event_t();
         virtual int call() = 0;
@@ -63,8 +63,8 @@ namespace oe{
         bool        active_{false};
         std::string name_;
 
-        event_type type_;
-        event_func_type  func_;
+        event_type      type_;
+        event_func_type func_;
 
         OE_Task task_;
 
@@ -151,5 +151,5 @@ namespace oe{
     protected:
     };
 
-};
+};     // namespace oe
 #endif // OE_EVENT_H

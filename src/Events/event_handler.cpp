@@ -11,7 +11,7 @@ oe::event_handler_t::event_handler_t() {
     done = false;
 }
 void oe::event_handler_t::init() {
-    this->input_handler.createEvents(&this->internal_events);
+    this->internal_events = this->input_handler.createEvents();
     for (auto x : this->internal_events) {
         this->happened_events_counter[x.first] = 0;
     }

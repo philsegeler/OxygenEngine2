@@ -34,7 +34,7 @@ public:
         friend bool operator!=(const Iterator& a, const Iterator& b);
 
     private:
-        set_iter_t             iter;
+        set_iter_t iter;
     };
 
     Iterator begin();

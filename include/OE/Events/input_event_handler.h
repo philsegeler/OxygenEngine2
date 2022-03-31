@@ -7,7 +7,7 @@
 /** This class is intended to store any user inputs
  *
  */
-namespace oe{
+namespace oe {
     class input_event_handler_t {
     public:
         friend class OE_EventHandler;
@@ -16,7 +16,7 @@ namespace oe{
         input_event_handler_t();
         ~input_event_handler_t();
 
-        void createEvents(std::map<std::string, std::shared_ptr<oe::event_t>>*);
+        std::map<std::string, std::shared_ptr<oe::event_t>> createEvents();
 
         // protected:
         std::vector<std::string>                 active_events;
@@ -25,5 +25,5 @@ namespace oe{
 
         std::unordered_map<int, std::string> keyList;
     };
-};
+};     // namespace oe
 #endif // OE_INPUTEVENTHANDLER_H

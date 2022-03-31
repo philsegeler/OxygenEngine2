@@ -25,8 +25,9 @@ oe::input_event_handler_t::input_event_handler_t() {
 oe::input_event_handler_t::~input_event_handler_t() {
 }
 
-void oe::input_event_handler_t::createEvents(std::map<std::string, std::shared_ptr<oe::event_t>>* event_list) {
+std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::createEvents() {
 
+    std::map<std::string, std::shared_ptr<oe::event_t>> event_list;
     /// generate keyboard events
     for (auto x : this->keyList) {
 
@@ -35,21 +36,21 @@ void oe::input_event_handler_t::createEvents(std::map<std::string, std::shared_p
         event->name_                           = "keyboard-" + x.second + "+";
         event->key_                            = x.second;
         event->set_func(&template_event_func);
-        event_list[0][event->name_] = event;
+        event_list[event->name_] = event;
 
         // event for just release (sent once per release)
         shared_ptr<oe::keyboard_event_t> event1 = std::make_shared<oe::keyboard_event_t>();
         event1->name_                           = "keyboard-" + x.second + "-";
         event1->key_                            = x.second;
         event1->set_func(&template_event_func);
-        event_list[0][event1->name_] = event1;
+        event_list[event1->name_] = event1;
 
         // event for hold (sent every frame the key is being held)
         shared_ptr<oe::keyboard_event_t> event2 = std::make_shared<oe::keyboard_event_t>();
         event2->name_                           = "keyboard-" + x.second + "";
         event2->key_                            = x.second;
         event2->set_func(&template_event_func);
-        event_list[0][event2->name_] = event2;
+        event_list[event2->name_] = event2;
     }
 
     /// generate mouse events
@@ -59,33 +60,35 @@ void oe::input_event_handler_t::createEvents(std::map<std::string, std::shared_p
         event->name_                        = "mouse-" + x.second + "+";
         event->key_                         = x.second;
         event->set_func(&template_event_func);
-        event_list[0][event->name_] = event;
+        event_list[event->name_] = event;
 
         // event for just release (sent once per release)
         shared_ptr<oe::mouse_event_t> event1 = std::make_shared<oe::mouse_event_t>();
         event1->name_                        = "mouse-" + x.second + "-";
         event1->key_                         = x.second;
         event1->set_func(&template_event_func);
-        event_list[0][event1->name_] = event1;
+        event_list[event1->name_] = event1;
 
         // event for hold (sent every frame the key is being held)
         shared_ptr<oe::mouse_event_t> event2 = std::make_shared<oe::mouse_event_t>();
         event2->name_                        = "mouse-" + x.second + "";
         event2->key_                         = x.second;
         event2->set_func(&template_event_func);
-        event_list[0][event2->name_] = event2;
+        event_list[event2->name_] = event2;
     }
     /// generate mouse motion event
     shared_ptr<oe::mouse_move_event_t> event3 = std::make_shared<oe::mouse_move_event_t>();
     event3->name_                             = "mouse-motion";
     event3->set_func(&template_event_func);
-    event_list[0][event3->name_] = event3;
+    event_list[event3->name_] = event3;
 
     /// generate mouse wheel event
     shared_ptr<oe::mouse_move_event_t> event4 = std::make_shared<oe::mouse_move_event_t>();
     event4->name_                             = "mouse-wheel";
     event4->set_func(&template_event_func);
-    event_list[0][event4->name_] = event4;
+    event_list[event4->name_] = event4;
+
+    return event_list;
 }
 
 void oe::event_handler_t::updateInput() {
