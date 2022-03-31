@@ -49,6 +49,7 @@ std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::c
         shared_ptr<oe::keyboard_event_t> event2 = std::make_shared<oe::keyboard_event_t>();
         event2->name_                           = "keyboard-" + x.second + "";
         event2->key_                            = x.second;
+        event2->is_main_event_                  = true;
         event2->set_func(&template_event_func);
         event_list[event2->name_] = event2;
     }
@@ -73,6 +74,7 @@ std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::c
         shared_ptr<oe::mouse_event_t> event2 = std::make_shared<oe::mouse_event_t>();
         event2->name_                        = "mouse-" + x.second + "";
         event2->key_                         = x.second;
+        event2->is_main_event_               = true;
         event2->set_func(&template_event_func);
         event_list[event2->name_] = event2;
     }
@@ -92,59 +94,48 @@ std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::c
 }
 
 void oe::event_handler_t::updateInput() {
+    lockMutex();
+    for (auto key_event_elem : this->events_list_) {
+        if (key_event_elem.p_->type_ == KEYBOARD_EVENT) {
 
-    for (auto key : this->input_handler.keyList) {
-
-        oe::keyboard_event_t* just_pressed =
-            static_cast<oe::keyboard_event_t*>(getIEvent("keyboard-" + key.second + "+").get());
-        oe::keyboard_event_t* just_released =
-            static_cast<oe::keyboard_event_t*>(getIEvent("keyboard-" + key.second + "-").get());
-        oe::keyboard_event_t* held = static_cast<oe::keyboard_event_t*>(getIEvent("keyboard-" + key.second + "").get());
-
-        // if button is already pressed once, make it register continuous events
-        if (just_pressed->keystate_ == oe::BUTTON_JUST_PRESS) {
-            just_pressed->keystate_ += 1;
-            just_released->keystate_ += 1;
-            held->keystate_ += 1;
+            auto key_event = static_cast<oe::keyboard_event_t*>(key_event_elem.p_.get());
+            if (key_event->keystate_ == oe::BUTTON_JUST_PRESS) {
+                key_event->keystate_ += 1;
+            }
+            else if (key_event->keystate_ == oe::BUTTON_PRESS) {
+                if (key_event->is_main_event_) {
+                    this->broadcastIEvent(key_event_elem.id_);
+                }
+            }
+            else if (key_event->keystate_ == oe::BUTTON_JUST_RELEASE) {
+                key_event->keystate_ = oe::BUTTON_RELEASE;
+            }
+            else {
+                continue;
+            }
         }
-        else if (just_pressed->keystate_ == oe::BUTTON_PRESS) {
-            this->broadcastIEvent(held->name_);
-        }
-        // if button has just been released stop emitting events
-        else if (just_pressed->keystate_ == oe::BUTTON_JUST_RELEASE) {
-            just_pressed->keystate_  = oe::BUTTON_RELEASE;
-            just_released->keystate_ = oe::BUTTON_RELEASE;
-            held->keystate_          = oe::BUTTON_RELEASE;
+        else if (key_event_elem.p_->type_ == MOUSE_EVENT) {
+            auto key_event = static_cast<oe::mouse_event_t*>(key_event_elem.p_.get());
+            if (key_event->keystate_ == oe::BUTTON_JUST_PRESS) {
+                key_event->keystate_ += 1;
+            }
+            else if (key_event->keystate_ == oe::BUTTON_PRESS) {
+                if (key_event->is_main_event_) {
+                    this->broadcastIEvent(key_event_elem.id_);
+                }
+            }
+            else if (key_event->keystate_ == oe::BUTTON_JUST_RELEASE) {
+                key_event->keystate_ = oe::BUTTON_RELEASE;
+            }
+            else {
+                continue;
+            }
         }
         else {
+            continue;
         }
     }
-
-    for (auto key : this->input_handler.mouseList) {
-
-        oe::mouse_event_t* just_pressed  = static_cast<oe::mouse_event_t*>(getIEvent("mouse-" + key.second + "+").get());
-        oe::mouse_event_t* just_released = static_cast<oe::mouse_event_t*>(getIEvent("mouse-" + key.second + "-").get());
-        oe::mouse_event_t* held          = static_cast<oe::mouse_event_t*>(getIEvent("mouse-" + key.second + "").get());
-
-        // if button is already pressed once, make it register continuous events
-        if (just_pressed->keystate_ == oe::BUTTON_JUST_PRESS) {
-            just_pressed->keystate_ += 1;
-            just_released->keystate_ += 1;
-            held->keystate_ += 1;
-        }
-        else if (just_pressed->keystate_ == oe::BUTTON_PRESS) {
-            this->broadcastIEvent(held->name_);
-        }
-        // if button has just been released stop emitting events
-        else if (just_pressed->keystate_ == oe::BUTTON_JUST_RELEASE) {
-            just_pressed->keystate_  = oe::BUTTON_RELEASE;
-            just_released->keystate_ = oe::BUTTON_RELEASE;
-            held->keystate_          = oe::BUTTON_RELEASE;
-        }
-        else {
-        }
-    }
-    // this->mouse_moved = false;
+    unlockMutex();
 }
 
 void oe::event_handler_t::internalBroadcastKeyDownEvent(const std::string& name) {

@@ -93,6 +93,7 @@ namespace oe {
     protected:
         uint8_t     keystate_;
         std::string key_;
+        bool        is_main_event_{false};
     };
 
     /// class intended to store mouse events (3 for each mouse buttons 1-5)
@@ -106,8 +107,8 @@ namespace oe {
         int call();
 
     protected:
-        uint8_t keystate_;
-
+        uint8_t     keystate_;
+        bool        is_main_event_{false};
         std::string key_;
     };
 
