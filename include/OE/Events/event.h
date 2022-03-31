@@ -7,7 +7,7 @@
 #include <functional>
 #include <memory>
 #include <set>
-
+#include <unordered_set>
 
 /** Temporary documentation: (OUTDATED)
  *
@@ -54,6 +54,9 @@ namespace oe {
         virtual ~event_t();
         virtual int call() = 0;
 
+        static std::atomic<std::size_t> current_id;
+        std::size_t                     id;
+
     protected:
         // internal_call() is implemented in OE_Error.cpp
         int internal_call();
@@ -68,8 +71,8 @@ namespace oe {
 
         OE_Task task_;
 
-        bool                  has_init_{false};
-        std::set<std::string> sub_events_;
+        bool                            has_init_{false};
+        std::unordered_set<std::size_t> sub_events_;
     };
 
     /*button event used in keyboard/mouse/gamepad*/

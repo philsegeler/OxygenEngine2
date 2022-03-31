@@ -77,12 +77,14 @@ void oe::create_event(std::string name) {
 
 size_t oe::get_event_activations(std::string name) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->window->event_handler.getEventActivations(name);
+    size_t event_id = OE_Main->window->event_handler.get_event_id(name);
+    return OE_Main->window->event_handler.getEventActivations(event_id);
 }
 
 size_t oe::get_event_counter(std::string name) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->window->event_handler.getEventCounter(name);
+    size_t event_id = OE_Main->window->event_handler.get_event_id(name);
+    return OE_Main->window->event_handler.getEventCounter(event_id);
 }
 
 bool oe::is_key_just_pressed(std::string key) {
@@ -144,7 +146,8 @@ int oe::get_mouse_y() {
 void oe::destroy_event(std::string name) {
     OE_API_Helpers::checkIfInit();
     OE_Main->window->event_handler.lockMutex();
-    OE_Main->window->event_handler.destroyIEvent(name);
+    size_t event_id = OE_Main->window->event_handler.get_event_id(name);
+    OE_Main->window->event_handler.destroyIEvent(event_id);
     OE_Main->window->event_handler.unlockMutex();
 }
 

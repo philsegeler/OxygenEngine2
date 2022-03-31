@@ -152,12 +152,12 @@ namespace oe {
 
         void append(const std::string& name, std::shared_ptr<T> element) {
             lockMutex();
-            this->appendUNSAFE_now(name, element);
+            this->appendUNSAFE(name, element);
             unlockMutex();
         }
 
         void appendUNSAFE(const std::string& name, std::shared_ptr<T> element) {
-            if ((this->count(element->id) == 0) && (this->pending_elements_.count(element->id) == 0)) {
+            if ((this->count(element->id) == 0)) {
                 this->elements_[element->id] = element;
                 this->id2name_[element->id]  = name;
                 this->names_.insert(name);
@@ -170,7 +170,7 @@ namespace oe {
 
         void force_append(const std::string& name, std::shared_ptr<T> element) {
             lockMutex();
-            this->force_appendUNSAFE_now(name, element);
+            this->force_appendUNSAFE(name, element);
             unlockMutex();
         }
 
@@ -359,6 +359,10 @@ namespace oe {
                 }
             }
 
+            bool empty() {
+                return this->indices_.empty();
+            }
+
             void clear() {
                 this->indices_.clear();
             }
@@ -418,6 +422,13 @@ namespace oe {
 
         Registered registered() {
             return this->registered_;
+        }
+
+        bool has_registered_events() {
+            lockMutex();
+            bool output = not this->registered_.empty();
+            unlockMutex();
+            return output;
         }
 
         //*******************************************/

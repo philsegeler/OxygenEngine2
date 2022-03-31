@@ -14,30 +14,29 @@ namespace oe {
 
         // internal event functions
         void                         init();
-        std::shared_ptr<oe::event_t> getIEvent(std::string);
-        std::shared_ptr<oe::event_t> getIEventUNSAFE(std::string);
+        std::shared_ptr<oe::event_t> getIEvent(const std::string&);
 
-        void createUserEvent(std::string);
-        void setIEventFunc(std::string, const oe::event_func_type);
-        void broadcastIEvent(std::string);
+        void createUserEvent(const std::string&);
+        void setIEventFunc(std::size_t, const oe::event_func_type);
+        void setIEventFunc(const std::string&, const oe::event_func_type);
+        void broadcastIEvent(std::size_t);
+        void broadcastIEvent(const std::string&);
 
-        void broadcastIEventWait(std::string, int); // TODO
-        void mapIEvent(std::string, std::string);
-        void unmapIEvent(std::string, std::string);
-        int  callIEvent(std::string);
-        void destroyIEvent(std::string);
+        void broadcastIEventWait(std::size_t, int); // TODO
+        void mapIEvent(std::size_t, std::size_t);
+        void unmapIEvent(std::size_t, std::size_t);
+        int  callIEvent(std::size_t);
+        void destroyIEvent(std::size_t);
 
-        std::size_t getEventActivations(std::string);
-        std::size_t getEventCounter(std::string);
+        std::size_t get_event_id(const std::string&);
+        std::size_t getEventActivations(std::size_t);
+        std::size_t getEventCounter(std::size_t);
 
         void updateInput();
         void cleanup();
         int  handleAllEvents();
 
-
-        void updatePostInputLoop();
-
-        // The methods starting with internal* are only supposed to be usede
+        // The methods starting with internal* are only supposed to be used
         // in subclasses of OE_WindowSystemBase
         // the key strings must exist
 
@@ -58,12 +57,13 @@ namespace oe {
     protected:
         bool havePendingEvents();
 
-        std::map<std::string, std::shared_ptr<oe::event_t>> internal_events;
-        std::vector<std::string>                            obsolete_events;
-        std::vector<std::string>                            pending_events;
+        oe::event_container_t<oe::event_t> events_list_;
+        // std::map<std::string, std::shared_ptr<oe::event_t>> internal_events;
+        // std::vector<std::string>                            obsolete_events;
+        // std::vector<std::string>                            pending_events;
 
-        std::vector<std::string>                     happened_events;
-        std::unordered_map<std::string, std::size_t> happened_events_counter;
+        std::vector<std::size_t>                     happened_events_;
+        std::unordered_map<std::size_t, std::size_t> happened_events_counter_;
 
         uint8_t index = -1;
 

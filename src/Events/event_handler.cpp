@@ -3,7 +3,8 @@
 
 using namespace std;
 
-int oe::template_event_func(OE_Task task, string event_name) { /*cout << event_name << endl;*/
+int oe::template_event_func(OE_Task task, string event_name) {
+    cout << event_name << endl;
     return 0;
 }
 
@@ -11,118 +12,159 @@ oe::event_handler_t::event_handler_t() {
     done = false;
 }
 void oe::event_handler_t::init() {
-    this->internal_events = this->input_handler.createEvents();
-    for (auto x : this->internal_events) {
-        this->happened_events_counter[x.first] = 0;
+    auto internal_events = this->input_handler.createEvents();
+    for (auto x : internal_events) {
+        this->events_list_.append(x.first, x.second);
+        this->happened_events_counter_[events_list_[x.first].id_] = 0;
     }
     this->done = false;
 }
 
 oe::event_handler_t::~event_handler_t() {
-    this->internal_events.clear();
-    this->happened_events_counter.clear();
+    this->happened_events_counter_.clear();
 }
 
 // THIS IS VERY USEFUL
-std::shared_ptr<oe::event_t> oe::event_handler_t::getIEvent(string a_name) {
-    /// wraps getIEventUNSAFE in a mutex, (now in 2020: like... seriously????)
+std::shared_ptr<oe::event_t> oe::event_handler_t::getIEvent(const string& event_name) {
+    /// Updated this function to 2022
     lockMutex();
 
-    std::shared_ptr<oe::event_t> output = getIEventUNSAFE(a_name);
-
-    if (output == nullptr) {
+    auto event_elem = events_list_[event_name];
+    if (!event_elem.is_valid()) {
         unlockMutex();
-        throw oe::invalid_event(a_name);
+        throw oe::invalid_event(event_name);
     }
-
     unlockMutex();
-    return output;
+    return event_elem.p_;
 }
 
-std::shared_ptr<oe::event_t> oe::event_handler_t::getIEventUNSAFE(string a_name) {
-    /// function to simplify fetching an event by name
-    /// WARNING: DO NOT USE THE FUNCTION OUTSIDE OF MUTEXES
+std::size_t oe::event_handler_t::get_event_id(const string& event_name) {
+    lockMutex();
 
-    if (internal_events.count(a_name) != 0) return internal_events[a_name];
-
-    return nullptr;
+    auto event_elem = events_list_[event_name];
+    if (!event_elem.is_valid()) {
+        unlockMutex();
+        throw oe::invalid_event(event_name);
+    }
+    unlockMutex();
+    return event_elem.id_;
 }
 
-void oe::event_handler_t::createUserEvent(string a_name) {
+
+void oe::event_handler_t::createUserEvent(const string& event_name) {
 
     std::shared_ptr<oe::custom_event_t> event = std::make_shared<oe::custom_event_t>();
-    event->name_                              = a_name;
+    event->name_                              = event_name;
     event->set_func(&template_event_func);
 
     lockMutex();
-    if (internal_events.count(a_name) == 0) {
-        internal_events[a_name]         = event;
-        happened_events_counter[a_name] = 0;
+    if (events_list_.count(event_name) == 0) {
+        events_list_.append(event_name, event);
+        happened_events_counter_[events_list_[event_name].id_] = 0;
     }
     unlockMutex();
 }
 
 
 
-void oe::event_handler_t::destroyIEvent(string a_name) {
+void oe::event_handler_t::destroyIEvent(size_t a_name) {
     lockMutex();
 
-    this->obsolete_events.push_back(a_name);
+    if (this->events_list_.count(a_name) != 0) {
+        events_list_.remove(events_list_[a_name].id_);
+    }
+    else {
+        // TODO: Warning
+    }
 
     unlockMutex();
     // return output;
 }
-void oe::event_handler_t::setIEventFunc(string a_name, const oe::event_func_type func) {
+void oe::event_handler_t::setIEventFunc(size_t a_name, const oe::event_func_type func) {
     lockMutex();
-    if (getIEventUNSAFE(a_name) != nullptr) {
-        getIEventUNSAFE(a_name)->set_func(func);
+    auto event = events_list_[a_name];
+    if (event.is_valid()) {
+        event.p_->set_func(func);
+    }
+    else {
+        // TODO: Warning
+    }
+
+    unlockMutex();
+}
+void oe::event_handler_t::setIEventFunc(const string& event_name, const oe::event_func_type func) {
+    lockMutex();
+    auto event = events_list_[event_name];
+    if (event.is_valid()) {
+        event.p_->set_func(func);
     }
     else {
         unlockMutex();
-        throw oe::invalid_event(a_name);
+        throw oe::invalid_event(event_name);
     }
 
     unlockMutex();
 }
 
-void oe::event_handler_t::mapIEvent(string upper, string target) {
+void oe::event_handler_t::mapIEvent(size_t upper, size_t target) {
     lockMutex();
-    if (getIEventUNSAFE(target) != nullptr) {
-        getIEventUNSAFE(target)->sub_events_.insert(upper);
+    if (this->events_list_.count(target) != 0) {
+        this->events_list_[target].p_->sub_events_.insert(upper);
     }
     else {
-        unlockMutex();
-        throw oe::invalid_event(upper);
+        // TODO: Warning
     }
 
     unlockMutex();
 }
 
-void oe::event_handler_t::unmapIEvent(string upper, string target) {
+void oe::event_handler_t::unmapIEvent(size_t upper, size_t target) {
     lockMutex();
-    if (getIEventUNSAFE(target) != nullptr) {
-        getIEventUNSAFE(target)->sub_events_.erase(getIEventUNSAFE(target)->sub_events_.find(upper));
+    auto event = events_list_[target];
+    if (event.is_valid()) {
+        event.p_->sub_events_.erase(upper);
     }
     else {
-        unlockMutex();
-        throw oe::invalid_event(upper);
+        // TODO: Warning
     }
 
     unlockMutex();
 }
 /// so simple
-void oe::event_handler_t::broadcastIEvent(string a_name) {
+void oe::event_handler_t::broadcastIEvent(size_t a_name) {
 
-    set<string> tobecalled_events;
+    unordered_set<size_t> tobecalled_events;
     lockMutex();
 
-    if (getIEventUNSAFE(a_name) != nullptr) {
-        this->pending_events.push_back(a_name);
-        tobecalled_events = this->getIEventUNSAFE(a_name)->sub_events_;
+    auto event = events_list_[a_name];
+    if (event.is_valid()) {
+        event.flag_as_registered();
+        tobecalled_events = event.p_->sub_events_;
+    }
+    else {
+        // TODO: Warning
+    }
+
+    unlockMutex();
+
+    /// broadcast any sub events (which in turn broadcast their sub events etc.)
+    for (auto& x : tobecalled_events)
+        this->broadcastIEvent(x);
+}
+
+void oe::event_handler_t::broadcastIEvent(const string& event_name) {
+
+    unordered_set<size_t> tobecalled_events;
+    lockMutex();
+
+    auto event = events_list_[event_name];
+    if (event.is_valid()) {
+        event.flag_as_registered();
+        tobecalled_events = event.p_->sub_events_;
     }
     else {
         unlockMutex();
-        throw oe::invalid_event(a_name);
+        throw oe::invalid_event(event_name);
     }
 
     unlockMutex();
@@ -133,49 +175,47 @@ void oe::event_handler_t::broadcastIEvent(string a_name) {
 }
 
 // TODO
-void oe::event_handler_t::broadcastIEventWait(string a_name, int milliseconds) {
+void oe::event_handler_t::broadcastIEventWait(size_t a_name, int milliseconds) {
 }
 
 /// so simple
-int oe::event_handler_t::callIEvent(string a_name) {
+int oe::event_handler_t::callIEvent(size_t a_name) {
 
     /// generic event management
-    auto event = getIEvent(a_name);
-    if (event != nullptr) {
+    auto event = events_list_[a_name];
+    if (event.is_valid()) {
 
-        event->lockMutex();
-        event->call();
-        event->unlockMutex();
+        event.p_->lockMutex();
+        event.p_->call();
+        event.p_->unlockMutex();
     }
     else {
-        cout << "OE Event is nullptr: '" + a_name + "'" << endl;
-        OE_WriteToLog("OE Event is nullptr: '" + a_name + "'" + "\n");
+        // TODO: Warning
     }
 
     return 0;
 }
 
-std::size_t oe::event_handler_t::getEventActivations(std::string a_name) {
+std::size_t oe::event_handler_t::getEventActivations(std::size_t a_name) {
     size_t output = 0;
     lockMutex();
-    if (this->happened_events_counter.count(a_name) == 1) {
-        output = this->happened_events_counter[a_name];
+    if (this->events_list_.count(a_name) == 1) {
+        output = this->happened_events_counter_[a_name];
     }
     else {
-        unlockMutex();
-        throw oe::invalid_event(a_name);
+        // TODO: Warning
     }
     unlockMutex();
     return output;
 }
 
-std::size_t oe::event_handler_t::getEventCounter(std::string a_name) {
+std::size_t oe::event_handler_t::getEventCounter(std::size_t a_name) {
     size_t output = 0;
-    auto   event  = getIEvent(a_name);
-    if (event != nullptr) {
-        event->lockMutex();
-        output = event->task_.GetCounter();
-        event->unlockMutex();
+    auto   event  = events_list_[a_name];
+    if (event.is_valid()) {
+        event.p_->lockMutex();
+        output = event.p_->task_.GetCounter();
+        event.p_->unlockMutex();
     }
     return output;
 }
@@ -183,7 +223,7 @@ std::size_t oe::event_handler_t::getEventCounter(std::string a_name) {
 
 bool oe::event_handler_t::havePendingEvents() {
     lockMutex();
-    bool output = !this->pending_events.empty();
+    bool output = this->events_list_.has_registered_events();
     unlockMutex();
     return output;
 }
@@ -194,8 +234,8 @@ bool oe::event_handler_t::havePendingEvents() {
 int oe::event_handler_t::handleAllEvents() {
 
     lockMutex();
-    for (auto x : this->happened_events_counter) {
-        this->happened_events_counter[x.first] = 0;
+    for (auto x : this->happened_events_counter_) {
+        this->happened_events_counter_[x.first] = 0;
     }
     unlockMutex();
 
@@ -206,22 +246,19 @@ int oe::event_handler_t::handleAllEvents() {
         lockMutex();
 
 
-        this->happened_events.clear();
-
-        if (pending_events.empty()) {
-            unlockMutex();
-            return 0;
+        this->happened_events_.clear();
+        for (auto event_elem : this->events_list_.registered()) {
+            this->happened_events_counter_[event_elem.id_]++;
+            happened_events_.push_back(event_elem.id_);
         }
-
-        this->happened_events = std::exchange(this->pending_events, {});
-        for (const auto& x : this->happened_events) {
-            this->happened_events_counter[x]++;
-        }
+        this->events_list_.reset_registered();
         unlockMutex();
 
-        for (auto a_event : happened_events)
+        for (auto a_event : happened_events_)
             callIEvent(a_event);
     }
+
+    this->cleanup();
     return 0;
 }
 
@@ -229,13 +266,10 @@ void oe::event_handler_t::cleanup() {
 
     lockMutex();
 
-    for (auto& a_name : obsolete_events) {
-        if (getIEventUNSAFE(a_name) != nullptr) {
-            internal_events.erase(a_name);
-            happened_events_counter.erase(a_name);
-        }
+    for (auto event_elem : this->events_list_.deleted()) {
+        happened_events_counter_.erase(event_elem.id_);
     }
-    obsolete_events.clear();
+    this->events_list_.synchronize(false);
 
     unlockMutex();
 }

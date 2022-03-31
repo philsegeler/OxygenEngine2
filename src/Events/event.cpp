@@ -5,10 +5,12 @@
 using namespace std;
 
 // bool oe::event_t::finished = false;
+std::atomic<size_t> oe::event_t::current_id(0);
 
 oe::event_t::event_t() {
-    active_ = false;
-    name_   = "";
+    active_  = false;
+    name_    = "";
+    this->id = ++oe::event_t::current_id;
 }
 
 oe::event_t::~event_t() {
