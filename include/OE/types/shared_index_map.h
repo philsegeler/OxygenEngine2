@@ -233,6 +233,7 @@ public:
         this->elements_[element->id] = element;
         this->id2name_[element->id]  = name;
         this->changed_.add(element->id);
+        this->names_.insert(name);
     }
 
     std::string to_str() {
@@ -318,8 +319,10 @@ public:
         auto output = Element();
 
         lockMutex();
-        if (elements_.count(name2id[name]) != 0)
-            output = Element(this, name2id[name], elements_[name2id[name]]);
+        if (this->names_.count(name) != 0) {
+            size_t elem_id = name2id[name];
+            output         = Element(this, elem_id, elements_[elem_id]);
+        }
         else
             output = Element(this, name2id[name], nullptr);
         unlockMutex();

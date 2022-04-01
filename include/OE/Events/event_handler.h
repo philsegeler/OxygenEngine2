@@ -14,39 +14,39 @@ namespace oe {
 
         // internal event functions
         void                         init();
-        std::shared_ptr<oe::event_t> getIEvent(const std::string&);
+        std::shared_ptr<oe::event_t> get_ievent(const std::string&);
 
-        void createUserEvent(const std::string&);
-        void setIEventFunc(std::size_t, const oe::event_func_type);
-        void setIEventFunc(const std::string&, const oe::event_func_type);
-        void broadcastIEvent(std::size_t);
-        void broadcastIEvent(const std::string&);
+        void create_user_event(const std::string&);
+        void set_ievent_func(std::size_t, const oe::event_func_type);
+        void set_ievent_func(const std::string&, const oe::event_func_type);
+        void broadcast_ievent(std::size_t);
+        void broadcast_ievent(const std::string&);
 
-        void broadcastIEventWait(std::size_t, int); // TODO
-        void mapIEvent(std::size_t, std::size_t);
-        void unmapIEvent(std::size_t, std::size_t);
-        int  callIEvent(std::size_t);
-        void destroyIEvent(std::size_t);
+        void broadcast_ievent_wait(std::size_t, int); // TODO
+        void map_ievent(std::size_t, std::size_t);
+        void unmap_ievent(std::size_t, std::size_t);
+        int  call_ievent(std::size_t);
+        void destroy_ievent(std::size_t);
 
         std::size_t get_event_id(const std::string&);
-        std::size_t getEventActivations(std::size_t);
-        std::size_t getEventCounter(std::size_t);
+        std::size_t get_event_activations(std::size_t);
+        std::size_t get_event_counter(std::size_t);
 
-        void updateInput();
+        void update_input();
         void cleanup();
-        int  handleAllEvents();
+        int  handle_all_events();
 
         // The methods starting with internal* are only supposed to be used
         // in subclasses of OE_WindowSystemBase
         // the key strings must exist
 
         void internal_update_mouse_status(int x, int y, int delta_x, int delta_y);
-        void internalBroadcastKeyDownEvent(const std::string&);
-        void internalBroadcastKeyUpEvent(const std::string&);
+        void internal_register_keydown_event(const std::string&);
+        void internal_register_keyup_event(const std::string&);
 
-        std::atomic<bool> done;
+        std::atomic<bool> done_;
 
-        input_event_handler_t input_handler;
+        input_event_handler_t input_handler_;
 
         int  get_mouse_x();
         int  get_mouse_y();
@@ -55,7 +55,7 @@ namespace oe {
         bool has_mouse_moved();
 
     protected:
-        bool havePendingEvents();
+        bool has_pending_events();
 
         oe::event_container_t<oe::event_t> events_list_;
         // std::map<std::string, std::shared_ptr<oe::event_t>> internal_events;
@@ -65,7 +65,7 @@ namespace oe {
         std::vector<std::size_t>                     happened_events_;
         std::unordered_map<std::size_t, std::size_t> happened_events_counter_;
 
-        uint8_t index = -1;
+        uint8_t index_ = -1;
 
     private:
         int  mouse_x_{0};

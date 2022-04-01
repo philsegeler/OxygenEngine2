@@ -47,7 +47,7 @@ bool oe::is_done() {
 // ?? Where do i even need this ??? UPDATE: Now I remember
 void oe::finish() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler.done = true;
+    OE_Main->window->event_handler_.done_ = true;
 }
 
 // size_t OE_InitFromFile(std::string); //TODO
@@ -68,23 +68,23 @@ void oe::remove_task(std::string task, std::string thread) {
 
 void oe::broadcast_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler.broadcastIEvent(name);
+    OE_Main->window->event_handler_.broadcast_ievent(name);
 }
 void oe::create_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler.createUserEvent(name);
+    OE_Main->window->event_handler_.create_user_event(name);
 }
 
 size_t oe::get_event_activations(std::string name) {
     OE_API_Helpers::checkIfInit();
-    size_t event_id = OE_Main->window->event_handler.get_event_id(name);
-    return OE_Main->window->event_handler.getEventActivations(event_id);
+    size_t event_id = OE_Main->window->event_handler_.get_event_id(name);
+    return OE_Main->window->event_handler_.get_event_activations(event_id);
 }
 
 size_t oe::get_event_counter(std::string name) {
     OE_API_Helpers::checkIfInit();
-    size_t event_id = OE_Main->window->event_handler.get_event_id(name);
-    return OE_Main->window->event_handler.getEventCounter(event_id);
+    size_t event_id = OE_Main->window->event_handler_.get_event_id(name);
+    return OE_Main->window->event_handler_.get_event_counter(event_id);
 }
 
 bool oe::is_key_just_pressed(std::string key) {
@@ -113,42 +113,42 @@ bool oe::is_mouse_moved() {
 
 int oe::get_delta_mouse_x() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler.lockMutex();
-    int output = OE_Main->window->event_handler.get_mouse_delta_x();
-    OE_Main->window->event_handler.unlockMutex();
+    OE_Main->window->event_handler_.lockMutex();
+    int output = OE_Main->window->event_handler_.get_mouse_delta_x();
+    OE_Main->window->event_handler_.unlockMutex();
     return output;
 }
 
 int oe::get_delta_mouse_y() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler.lockMutex();
-    int output = OE_Main->window->event_handler.get_mouse_delta_y();
-    OE_Main->window->event_handler.unlockMutex();
+    OE_Main->window->event_handler_.lockMutex();
+    int output = OE_Main->window->event_handler_.get_mouse_delta_y();
+    OE_Main->window->event_handler_.unlockMutex();
     return output;
 }
 
 int oe::get_mouse_x() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler.lockMutex();
-    int output = OE_Main->window->event_handler.get_mouse_x();
-    OE_Main->window->event_handler.unlockMutex();
+    OE_Main->window->event_handler_.lockMutex();
+    int output = OE_Main->window->event_handler_.get_mouse_x();
+    OE_Main->window->event_handler_.unlockMutex();
     return output;
 }
 
 int oe::get_mouse_y() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler.lockMutex();
-    int output = OE_Main->window->event_handler.get_mouse_y();
-    OE_Main->window->event_handler.unlockMutex();
+    OE_Main->window->event_handler_.lockMutex();
+    int output = OE_Main->window->event_handler_.get_mouse_y();
+    OE_Main->window->event_handler_.unlockMutex();
     return output;
 }
 
 void oe::destroy_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler.lockMutex();
-    size_t event_id = OE_Main->window->event_handler.get_event_id(name);
-    OE_Main->window->event_handler.destroyIEvent(event_id);
-    OE_Main->window->event_handler.unlockMutex();
+    OE_Main->window->event_handler_.lockMutex();
+    size_t event_id = OE_Main->window->event_handler_.get_event_id(name);
+    OE_Main->window->event_handler_.destroy_ievent(event_id);
+    OE_Main->window->event_handler_.unlockMutex();
 }
 
 void oe::pause(int x) {

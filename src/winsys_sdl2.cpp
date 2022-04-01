@@ -198,7 +198,7 @@ void OE_SDL_WindowSystem::finishInit() {
         }
     }
 
-    this->event_handler.init();
+    this->event_handler_.init();
 }
 
 bool OE_SDL_WindowSystem::getMouseLockedState() {
@@ -238,15 +238,15 @@ bool OE_SDL_WindowSystem::update() {
     this->resolution_y = y;
     unlockMutex();
 
-    this->event_handler.updateInput();
+    this->event_handler_.update_input();
     this->mouse_moved = false;
 
     while (SDL_PollEvent(&this->event)) {
 
         // exit before handling SDL events
         if (event.type == SDL_QUIT) {
-            this->event_handler.done = true;
-            return this->event_handler.done;
+            this->event_handler_.done_ = true;
+            return this->event_handler_.done_;
         }
         this->updateEvents();
         this->updateWindowEvents();
@@ -254,20 +254,20 @@ bool OE_SDL_WindowSystem::update() {
 
     if (this->mouse_moved) {
         // fetch mouse position, since this IS needed
-        this->event_handler.lockMutex();
+        this->event_handler_.lockMutex();
 
         int mouse_x, mouse_y, mouse_delta_x, mouse_delta_y;
         SDL_GetMouseState(&mouse_x, &mouse_y);
         SDL_GetRelativeMouseState(&mouse_delta_x, &mouse_delta_y);
-        this->event_handler.internal_update_mouse_status(mouse_x, mouse_y, mouse_delta_x, mouse_delta_y);
+        this->event_handler_.internal_update_mouse_status(mouse_x, mouse_y, mouse_delta_x, mouse_delta_y);
 
-        this->event_handler.unlockMutex();
+        this->event_handler_.unlockMutex();
 
-        this->event_handler.broadcastIEvent("mouse-motion");
+        this->event_handler_.broadcast_ievent("mouse-motion");
     }
 
     // This is needed to support things like OE_Finish()
-    return this->event_handler.done;
+    return this->event_handler_.done_;
 }
 
 bool OE_SDL_WindowSystem::updateEvents() {
@@ -275,18 +275,18 @@ bool OE_SDL_WindowSystem::updateEvents() {
     switch (this->event.type) {
     // check for key presses
     case SDL_KEYDOWN:
-        for (auto key : this->event_handler.input_handler.keyList) {
+        for (auto key : this->event_handler_.input_handler_.keyList_) {
             if (this->event.key.keysym.sym == key.first) {
-                this->event_handler.internalBroadcastKeyDownEvent("keyboard-" + key.second);
+                this->event_handler_.internal_register_keydown_event("keyboard-" + key.second);
             }
         }
         break;
 
     // check for releases
     case SDL_KEYUP:
-        for (auto key : this->event_handler.input_handler.keyList) {
+        for (auto key : this->event_handler_.input_handler_.keyList_) {
             if (this->event.key.keysym.sym == key.first) {
-                this->event_handler.internalBroadcastKeyUpEvent("keyboard-" + key.second);
+                this->event_handler_.internal_register_keyup_event("keyboard-" + key.second);
             }
         }
         break;
@@ -299,18 +299,18 @@ bool OE_SDL_WindowSystem::updateEvents() {
 
         // update mouse down events
     case SDL_MOUSEBUTTONDOWN:
-        for (auto key : this->event_handler.input_handler.mouseList) {
+        for (auto key : this->event_handler_.input_handler_.mouseList_) {
             if (this->event.button.button == key.first) {
-                this->event_handler.internalBroadcastKeyDownEvent("mouse-" + key.second);
+                this->event_handler_.internal_register_keydown_event("mouse-" + key.second);
             }
         }
         break;
 
     // update mouse up events
     case SDL_MOUSEBUTTONUP:
-        for (auto key : this->event_handler.input_handler.mouseList) {
+        for (auto key : this->event_handler_.input_handler_.mouseList_) {
             if (this->event.button.button == key.first) {
-                this->event_handler.internalBroadcastKeyUpEvent("mouse-" + key.second);
+                this->event_handler_.internal_register_keyup_event("mouse-" + key.second);
             }
         }
         break;
@@ -318,12 +318,12 @@ bool OE_SDL_WindowSystem::updateEvents() {
     // update mouse wheel events
     case SDL_MOUSEWHEEL:
 
-        this->event_handler.lockMutex();
+        this->event_handler_.lockMutex();
         // mouse_mouse_wheel = event.wheel.y;
         //  fetch mouse position, since this may be needed
-        this->event_handler.unlockMutex();
+        this->event_handler_.unlockMutex();
 
-        this->event_handler.broadcastIEvent("mouse-wheel");
+        this->event_handler_.broadcast_ievent("mouse-wheel");
         break;
     }
 

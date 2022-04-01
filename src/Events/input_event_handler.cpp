@@ -4,9 +4,9 @@
 using namespace std;
 
 oe::input_event_handler_t::input_event_handler_t() {
-    mouseList = {
+    mouseList_ = {
         {SDL_BUTTON_LEFT, "1"}, {SDL_BUTTON_RIGHT, "2"}, {SDL_BUTTON_MIDDLE, "3"}, {SDL_BUTTON_X1, "4"}, {SDL_BUTTON_X2, "5"}};
-    keyList = {
+    keyList_ = {
         {SDLK_0, "0"},         {SDLK_1, "1"},           {SDLK_2, "2"},           {SDLK_3, "3"},         {SDLK_4, "4"},
         {SDLK_5, "0"},         {SDLK_6, "6"},           {SDLK_7, "7"},           {SDLK_8, "8"},         {SDLK_9, "9"},
         {SDLK_a, "a"},         {SDLK_b, "b"},           {SDLK_c, "c"},           {SDLK_d, "d"},         {SDLK_e, "e"},
@@ -25,11 +25,11 @@ oe::input_event_handler_t::input_event_handler_t() {
 oe::input_event_handler_t::~input_event_handler_t() {
 }
 
-std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::createEvents() {
+std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::create_events() {
 
     std::map<std::string, std::shared_ptr<oe::event_t>> event_list;
     /// generate keyboard events
-    for (auto x : this->keyList) {
+    for (auto x : this->keyList_) {
 
         // event for just pressed (sent once per tap)
         shared_ptr<oe::keyboard_event_t> event = std::make_shared<oe::keyboard_event_t>();
@@ -55,7 +55,7 @@ std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::c
     }
 
     /// generate mouse events
-    for (auto x : this->mouseList) {
+    for (auto x : this->mouseList_) {
         // event for just pressed (sent once per tap)
         shared_ptr<oe::mouse_event_t> event = std::make_shared<oe::mouse_event_t>();
         event->name_                        = "mouse-" + x.second + "+";
@@ -93,7 +93,7 @@ std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::c
     return event_list;
 }
 
-void oe::event_handler_t::updateInput() {
+void oe::event_handler_t::update_input() {
     lockMutex();
     for (auto key_event_elem : this->events_list_) {
         if (key_event_elem.p_->type_ == KEYBOARD_EVENT) {
@@ -104,7 +104,7 @@ void oe::event_handler_t::updateInput() {
             }
             else if (key_event->keystate_ == oe::BUTTON_PRESS) {
                 if (key_event->is_main_event_) {
-                    this->broadcastIEvent(key_event_elem.id_);
+                    this->broadcast_ievent(key_event_elem.id_);
                 }
             }
             else if (key_event->keystate_ == oe::BUTTON_JUST_RELEASE) {
@@ -121,7 +121,7 @@ void oe::event_handler_t::updateInput() {
             }
             else if (key_event->keystate_ == oe::BUTTON_PRESS) {
                 if (key_event->is_main_event_) {
-                    this->broadcastIEvent(key_event_elem.id_);
+                    this->broadcast_ievent(key_event_elem.id_);
                 }
             }
             else if (key_event->keystate_ == oe::BUTTON_JUST_RELEASE) {
@@ -138,7 +138,7 @@ void oe::event_handler_t::updateInput() {
     unlockMutex();
 }
 
-void oe::event_handler_t::internalBroadcastKeyDownEvent(const std::string& name) {
+void oe::event_handler_t::internal_register_keydown_event(const std::string& name) {
 
     if (name.length() <= 8)
         assert(name.substr(0, 6) == "mouse-");
@@ -152,36 +152,36 @@ void oe::event_handler_t::internalBroadcastKeyDownEvent(const std::string& name)
     // update mouse event if it exists
     if (name.substr(0, 6) == "mouse-") {
 
-        oe::mouse_event_t* just_pressed  = static_cast<oe::mouse_event_t*>(getIEvent(name + "+").get());
-        oe::mouse_event_t* just_released = static_cast<oe::mouse_event_t*>(getIEvent(name + "-").get());
-        oe::mouse_event_t* held          = static_cast<oe::mouse_event_t*>(getIEvent(name + "").get());
+        oe::mouse_event_t* just_pressed  = static_cast<oe::mouse_event_t*>(get_ievent(name + "+").get());
+        oe::mouse_event_t* just_released = static_cast<oe::mouse_event_t*>(get_ievent(name + "-").get());
+        oe::mouse_event_t* held          = static_cast<oe::mouse_event_t*>(get_ievent(name + "").get());
 
         if (just_pressed->keystate_ < oe::BUTTON_PRESS) {
             just_pressed->keystate_ += 1;
             just_released->keystate_ += 1;
             held->keystate_ += 1;
         }
-        if (just_pressed->keystate_ == oe::BUTTON_JUST_PRESS) this->broadcastIEvent(just_pressed->name_);
+        if (just_pressed->keystate_ == oe::BUTTON_JUST_PRESS) this->broadcast_ievent(just_pressed->name_);
     }
     // update keyboard event if it exists
     else if (name.substr(0, 9) == "keyboard-") {
 
-        oe::keyboard_event_t* just_pressed  = static_cast<oe::keyboard_event_t*>(getIEvent(name + "+").get());
-        oe::keyboard_event_t* just_released = static_cast<oe::keyboard_event_t*>(getIEvent(name + "-").get());
-        oe::keyboard_event_t* held          = static_cast<oe::keyboard_event_t*>(getIEvent(name + "").get());
+        oe::keyboard_event_t* just_pressed  = static_cast<oe::keyboard_event_t*>(get_ievent(name + "+").get());
+        oe::keyboard_event_t* just_released = static_cast<oe::keyboard_event_t*>(get_ievent(name + "-").get());
+        oe::keyboard_event_t* held          = static_cast<oe::keyboard_event_t*>(get_ievent(name + "").get());
 
         if (just_pressed->keystate_ < oe::BUTTON_JUST_PRESS) {
             just_pressed->keystate_ += 1;
             just_released->keystate_ += 1;
             held->keystate_ += 1;
         }
-        if (just_pressed->keystate_ == oe::BUTTON_JUST_PRESS) this->broadcastIEvent(just_pressed->name_);
+        if (just_pressed->keystate_ == oe::BUTTON_JUST_PRESS) this->broadcast_ievent(just_pressed->name_);
     }
     else {
     }
 }
 
-void oe::event_handler_t::internalBroadcastKeyUpEvent(const std::string& name) {
+void oe::event_handler_t::internal_register_keyup_event(const std::string& name) {
     if (name.length() <= 8)
         assert(name.substr(0, 6) == "mouse-");
     else if (name.length() > 8)
@@ -194,9 +194,9 @@ void oe::event_handler_t::internalBroadcastKeyUpEvent(const std::string& name) {
     // update mouse event if it exists
     if (name.substr(0, 6) == "mouse-") {
 
-        oe::mouse_event_t* just_pressed  = static_cast<oe::mouse_event_t*>(getIEvent(name + "+").get());
-        oe::mouse_event_t* just_released = static_cast<oe::mouse_event_t*>(getIEvent(name + "-").get());
-        oe::mouse_event_t* held          = static_cast<oe::mouse_event_t*>(getIEvent(name + "").get());
+        oe::mouse_event_t* just_pressed  = static_cast<oe::mouse_event_t*>(get_ievent(name + "+").get());
+        oe::mouse_event_t* just_released = static_cast<oe::mouse_event_t*>(get_ievent(name + "-").get());
+        oe::mouse_event_t* held          = static_cast<oe::mouse_event_t*>(get_ievent(name + "").get());
 
         if (just_pressed->keystate_ < oe::BUTTON_JUST_RELEASE) {
             just_pressed->keystate_ += 1;
@@ -204,16 +204,16 @@ void oe::event_handler_t::internalBroadcastKeyUpEvent(const std::string& name) {
             held->keystate_ += 1;
         }
         if (just_pressed->keystate_ == oe::BUTTON_JUST_RELEASE)
-            this->broadcastIEvent(just_released->name_);
+            this->broadcast_ievent(just_released->name_);
         else
             OE_WriteToLog("dafuq?"); /// IMPOSSIBLE
     }
     // update keyboard event if it exists
     else if (name.substr(0, 9) == "keyboard-") {
 
-        oe::keyboard_event_t* just_pressed  = static_cast<oe::keyboard_event_t*>(getIEvent(name + "+").get());
-        oe::keyboard_event_t* just_released = static_cast<oe::keyboard_event_t*>(getIEvent(name + "-").get());
-        oe::keyboard_event_t* held          = static_cast<oe::keyboard_event_t*>(getIEvent(name + "").get());
+        oe::keyboard_event_t* just_pressed  = static_cast<oe::keyboard_event_t*>(get_ievent(name + "+").get());
+        oe::keyboard_event_t* just_released = static_cast<oe::keyboard_event_t*>(get_ievent(name + "-").get());
+        oe::keyboard_event_t* held          = static_cast<oe::keyboard_event_t*>(get_ievent(name + "").get());
 
         while (just_pressed->keystate_ < oe::BUTTON_JUST_RELEASE) {
             just_pressed->keystate_ += 1;
@@ -221,7 +221,7 @@ void oe::event_handler_t::internalBroadcastKeyUpEvent(const std::string& name) {
             held->keystate_ += 1;
         }
         if (just_pressed->keystate_ == oe::BUTTON_JUST_RELEASE)
-            this->broadcastIEvent(just_released->name_);
+            this->broadcast_ievent(just_released->name_);
         else
             OE_WriteToLog("dafuq?"); /// IMPOSSIBLE
     }

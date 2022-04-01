@@ -240,7 +240,7 @@ namespace oe {
         assert(OE_Main != nullptr);
         oe::event_func_type func_copy =
             std::bind(func, std::placeholders::_1, std::placeholders::_2, std::forward<Args...>(arguments...));
-        OE_Main->window->event_handler.setIEventFunc(name, func_copy);
+        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
     }
 
     template <typename T>
@@ -248,7 +248,7 @@ namespace oe {
 
         assert(OE_Main != nullptr);
         oe::event_func_type func_copy = std::bind(func, std::placeholders::_1, std::placeholders::_2);
-        OE_Main->window->event_handler.setIEventFunc(name, func_copy);
+        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
     }
 
     template <typename T, typename A, typename... Args>
@@ -257,7 +257,7 @@ namespace oe {
         assert(OE_Main != nullptr);
         oe::event_func_type func_copy =
             std::bind(func, instance, std::placeholders::_1, std::placeholders::_2, std::forward<Args...>(arguments...));
-        OE_Main->window->event_handler.setIEventFunc(name, func_copy);
+        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
     }
 
     template <typename T, typename A>
@@ -265,7 +265,7 @@ namespace oe {
 
         assert(OE_Main != nullptr);
         oe::event_func_type func_copy = std::bind(func, instance, std::placeholders::_1, std::placeholders::_2);
-        OE_Main->window->event_handler.setIEventFunc(name, func_copy);
+        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
     }
 
     void destroy_event(std::string);

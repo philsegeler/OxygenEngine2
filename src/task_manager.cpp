@@ -281,7 +281,7 @@ void OE_TaskManager::Step() {
 
     this->updateWorld();
     // cout << "overcome critical part" << endl;
-    this->window->event_handler.handleAllEvents();
+    this->window->event_handler_.handle_all_events();
 
     this->syncBeginFrame();
 
@@ -340,7 +340,7 @@ void OE_TaskManager::Destroy() {
     this->renderer->destroy();
     this->physics->destroy();
 
-    this->window->event_handler.cleanup();
+    this->window->event_handler_.cleanup();
     this->window->destroy();
 
     delete this->renderer;
