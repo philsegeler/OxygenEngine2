@@ -65,8 +65,6 @@ namespace oe {
         std::vector<std::size_t>                     happened_events_;
         std::unordered_map<std::size_t, std::size_t> happened_events_counter_;
 
-        uint8_t index_ = -1;
-
     private:
         int  mouse_x_{0};
         int  mouse_y_{0};

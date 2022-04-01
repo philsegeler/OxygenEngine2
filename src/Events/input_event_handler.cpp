@@ -181,7 +181,7 @@ void oe::event_handler_t::internal_register_keyup_event(const std::string& name)
         oe::mouse_event_t* just_released = static_cast<oe::mouse_event_t*>(get_ievent(name + "-").get());
         oe::mouse_event_t* held          = static_cast<oe::mouse_event_t*>(get_ievent(name + "").get());
 
-        if (just_pressed->keystate_ < oe::BUTTON_JUST_RELEASE) {
+        while (just_pressed->keystate_ < oe::BUTTON_JUST_RELEASE) {
             just_pressed->keystate_ += 1;
             just_released->keystate_ += 1;
             held->keystate_ += 1;
