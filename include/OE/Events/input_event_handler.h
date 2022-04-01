@@ -19,7 +19,7 @@ namespace oe {
 
         // protected:
         std::unordered_map<uint8_t, std::string> mouseList_;
-        std::unordered_map<int, std::string>     keyList_;
+        std::unordered_map<uint8_t, std::string> keyList_;
     };
 };     // namespace oe
 #endif // OE_INPUTEVENTHANDLER_H

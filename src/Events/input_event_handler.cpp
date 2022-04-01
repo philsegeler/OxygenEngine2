@@ -140,17 +140,8 @@ void oe::event_handler_t::update_input() {
 
 void oe::event_handler_t::internal_register_keydown_event(const std::string& name) {
 
-    if (name.length() <= 8)
-        assert(name.substr(0, 6) == "mouse-");
-    else if (name.length() > 8)
-        assert(name.substr(0, 6) == "mouse-" || name.substr(0, 9) == "keyboard-");
-    else {
-        cout << "Error invalid name in internalBroadcastKeyDwonEvent: " << name << endl;
-        assert(false);
-    }
-
     // update mouse event if it exists
-    if (name.substr(0, 6) == "mouse-") {
+    if (name.starts_with("mouse-")) {
 
         oe::mouse_event_t* just_pressed  = static_cast<oe::mouse_event_t*>(get_ievent(name + "+").get());
         oe::mouse_event_t* just_released = static_cast<oe::mouse_event_t*>(get_ievent(name + "-").get());
@@ -164,7 +155,7 @@ void oe::event_handler_t::internal_register_keydown_event(const std::string& nam
         if (just_pressed->keystate_ == oe::BUTTON_JUST_PRESS) this->broadcast_ievent(just_pressed->name_);
     }
     // update keyboard event if it exists
-    else if (name.substr(0, 9) == "keyboard-") {
+    else if (name.starts_with("keyboard-")) {
 
         oe::keyboard_event_t* just_pressed  = static_cast<oe::keyboard_event_t*>(get_ievent(name + "+").get());
         oe::keyboard_event_t* just_released = static_cast<oe::keyboard_event_t*>(get_ievent(name + "-").get());
@@ -178,21 +169,13 @@ void oe::event_handler_t::internal_register_keydown_event(const std::string& nam
         if (just_pressed->keystate_ == oe::BUTTON_JUST_PRESS) this->broadcast_ievent(just_pressed->name_);
     }
     else {
+        // TODO: Warnings
     }
 }
 
 void oe::event_handler_t::internal_register_keyup_event(const std::string& name) {
-    if (name.length() <= 8)
-        assert(name.substr(0, 6) == "mouse-");
-    else if (name.length() > 8)
-        assert(name.substr(0, 6) == "mouse-" || name.substr(0, 9) == "keyboard-");
-    else {
-        cout << "Error invalid name in internalBroadcastKeyDwonEvent: " << name << endl;
-        assert(false);
-    }
-
     // update mouse event if it exists
-    if (name.substr(0, 6) == "mouse-") {
+    if (name.starts_with("mouse-")) {
 
         oe::mouse_event_t* just_pressed  = static_cast<oe::mouse_event_t*>(get_ievent(name + "+").get());
         oe::mouse_event_t* just_released = static_cast<oe::mouse_event_t*>(get_ievent(name + "-").get());
@@ -209,7 +192,7 @@ void oe::event_handler_t::internal_register_keyup_event(const std::string& name)
             OE_WriteToLog("dafuq?"); /// IMPOSSIBLE
     }
     // update keyboard event if it exists
-    else if (name.substr(0, 9) == "keyboard-") {
+    else if (name.starts_with("keyboard-")) {
 
         oe::keyboard_event_t* just_pressed  = static_cast<oe::keyboard_event_t*>(get_ievent(name + "+").get());
         oe::keyboard_event_t* just_released = static_cast<oe::keyboard_event_t*>(get_ievent(name + "-").get());
@@ -226,6 +209,7 @@ void oe::event_handler_t::internal_register_keyup_event(const std::string& name)
             OE_WriteToLog("dafuq?"); /// IMPOSSIBLE
     }
     else {
+        // TODO: Warnings
     }
 }
 

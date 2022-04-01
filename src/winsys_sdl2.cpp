@@ -275,19 +275,17 @@ bool OE_SDL_WindowSystem::updateEvents() {
     switch (this->event.type) {
     // check for key presses
     case SDL_KEYDOWN:
-        for (auto key : this->event_handler_.input_handler_.keyList_) {
-            if (this->event.key.keysym.sym == key.first) {
-                this->event_handler_.internal_register_keydown_event("keyboard-" + key.second);
-            }
+        if (this->event_handler_.input_handler_.keyList_.count(this->event.key.keysym.sym) != 0) {
+            auto key_string = this->event_handler_.input_handler_.keyList_[this->event.key.keysym.sym];
+            this->event_handler_.internal_register_keydown_event("keyboard-" + key_string);
         }
         break;
 
     // check for releases
     case SDL_KEYUP:
-        for (auto key : this->event_handler_.input_handler_.keyList_) {
-            if (this->event.key.keysym.sym == key.first) {
-                this->event_handler_.internal_register_keyup_event("keyboard-" + key.second);
-            }
+        if (this->event_handler_.input_handler_.keyList_.count(this->event.key.keysym.sym) != 0) {
+            auto key_string = this->event_handler_.input_handler_.keyList_[this->event.key.keysym.sym];
+            this->event_handler_.internal_register_keyup_event("keyboard-" + key_string);
         }
         break;
 
@@ -299,19 +297,17 @@ bool OE_SDL_WindowSystem::updateEvents() {
 
         // update mouse down events
     case SDL_MOUSEBUTTONDOWN:
-        for (auto key : this->event_handler_.input_handler_.mouseList_) {
-            if (this->event.button.button == key.first) {
-                this->event_handler_.internal_register_keydown_event("mouse-" + key.second);
-            }
+        if (this->event_handler_.input_handler_.mouseList_.count(this->event.button.button) != 0) {
+            auto key_string = this->event_handler_.input_handler_.mouseList_[this->event.button.button];
+            this->event_handler_.internal_register_keydown_event("mouse-" + key_string);
         }
         break;
 
     // update mouse up events
     case SDL_MOUSEBUTTONUP:
-        for (auto key : this->event_handler_.input_handler_.mouseList_) {
-            if (this->event.button.button == key.first) {
-                this->event_handler_.internal_register_keyup_event("mouse-" + key.second);
-            }
+        if (this->event_handler_.input_handler_.mouseList_.count(this->event.button.button) != 0) {
+            auto key_string = this->event_handler_.input_handler_.mouseList_[this->event.button.button];
+            this->event_handler_.internal_register_keyup_event("mouse-" + key_string);
         }
         break;
 
