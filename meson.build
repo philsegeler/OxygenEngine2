@@ -1,4 +1,4 @@
-project('Oxygen Engine', ['cpp', 'c'], default_options : ['cpp_std=c++17', 'buildtype=debugoptimized'])
+project('Oxygen Engine', ['cpp', 'c'], default_options : ['cpp_std=c++20', 'buildtype=debugoptimized'])
 
 src = ['src/Renderer/glad.c',
        'src/Renderer/api_gpu.cpp',
@@ -43,7 +43,13 @@ src = ['src/Renderer/glad.c',
        'src/types/world.cpp']
 
 
-internal_inc = include_directories('./include')
+cmake = import('cmake')
+sub_proj = cmake.subproject('ctre')
+ctre_dep = sub_proj.dependency('ctre')
+
+
+internal_inc = [include_directories('./include'), sub_proj.include_directories('ctre')]
+
 
 glm_dep = dependency('glm')
 
@@ -60,11 +66,11 @@ endif
 oe_dep = declare_dependency(link_with : oe_lib, include_directories : internal_inc)
 
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
-    executable('CSL_Test', sources : 'examples/csl_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
-    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
+    executable('CSL_Test', sources : 'examples/csl_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
+    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
 else
-    #executable('CSL_Test', sources : 'esamples/csl_main_test.cpp', dependencies : [oe_dep], win_subsystem: 'windows')
-    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
+    #executable('CSL_Test', sources : 'esamples/csl_main_test.cpp', dependencies : [oe_dep, ctre_dep], win_subsystem: 'windows')
+    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
 endif
 
 
