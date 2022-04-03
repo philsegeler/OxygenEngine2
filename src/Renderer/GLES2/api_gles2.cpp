@@ -116,7 +116,7 @@ void NRE_GLES2_API::update(uint32_t x_in, uint32_t y_in) {
         nre::gpu::x = x_in;
         nre::gpu::y = y_in;
     }
-    cout << this->prog_db.size() << " " << this->vs_db.size() << " " << this->fs_db.size() << endl;
+    // cout << this->prog_db.size() << " " << this->vs_db.size() << " " << this->fs_db.size() << endl;
     glDepthMask(GL_TRUE);
     glStencilMask(0xFF);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
