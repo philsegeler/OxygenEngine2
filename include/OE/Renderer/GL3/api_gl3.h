@@ -79,9 +79,19 @@ struct NRE_GL3_Program {
     bool   prog_created{false};
     GLuint handle{0};
 
-    // this is needed for it to be in an std::set
-    bool operator<(const NRE_GL3_Program&) const;
+    // this is needed for it to be in an std::unordered_set
+    bool   operator==(const NRE_GL3_Program&) const;
+    size_t gen_hash() const;
 };
+
+namespace std {
+    template <>
+    struct hash<NRE_GL3_Program> {
+        auto operator()(const NRE_GL3_Program& xyz) const -> size_t {
+            return hash<size_t>{}(xyz.gen_hash());
+        }
+    };
+} // namespace std
 
 struct NRE_GL3_ProgramData {
     GLuint                                   handle{0};
@@ -198,9 +208,9 @@ protected:
 
     std::size_t getVAOSize(std::size_t);
 
-    std::map<nre::gpu::vertex_shader, GLuint>      vs_db;
-    std::map<nre::gpu::pixel_shader, GLuint>       fs_db;
-    std::map<NRE_GL3_Program, NRE_GL3_ProgramData> prog_db;
+    std::unordered_map<nre::gpu::vertex_shader, GLuint>      vs_db;
+    std::unordered_map<nre::gpu::pixel_shader, GLuint>       fs_db;
+    std::unordered_map<NRE_GL3_Program, NRE_GL3_ProgramData> prog_db;
 
 private:
     void check_rbo_id_(std::size_t, const std::string&);

@@ -693,6 +693,7 @@ void nre::gpu::del_framebuffer(std::size_t id) {
 
 // vertex shaders
 void nre::gpu::set_program_vertex_shader(std::size_t id, nre::gpu::vertex_shader vs) {
+    // std::cout << "VS HASH " << std::bitset<64>(vs.gen_hash()) << " " << vs.info() << std::endl;
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
@@ -706,6 +707,7 @@ void nre::gpu::set_program_vertex_shader(std::size_t id, nre::gpu::vertex_shader
     }
 }
 void nre::gpu::set_program_pixel_shader(std::size_t id, nre::gpu::pixel_shader fs) {
+    // std::cout << "FS HASH " << std::bitset<64>(fs.gen_hash()) << " " << fs.info() << std::endl;
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:

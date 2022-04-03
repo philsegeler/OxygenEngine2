@@ -100,17 +100,11 @@ std::size_t NRE_GL3_ProgramData::hasUniform(std::string name) {
     return this->uniforms.size();
 }
 
-bool NRE_GL3_Program::operator<(const NRE_GL3_Program& other) const {
-    if (this->vs < other.vs) {
-        return true;
-    }
-    else if (this->vs == other.vs) {
-        return this->fs < other.fs;
-    }
-    else {
-        return false;
-    }
-    return false;
+bool NRE_GL3_Program::operator==(const NRE_GL3_Program&) const {
+    return std::tie(this->vs, this->fs) == std::tie(this->vs, this->fs);
+}
+size_t NRE_GL3_Program::gen_hash() const {
+    return this->vs.gen_hash() + this->fs.gen_hash();
 }
 
 bool NRE_GL3_Texture::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, nre::gpu::TEXTURE_FILTER filter_in, int x_in, int y_in,

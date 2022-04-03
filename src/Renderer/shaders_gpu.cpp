@@ -1,9 +1,9 @@
 #include <OE/Renderer/GL3/shaders_gl3.h>
 #include <OE/Renderer/GLES2/shaders_gles2.h>
 #include <OE/Renderer/api_gpu.h>
+#include <bitset>
 #include <iostream>
 #include <sstream>
-
 using namespace std;
 using namespace nre::gpu;
 
@@ -62,34 +62,13 @@ nre::gpu::vertex_shader::vertex_shader() {
 nre::gpu::vertex_shader::~vertex_shader() {
 }
 
-bool nre::gpu::vertex_shader::operator<(const nre::gpu::vertex_shader& other) const {
-    if (this->num_of_uvs < other.num_of_uvs) {
-        return true;
-    }
-    else if (this->num_of_uvs > other.num_of_uvs) {
-        return false;
-    }
-    else {
-        // both are equal
-        if (this->type < other.type) {
-            return true;
-        }
-        else if (this->type > other.type) {
-            return false;
-        }
-        else {
-            return this->fullscreenQuad < other.fullscreenQuad;
-        }
-    }
-    return false;
-}
-
 bool nre::gpu::vertex_shader::operator==(const nre::gpu::vertex_shader& other) const {
-    return (this->fullscreenQuad == other.fullscreenQuad) && (this->type == other.type) &&
-           (this->num_of_uvs == other.num_of_uvs);
+    return std::tie(this->fullscreenQuad, this->type, this->num_of_uvs) ==
+           std::tie(other.fullscreenQuad, other.type, other.num_of_uvs);
 }
 
-std::string nre::gpu::vertex_shader::gen_shader() {
+
+std::string nre::gpu::vertex_shader::gen_shader() const {
     if (nre::gpu::get_api() == GL || nre::gpu::get_api() == GLES)
         return NRE_GenGL3VertexShader(*this);
     else if (nre::gpu::get_api() == GLES2)
@@ -98,7 +77,7 @@ std::string nre::gpu::vertex_shader::gen_shader() {
         return "";
 }
 
-std::string nre::gpu::vertex_shader::info() {
+std::string nre::gpu::vertex_shader::info() const {
 
     stringstream ss;
     switch (this->type) {
@@ -121,8 +100,20 @@ std::string nre::gpu::vertex_shader::info() {
         ss << "VS_LIGHT";
         break;
     }
-
+    ss << " " << this->fullscreenQuad << " " << this->num_of_uvs;
     return ss.str();
+}
+
+
+size_t nre::gpu::vertex_shader::gen_hash() const {
+    // should only use the first 32
+    std::bitset<64> output_bits(this->fullscreenQuad);
+
+    output_bits |= (num_of_uvs & 7) << 1;
+    output_bits |= (this->type << 4);
+
+
+    return output_bits.to_ullong();
 }
 
 // Fragment/Pixel Shader
@@ -133,21 +124,11 @@ nre::gpu::pixel_shader::pixel_shader() {
 nre::gpu::pixel_shader::~pixel_shader() {
 }
 
-bool nre::gpu::pixel_shader::operator<(const nre::gpu::pixel_shader& other) const {
-    if (this->num_of_uvs < other.num_of_uvs) {
-        return true;
-    }
-    else if (this->num_of_uvs > other.num_of_uvs) {
-        return false;
-    }
-    else {
-        // both are equal
-        return this->type < other.type;
-    }
-    return false;
+bool nre::gpu::pixel_shader::operator==(const nre::gpu::pixel_shader& other) const {
+    return std::tie(this->type, this->num_of_uvs) == std::tie(other.type, other.num_of_uvs);
 }
 
-std::string nre::gpu::pixel_shader::gen_shader() {
+std::string nre::gpu::pixel_shader::gen_shader() const {
     if (nre::gpu::get_api() == GL || nre::gpu::get_api() == GLES)
         return NRE_GenGL3PixelShader(*this);
     else if (nre::gpu::get_api() == GLES2)
@@ -157,7 +138,7 @@ std::string nre::gpu::pixel_shader::gen_shader() {
     return "";
 }
 
-std::string nre::gpu::pixel_shader::info() {
+std::string nre::gpu::pixel_shader::info() const {
     stringstream ss;
     switch (this->type) {
     case FS_UNDEFINED:
@@ -188,6 +169,18 @@ std::string nre::gpu::pixel_shader::info() {
         ss << "FS_LIGHT_INDEX";
         break;
     }
-
+    ss << " " << this->num_of_uvs;
     return ss.str();
+}
+
+
+size_t nre::gpu::pixel_shader::gen_hash() const {
+    // should only use the last 32
+    std::bitset<64> output_bits(0);
+
+    output_bits |= (num_of_uvs & 7) << 29;
+    output_bits |= (this->type << 26);
+    output_bits = output_bits << 32;
+
+    return output_bits.to_ullong();
 }

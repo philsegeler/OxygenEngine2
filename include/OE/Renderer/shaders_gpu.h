@@ -47,11 +47,11 @@ namespace nre { namespace gpu {
         vertex_shader();
         ~vertex_shader();
 
-        bool operator<(const vertex_shader&) const;
         bool operator==(const vertex_shader&) const;
 
-        std::string gen_shader();
-        std::string info();
+        std::string gen_shader() const;
+        std::string info() const;
+        size_t      gen_hash() const;
 
         bool        fullscreenQuad{false};
         std::size_t num_of_uvs{0};
@@ -63,14 +63,37 @@ namespace nre { namespace gpu {
         pixel_shader();
         ~pixel_shader();
 
-        bool operator<(const pixel_shader&) const;
+        bool operator==(const pixel_shader&) const;
 
-        std::string gen_shader();
-        std::string info();
+        std::string gen_shader() const;
+        std::string info() const;
+        size_t      gen_hash() const;
 
         std::size_t num_of_uvs{0};
         FS_TYPE     type{FS_UNDEFINED};
     };
 
 }; }; // namespace nre::gpu
+
+
+// specializations for hashing
+
+namespace std {
+template <>
+struct hash<nre::gpu::vertex_shader> {
+  auto operator()(const nre::gpu::vertex_shader &xyz) const -> size_t {
+    return hash<size_t>{}(xyz.gen_hash());
+  }
+};
+}  // namespace std
+
+namespace std {
+template <>
+struct hash<nre::gpu::pixel_shader> {
+  auto operator()(const nre::gpu::pixel_shader &xyz) const -> size_t {
+    return hash<size_t>{}(xyz.gen_hash());
+  }
+};
+}  // namespace std
+
 #endif

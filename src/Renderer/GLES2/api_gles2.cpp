@@ -29,27 +29,14 @@ GLenum NRE2GLES2_BufferUse(nre::gpu::BUFFER_USAGE usage) {
 
 // get index of a uniform variable in a shader program
 std::size_t NRE_GLES2_ProgramData::hasUniform(std::string name) {
-    size_t index = 0;
-    for (auto x : this->uniforms) {
-        if (x.name == name) {
-            return index;
-        }
-        index++;
-    }
-    return this->uniforms.size();
+    return this->uniforms.contains(name);
 }
 
-bool NRE_GLES2_Program::operator<(const NRE_GLES2_Program& other) const {
-    if (this->vs < other.vs) {
-        return true;
-    }
-    else if (this->vs == other.vs) {
-        return this->fs < other.fs;
-    }
-    else {
-        return false;
-    }
-    return false;
+bool NRE_GLES2_Program::operator==(const NRE_GLES2_Program&) const {
+    return std::tie(this->vs, this->fs) == std::tie(this->vs, this->fs);
+}
+size_t NRE_GLES2_Program::gen_hash() const {
+    return this->vs.gen_hash() + this->fs.gen_hash();
 }
 
 bool NRE_GLES2_Texture::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, nre::gpu::TEXTURE_FILTER filter_in, int x_in, int y_in,
@@ -129,6 +116,7 @@ void NRE_GLES2_API::update(uint32_t x_in, uint32_t y_in) {
         nre::gpu::x = x_in;
         nre::gpu::y = y_in;
     }
+    // cout << this->prog_db.size() << " " << this->vs_db.size() <<  " " << this->fs_db.size() << endl;
     glDepthMask(GL_TRUE);
     glStencilMask(0xFF);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -140,6 +128,12 @@ void NRE_GLES2_API::update(uint32_t x_in, uint32_t y_in) {
 
     for (auto x : this->vao_ibos_) {
         this->vao_ibos_[x.first] = 0;
+    }
+    for (auto a_prog : this->prog_db) {
+        this->prog_db[a_prog.first].checked = false;
+        for (auto uniform : a_prog.second.uniforms) {
+            this->prog_db[a_prog.first].uniforms[uniform.first].checked = false;
+        }
     }
 }
 
@@ -220,14 +214,14 @@ void NRE_GLES2_API::check_prog_complete_(std::size_t id, const std::string& func
 }
 
 void NRE_GLES2_API::check_prog_uniform_(std::size_t id, const std::string& name, const std::string& func) {
-    if (this->prog_db[this->progs[id]].hasUniform(name) == this->prog_db[this->progs[id]].uniforms.size()) {
+    if (not this->prog_db[this->progs[id]].hasUniform(name)) {
         throw nre::gpu::invalid_program_uniform(id, name, func);
     }
 }
 
 void NRE_GLES2_API::check_prog_uniform_property_(std::size_t id, const std::string& name, std::size_t length,
                                                  const std::string& func, bool is_type_problem) {
-    auto uniform_typ = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_typ = this->prog_db[this->progs[id]].uniforms[name].type;
     bool is_vec2     = (uniform_typ == GL_FLOAT_VEC2) and (length >= 2);
     bool is_vec3     = (uniform_typ == GL_FLOAT_VEC3) and (length >= 3);
     bool is_vec4     = (uniform_typ == GL_FLOAT_VEC4) and (length >= 4);
@@ -283,12 +277,11 @@ void NRE_GLES2_API::get_program_all_uniforms_(std::size_t id) {
 
         string actual_name   = string(uniform_name);
         auto   uniform_state = NRE_GLES2_ProgramUniformState();
-        uniform_state.name   = actual_name;
-        uniform_state.slot   = -1;
+        uniform_state.slot   = ida;
         uniform_state.type   = var_enum;
         uniform_state.size   = uniform_size;
         // cout << uniform_state.name << " " << uniform_state.type << " " << uniform_state.size << endl;
-        this->prog_db[this->progs[id]].uniforms.push_back(uniform_state);
+        this->prog_db[this->progs[id]].uniforms[actual_name] = uniform_state;
     }
 }
 
@@ -592,20 +585,20 @@ void NRE_GLES2_API::deleteIndexBuffer(std::size_t id) {
 
 void NRE_GLES2_API::setProgramTextureSlot(std::size_t id, std::string name, int slot) {
     this->check_prog_id_(id, "setProgramTextureSlot");
-    this->check_prog_complete_(id, "setProgramUniformData");
+    this->check_prog_complete_(id, "setProgramTextureSlot");
     this->check_prog_uniform_(id, name, "setProgramTextureSlot");
 
     if (this->active_prog_ != this->progs[id].handle) {
         glUseProgram(this->progs[id].handle);
         this->active_prog_ = this->progs[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[name].type;
     if ((uniform_type_enum == GL_SAMPLER_2D) or (uniform_type_enum == GL_SAMPLER_2D_SHADOW)) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1i(this->prog_db[this->progs[id]].hasUniform(name), slot);
+        glUniform1i(this->prog_db[this->progs[id]].uniforms[name].slot, slot);
 #else
         glUniform1i(glGetUniformLocation(this->progs[id].handle, name.c_str()), slot);
 #endif
@@ -625,13 +618,13 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, uint
         glUseProgram(this->progs[id].handle);
         this->active_prog_ = this->progs[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[name].type;
     if (uniform_type_enum == GL_INT) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1i(this->prog_db[this->progs[id]].hasUniform(name), data);
+        glUniform1i(this->prog_db[this->progs[id]].uniforms[name].slot, data);
 #else
         glUniform1i(glGetUniformLocation(this->progs[id].handle, name.c_str()), data);
 #endif
@@ -651,13 +644,13 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, floa
         glUseProgram(this->progs[id].handle);
         this->active_prog_ = this->progs[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[name].type;
     if (uniform_type_enum == GL_FLOAT) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1f(this->prog_db[this->progs[id]].hasUniform(name), data);
+        glUniform1f(this->prog_db[this->progs[id]].uniforms[name].slot, data);
 #else
         glUniform1f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data);
 #endif
@@ -679,12 +672,12 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, cons
         glUseProgram(this->progs[id].handle);
         this->active_prog_ = this->progs[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[name].type;
     // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
     // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
     // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-    auto uniform_id = this->prog_db[this->progs[id]].hasUniform(name);
+    auto uniform_id = this->prog_db[this->progs[id]].uniforms[name].slot;
     if (uniform_type_enum == GL_FLOAT_VEC2) {
         glUniform2f(uniform_id, data[0], data[1]);
     }
@@ -729,8 +722,8 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, cons
 int NRE_GLES2_API::getProgramUniformSlot(std::size_t id, std::string name) {
     this->check_prog_id_(id, "getProgramUniformSlot");
     this->check_prog_complete_(id, "getProgramUniformSlot");
-    if (this->prog_db[this->progs[id]].hasUniform(name) != this->prog_db[this->progs[id]].uniforms.size()) {
-        return this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].slot;
+    if (this->prog_db[this->progs[id]].hasUniform(name)) {
+        return this->prog_db[this->progs[id]].uniforms[name].slot;
     }
     return -2;
 }

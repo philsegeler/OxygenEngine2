@@ -53,10 +53,10 @@ struct NRE_GLES2_VertexArray {
 };
 
 struct NRE_GLES2_ProgramUniformState {
-    std::string name;
-    GLint       slot{0};
-    GLenum      type{GL_FLOAT}; // unused in Uniform blocks
-    size_t      size{0};        // unused in Uniform Blocks
+    GLint  slot{0};
+    GLenum type{GL_FLOAT}; // unused in Uniform blocks
+    size_t size{0};        // unused in Uniform Blocks
+    bool   checked{false}; // used to speed up sanity checks
 };
 
 struct NRE_GLES2_Program {
@@ -73,14 +73,25 @@ struct NRE_GLES2_Program {
     bool   prog_created{false};
     GLuint handle{0};
 
-    // this is needed for it to be in an std::set
-    bool operator<(const NRE_GLES2_Program&) const;
+    // this is needed for it to be in an std::unordered_set
+    bool   operator==(const NRE_GLES2_Program&) const;
+    size_t gen_hash() const;
 };
 
+namespace std {
+    template <>
+    struct hash<NRE_GLES2_Program> {
+        auto operator()(const NRE_GLES2_Program& xyz) const -> size_t {
+            return hash<size_t>{}(xyz.gen_hash());
+        }
+    };
+} // namespace std
+
 struct NRE_GLES2_ProgramData {
-    GLuint                                     handle{0};
-    std::vector<NRE_GLES2_ProgramUniformState> uniforms;
-    std::size_t                                hasUniform(std::string);
+    bool                                                           checked{false};
+    GLuint                                                         handle{0};
+    std::unordered_map<std::string, NRE_GLES2_ProgramUniformState> uniforms;
+    std::size_t                                                    hasUniform(std::string);
 };
 
 GLenum NRE2GLES2_BufferUse(nre::gpu::BUFFER_USAGE usage);
@@ -172,9 +183,9 @@ protected:
 
     std::size_t getVAOSize(std::size_t);
 
-    std::map<nre::gpu::vertex_shader, GLuint>          vs_db;
-    std::map<nre::gpu::pixel_shader, GLuint>           fs_db;
-    std::map<NRE_GLES2_Program, NRE_GLES2_ProgramData> prog_db;
+    std::unordered_map<nre::gpu::vertex_shader, GLuint>          vs_db;
+    std::unordered_map<nre::gpu::pixel_shader, GLuint>           fs_db;
+    std::unordered_map<NRE_GLES2_Program, NRE_GLES2_ProgramData> prog_db;
 
 private:
     void check_rbo_id_(std::size_t, const std::string&);
