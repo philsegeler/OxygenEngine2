@@ -111,10 +111,10 @@ void NRE_GLES2_API::update(uint32_t x_in, uint32_t y_in) {
 
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (x_in != nre::gpu::x or y_in != nre::gpu::y) {
+    if (x_in != x_ or y_in != y_) {
         glViewport(0, 0, x_in, y_in);
-        nre::gpu::x = x_in;
-        nre::gpu::y = y_in;
+        x_ = x_in;
+        y_ = y_in;
     }
     // cout << this->prog_db.size() << " " << this->vs_db.size() << " " << this->fs_db.size() << endl;
     glDepthMask(GL_TRUE);
@@ -1371,4 +1371,8 @@ void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode) {
     else {
         // TODO
     }
+}
+
+void NRE_GLES2_API::use_wireframe(bool value_in) {
+    // TODO: Warning
 }

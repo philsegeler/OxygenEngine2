@@ -2,11 +2,9 @@
 #include <OE/Renderer/GLES2/api_gles2.h>
 #include <OE/Renderer/api_gpu.h>
 
-uint32_t              nre::gpu::x             = 0;
-uint32_t              nre::gpu::y             = 0;
-void*                 nre::gpu::api           = nullptr;
-std::atomic<bool>     nre::gpu::use_wireframe = false;
-nre::gpu::info_struct nre::gpu::backend_info  = nre::gpu::info_struct();
+
+void*                 nre::gpu::api          = nullptr;
+nre::gpu::info_struct nre::gpu::backend_info = nre::gpu::info_struct();
 
 nre::gpu::vertex_layout_input::vertex_layout_input() {
 }
@@ -862,6 +860,20 @@ void nre::gpu::set_render_mode(RENDERMODE mode) {
         break;
     case GLES2:
         static_cast<NRE_GLES2_API*>(nre::gpu::api)->setRenderMode(mode);
+        break;
+    default:
+        return;
+    }
+}
+
+void nre::gpu::use_wireframe(bool mode) {
+    switch (nre::gpu::get_api()) {
+    case GL:
+    case GLES:
+        static_cast<NRE_GL3_API*>(nre::gpu::api)->use_wireframe(mode);
+        break;
+    case GLES2:
+        static_cast<NRE_GLES2_API*>(nre::gpu::api)->use_wireframe(mode);
         break;
     default:
         return;

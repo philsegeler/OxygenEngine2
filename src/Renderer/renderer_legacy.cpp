@@ -173,7 +173,7 @@ bool NRE_RendererLegacy::updateSingleThread() {
 
 
     // render viewport
-    nre::gpu::use_wireframe = this->use_wireframe.load(std::memory_order_relaxed);
+    nre::gpu::use_wireframe(this->use_wireframe.load(std::memory_order_relaxed));
 
     /*cout << "NRE Cameras: " << data_.cameras_.size() << endl;
     cout << "NRE Materials: " << data_.materials_.size() << endl;
@@ -226,10 +226,9 @@ bool NRE_RendererLegacy::updateSingleThread() {
         this->sce_ren_groups[scene_id].update();
 
         // optionally draw a bounding box/sphere for each object (in wireframe mode)
-        bool temp               = nre::gpu::use_wireframe;
-        bool render_bboxes      = this->render_bounding_boxes.load(std::memory_order_relaxed);
-        bool render_spheres     = this->render_bounding_spheres.load(std::memory_order_relaxed);
-        nre::gpu::use_wireframe = true;
+        bool render_bboxes  = this->render_bounding_boxes.load(std::memory_order_relaxed);
+        bool render_spheres = this->render_bounding_spheres.load(std::memory_order_relaxed);
+        nre::gpu::use_wireframe(true);
 
         if (render_bboxes) {
             nre::gpu::set_render_mode(nre::gpu::REGULAR_BOTH);
@@ -261,14 +260,12 @@ bool NRE_RendererLegacy::updateSingleThread() {
             }
             this->sce_ren_groups[scene_id].update();
         }
-
-        nre::gpu::use_wireframe = temp;
     }
 
     // nre::gpu::copyFrameBuffer(this->framebuffer, 0, nre::gpu::FBO_DEPTHSTENCIL);
 
     nre::gpu::use_framebuffer(0);
-    nre::gpu::use_wireframe = false;
+    nre::gpu::use_wireframe(false);
     nre::gpu::set_render_mode(nre::gpu::FULLSCREEN_QUAD);
 
     nre::gpu::set_texture_slot(this->colortexture, 0);

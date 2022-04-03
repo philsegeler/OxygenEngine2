@@ -161,6 +161,7 @@ public:
     void draw(nre::gpu::draw_call);
 
     void setRenderMode(nre::gpu::RENDERMODE);
+    void use_wireframe(bool);
 
 protected:
     std::size_t cur_rbo{0};
@@ -237,6 +238,9 @@ private:
     bool has_oes_texture_npot{false};
     bool has_ext_texture_compression_s3tc{false}; // WEBGL_compressed_texture_s3tc
     bool has_ext_srgb{false};
+
+    uint32_t x_{0};
+    uint32_t y_{0};
 };
 
 #endif

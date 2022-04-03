@@ -145,13 +145,13 @@ NRE_GL3_API::~NRE_GL3_API() {
 
 void NRE_GL3_API::update(uint32_t x_in, uint32_t y_in) {
 
-    if (x_in != nre::gpu::x or y_in != nre::gpu::y) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (x_in != x_ or y_in != y_) {
         glViewport(0, 0, x_in, y_in);
-        nre::gpu::x = x_in;
-        nre::gpu::y = y_in;
+        x_ = x_in;
+        y_ = y_in;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDepthMask(GL_TRUE);
     glStencilMask(0xFF);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1430,9 +1430,12 @@ void NRE_GL3_API::setRenderMode(nre::gpu::RENDERMODE rendermode) {
     else {
         // TODO
     }
+}
+
+void NRE_GL3_API::use_wireframe(bool value_in) {
 #ifndef OE_PLATFORM_WEB
     if (nre::gpu::get_api() != nre::gpu::GLES) {
-        if (nre::gpu::use_wireframe) {
+        if (value_in) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
         else {

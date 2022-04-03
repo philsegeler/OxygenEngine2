@@ -186,6 +186,7 @@ public:
     void draw_instanced(std::size_t, std::size_t, std::size_t, std::size_t);
 
     void setRenderMode(nre::gpu::RENDERMODE);
+    void use_wireframe(bool);
 
 protected:
     std::size_t cur_rbo{0};
@@ -248,6 +249,9 @@ private:
     GLuint active_prog_{0};
     // every VAO in OpenGL stores its Index Buffer
     std::unordered_map<GLuint, GLuint> vao_ibos_;
+
+    uint32_t x_{0};
+    uint32_t y_{0};
 };
 
 

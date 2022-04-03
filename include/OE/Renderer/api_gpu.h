@@ -77,12 +77,8 @@ namespace nre { namespace gpu {
 
     //////////////////////
     //  all variables here
-    extern void*             api;
-    extern info_struct       backend_info;
-    extern std::atomic<bool> use_wireframe;
-
-    extern uint32_t x;
-    extern uint32_t y;
+    extern void*       api;
+    extern info_struct backend_info;
     //////////////////////
 
     info_struct    get_backend_info();
@@ -162,7 +158,7 @@ namespace nre { namespace gpu {
     void draw_instanced(std::size_t, std::size_t, std::size_t, int);
 
     void set_render_mode(nre::gpu::RENDERMODE);
-
+    void use_wireframe(bool);
 }; }; // namespace nre::gpu
 
 
