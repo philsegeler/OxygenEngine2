@@ -27,21 +27,14 @@ namespace csl {
         static const unsigned skip  = 2;
     };
 
-    template <typename T, typename U>
+    template <unsigned Type_, ctll::fixed_string Regex_>
     struct token_def_t {
-        unsigned type = token_type_predef_t::undef;
-
-        const T condition;
-        const U action;
+        constexpr static unsigned type    = Type_;
+        constexpr static auto     matcher = ctre::starts_with<Regex_>;
     };
 
-    // Needed for compilation with clang
-    template <typename T, typename U>
-    token_def_t(int, T, U) -> token_def_t<T, U>;
-
-
     struct token_t {
-        unsigned     type = token_type_predef_t::undef;
+        unsigned         type = token_type_predef_t::undef;
         std::string_view content;
     };
 
@@ -53,23 +46,15 @@ namespace csl {
      */
 
 
-    template <typename... T>
-    inline void for_each(unsigned& type, lexer_input_it_t& it, const lexer_input_it_t& end_it, T... cws);
-
-    template <typename T, typename... U>
-    inline void for_each(unsigned& type, lexer_input_it_t& it, const lexer_input_it_t& end_it, T cw, U... cws) {
-        if (cw.condition(it, end_it)) {
-            type = cw.type;
-            it++;
-            cw.action(it, end_it);
+    template <typename First, typename... Rest>
+    constexpr inline void for_each(unsigned& type, lexer_input_it_t& it, const lexer_input_it_t& end_it) {
+        if (const auto m = First::matcher(it)) {
+            type = First::type;
+            it += m.to_view().size();
         }
         else {
-            for_each(type, it, end_it, cws...);
+            if constexpr (sizeof...(Rest) > 0) for_each<Rest...>(type, it, end_it);
         }
-    }
-
-    template <>
-    inline void for_each(unsigned& type, lexer_input_it_t& it, const lexer_input_it_t& end_it) {
     }
 
 
@@ -129,16 +114,19 @@ namespace csl {
 
         generic_lexer_t(std::string& input) : input_(input), input_it_(input_.begin()), end_it_(input_.end()){};
 
-        token_t next_token() {
-            if (input_it_ == end_it_) return {token_type_predef_t::eoi, std::string_view(*&input_it_, 0)};
+        constexpr token_t next_token() {
+            if (input_it_ == end_it_)
+                return {token_type_predef_t::eoi, std::string_view(*&input_it_, 0)};
+
 
             next_token_type_ = token_type_predef_t::undef;
 
             auto temp = input_it_;
-            for_each(next_token_type_, input_it_, end_it_, TokenDefs_...);
+            for_each<TokenDefs_...>(next_token_type_, input_it_, end_it_);
 
             if (next_token_type_ == token_type_predef_t::undef) {
                 input_it_++;
+                return {token_type_predef_t::undef, std::string_view(*&temp, input_it_ - temp)};
             }
             else if (next_token_type_ == token_type_predef_t::skip) {
                 return next_token();
