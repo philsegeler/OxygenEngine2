@@ -18,7 +18,7 @@ public:
     void destroy();
 
     // holds all rendering data from the engine
-    NRE_DataHandler data_;
+    nre::data_handler_t data_;
 
     // normal and point light draw calls, framebuffer, integer texture and ubo/program
     std::set<NRE_PointLightDrawCall, std::greater<NRE_PointLightDrawCall>> pt_visible_lights;

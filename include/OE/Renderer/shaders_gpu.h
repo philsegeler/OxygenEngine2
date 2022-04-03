@@ -79,21 +79,21 @@ namespace nre { namespace gpu {
 // specializations for hashing
 
 namespace std {
-template <>
-struct hash<nre::gpu::vertex_shader> {
-  auto operator()(const nre::gpu::vertex_shader &xyz) const -> size_t {
-    return hash<size_t>{}(xyz.gen_hash());
-  }
-};
-}  // namespace std
+    template <>
+    struct hash<nre::gpu::vertex_shader> {
+        auto operator()(const nre::gpu::vertex_shader& xyz) const -> size_t {
+            return hash<size_t>{}(xyz.gen_hash());
+        }
+    };
+} // namespace std
 
 namespace std {
-template <>
-struct hash<nre::gpu::pixel_shader> {
-  auto operator()(const nre::gpu::pixel_shader &xyz) const -> size_t {
-    return hash<size_t>{}(xyz.gen_hash());
-  }
-};
-}  // namespace std
+    template <>
+    struct hash<nre::gpu::pixel_shader> {
+        auto operator()(const nre::gpu::pixel_shader& xyz) const -> size_t {
+            return hash<size_t>{}(xyz.gen_hash());
+        }
+    };
+} // namespace std
 
 #endif

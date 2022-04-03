@@ -108,13 +108,17 @@ public:
  * A LOT of stuff will be broken if you do sth wrong
  */
 
+namespace nre {
+    class data_handler_t;
+}
+
 class OE_PolygonStorage32 {
 
     //	friend class CSL_Interpreter;
     friend class OE_Mesh32;
     friend class NRE_Renderer;
     friend class NRE_RendererLegacy;
-    friend class NRE_DataHandler;
+    friend class nre::data_handler_t;
 
 public:
     OE_PolygonStorage32(uint32_t num_of_vertices, uint32_t num_of_normals, uint32_t num_of_triangles, uint32_t num_of_uvs,
