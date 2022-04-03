@@ -38,8 +38,8 @@ namespace nre { namespace gpu {
         static void init(SHADER_BACKEND, int, int);
 
         virtual ~shader_base();
-        virtual std::string gen_shader();
-        virtual std::string info();
+        virtual std::string gen_shader() const;
+        virtual std::string info() const;
     };
 
     class vertex_shader : public shader_base {

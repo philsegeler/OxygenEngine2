@@ -100,8 +100,8 @@ std::size_t NRE_GL3_ProgramData::hasUniform(std::string name) {
     return this->uniforms.size();
 }
 
-bool NRE_GL3_Program::operator==(const NRE_GL3_Program&) const {
-    return std::tie(this->vs, this->fs) == std::tie(this->vs, this->fs);
+bool NRE_GL3_Program::operator==(const NRE_GL3_Program& other) const {
+    return std::tie(this->vs, this->fs) == std::tie(other.vs, other.fs);
 }
 size_t NRE_GL3_Program::gen_hash() const {
     return this->vs.gen_hash() + this->fs.gen_hash();

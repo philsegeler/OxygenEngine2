@@ -46,11 +46,11 @@ void nre::gpu::shader_base::init(SHADER_BACKEND backend, int major, int minor) {
 }
 
 
-std::string nre::gpu::shader_base::gen_shader() {
+std::string nre::gpu::shader_base::gen_shader() const {
     return "";
 }
 
-std::string nre::gpu::shader_base::info() {
+std::string nre::gpu::shader_base::info() const {
     return "";
 }
 

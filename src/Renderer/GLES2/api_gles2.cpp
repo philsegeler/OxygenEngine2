@@ -32,8 +32,8 @@ std::size_t NRE_GLES2_ProgramData::hasUniform(std::string name) {
     return this->uniforms.contains(name);
 }
 
-bool NRE_GLES2_Program::operator==(const NRE_GLES2_Program&) const {
-    return std::tie(this->vs, this->fs) == std::tie(this->vs, this->fs);
+bool NRE_GLES2_Program::operator==(const NRE_GLES2_Program& other) const {
+    return std::tie(this->vs, this->fs) == std::tie(other.vs, other.fs);
 }
 size_t NRE_GLES2_Program::gen_hash() const {
     return this->vs.gen_hash() + this->fs.gen_hash();
@@ -116,7 +116,7 @@ void NRE_GLES2_API::update(uint32_t x_in, uint32_t y_in) {
         nre::gpu::x = x_in;
         nre::gpu::y = y_in;
     }
-    // cout << this->prog_db.size() << " " << this->vs_db.size() <<  " " << this->fs_db.size() << endl;
+    cout << this->prog_db.size() << " " << this->vs_db.size() << " " << this->fs_db.size() << endl;
     glDepthMask(GL_TRUE);
     glStencilMask(0xFF);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
