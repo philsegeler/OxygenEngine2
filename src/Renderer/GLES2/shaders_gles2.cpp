@@ -4,7 +4,7 @@
 
 using namespace std;
 
-std::string NRE_GenGLES2VertexShader(nre::gpu::vertex_shader vs) {
+std::string nre::gles2::gen_vertex_shader(nre::gpu::vertex_shader_t vs) {
 
     std::string output = "\n";
 
@@ -156,10 +156,10 @@ std::string NRE_GenGLES2VertexShader(nre::gpu::vertex_shader vs) {
         }
     }
 
-    return nre::gpu::shader_base::shader_prefix + output;
+    return nre::gpu::gen_shader_prefix() + output;
 }
 
-std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs) {
+std::string nre::gles2::gen_pixel_shader(nre::gpu::pixel_shader_t fs) {
 
     std::string output = "\n";
 
@@ -169,7 +169,7 @@ std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs) {
         output.append(NRE_Shader(varying vec2 position;
 
                                  void main() { gl_FragColor = vec4(vec3(0.5), 1.0); }));
-        return nre::gpu::shader_base::shader_prefix + output;
+        return nre::gpu::gen_shader_prefix() + output;
     }
     else if (fs.type == nre::gpu::FS_GAMMA) {
         output.append(NRE_Shader(varying vec2 position;
@@ -188,7 +188,7 @@ std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs) {
                                      // }
                                      gl_FragColor = vec4(pow(sampled_data.xyz, vec3(1.0 / 2.2)), sampled_data.w);
                                  }));
-        return nre::gpu::shader_base::shader_prefix + output;
+        return nre::gpu::gen_shader_prefix() + output;
     }
     else {
     }
@@ -249,5 +249,5 @@ std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader fs) {
             void main() { gl_FragColor = vec4(abs(normals), 1.0); }));
     }
 
-    return nre::gpu::shader_base::shader_prefix + output;
+    return nre::gpu::gen_shader_prefix() + output;
 }

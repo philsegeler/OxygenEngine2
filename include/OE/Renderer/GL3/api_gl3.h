@@ -67,13 +67,13 @@ struct NRE_GL3_ProgramUniformState {
 
 struct NRE_GL3_Program {
 
-    nre::gpu::vertex_shader vs;
-    GLuint                  vs_handle{0};
-    bool                    vs_setup{false};
+    nre::gpu::vertex_shader_t vs;
+    GLuint                    vs_handle{0};
+    bool                      vs_setup{false};
 
-    nre::gpu::pixel_shader fs;
-    GLuint                 fs_handle{0};
-    bool                   fs_setup{false};
+    nre::gpu::pixel_shader_t fs;
+    GLuint                   fs_handle{0};
+    bool                     fs_setup{false};
 
     bool   setup{false};
     bool   prog_created{false};
@@ -165,8 +165,8 @@ public:
     void clearFrameBuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
     void deleteFrameBuffer(std::size_t);
 
-    void setProgramVS(std::size_t, nre::gpu::vertex_shader);
-    void setProgramFS(std::size_t, nre::gpu::pixel_shader);
+    void setProgramVS(std::size_t, nre::gpu::vertex_shader_t);
+    void setProgramFS(std::size_t, nre::gpu::pixel_shader_t);
 
     void setProgramVS(std::size_t, std::string);
     // void setProgramGS(std::size_t, FE_GPU_Shader);
@@ -209,8 +209,8 @@ protected:
 
     std::size_t getVAOSize(std::size_t);
 
-    std::unordered_map<nre::gpu::vertex_shader, GLuint>      vs_db;
-    std::unordered_map<nre::gpu::pixel_shader, GLuint>       fs_db;
+    std::unordered_map<nre::gpu::vertex_shader_t, GLuint>    vs_db;
+    std::unordered_map<nre::gpu::pixel_shader_t, GLuint>     fs_db;
     std::unordered_map<NRE_GL3_Program, NRE_GL3_ProgramData> prog_db;
 
 private:
@@ -250,8 +250,11 @@ private:
     // every VAO in OpenGL stores its Index Buffer
     std::unordered_map<GLuint, GLuint> vao_ibos_;
 
-    uint32_t x_{0};
-    uint32_t y_{0};
+    uint32_t                 x_{0};
+    uint32_t                 y_{0};
+    nre::gpu::SHADER_BACKEND backend_;
+    int                      major_{3};
+    int                      minor_{3};
 };
 
 

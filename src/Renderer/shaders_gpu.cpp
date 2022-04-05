@@ -10,74 +10,77 @@ using namespace nre::gpu;
 
 // General boilerplate
 
-std::string nre::gpu::shader_base::shader_prefix = "";
-
-nre::gpu::shader_base::~shader_base() {
+nre::gpu::shader_base_t::~shader_base_t() {
 }
 
-void nre::gpu::shader_base::init(SHADER_BACKEND backend, int major, int minor) {
+std::string nre::gpu::gen_shader_prefix() {
 
+    std::string output;
+    auto        backend = nre::gpu::get_api();
+    int         major   = nre::gpu::get_major_api_version();
+    int         minor   = nre::gpu::get_minor_api_version();
 
     if (backend == GLES) {
-        nre::gpu::shader_base::shader_prefix = "#version 300 es \n";
+        output = "#version 300 es \n";
     }
     else if (backend == GL) {
 
         if (major == 3 && minor == 1) {
-            nre::gpu::shader_base::shader_prefix = "#version 140 \n"
-                                                   "#extension GL_ARB_explicit_attrib_location"
-                                                   ": require\n";
+            output = "#version 140 \n"
+                     "#extension GL_ARB_explicit_attrib_location"
+                     ": require\n";
         }
         else if (major == 3 && minor >= 2) {
-            nre::gpu::shader_base::shader_prefix = "#version 150 core \n"
-                                                   "#extension GL_ARB_explicit_attrib_location"
-                                                   ": require\n";
+            output = "#version 150 core \n"
+                     "#extension GL_ARB_explicit_attrib_location"
+                     ": require\n";
         }
         else {
             cout << "WTF" << endl;
         }
     }
     else if (backend == GLES2) {
-        nre::gpu::shader_base::shader_prefix = "#version 100 \n";
+        output = "#version 100 \n";
     }
     else {
         cout << "Undefined NRE GPU Shader backend. Nothing is rendered" << endl;
     }
+    return output;
 }
 
 
-std::string nre::gpu::shader_base::gen_shader() const {
+std::string nre::gpu::shader_base_t::gen_shader() const {
     return "";
 }
 
-std::string nre::gpu::shader_base::info() const {
+std::string nre::gpu::shader_base_t::info() const {
     return "";
 }
 
 // Vertex Shader
 
-nre::gpu::vertex_shader::vertex_shader() {
+nre::gpu::vertex_shader_t::vertex_shader_t() {
 }
 
-nre::gpu::vertex_shader::~vertex_shader() {
+nre::gpu::vertex_shader_t::~vertex_shader_t() {
 }
 
-bool nre::gpu::vertex_shader::operator==(const nre::gpu::vertex_shader& other) const {
+bool nre::gpu::vertex_shader_t::operator==(const nre::gpu::vertex_shader_t& other) const {
     return std::tie(this->fullscreenQuad, this->type, this->num_of_uvs) ==
            std::tie(other.fullscreenQuad, other.type, other.num_of_uvs);
 }
 
 
-std::string nre::gpu::vertex_shader::gen_shader() const {
+std::string nre::gpu::vertex_shader_t::gen_shader() const {
     if (nre::gpu::get_api() == GL || nre::gpu::get_api() == GLES)
-        return NRE_GenGL3VertexShader(*this);
+        return nre::gl3::gen_vertex_shader(*this);
     else if (nre::gpu::get_api() == GLES2)
-        return NRE_GenGLES2VertexShader(*this);
+        return nre::gles2::gen_vertex_shader(*this);
     else
         return "";
 }
 
-std::string nre::gpu::vertex_shader::info() const {
+std::string nre::gpu::vertex_shader_t::info() const {
 
     stringstream ss;
     switch (this->type) {
@@ -105,7 +108,7 @@ std::string nre::gpu::vertex_shader::info() const {
 }
 
 
-size_t nre::gpu::vertex_shader::gen_hash() const {
+size_t nre::gpu::vertex_shader_t::gen_hash() const {
     // should only use the first 32
     std::bitset<64> output_bits(this->fullscreenQuad);
 
@@ -118,27 +121,27 @@ size_t nre::gpu::vertex_shader::gen_hash() const {
 
 // Fragment/Pixel Shader
 
-nre::gpu::pixel_shader::pixel_shader() {
+nre::gpu::pixel_shader_t::pixel_shader_t() {
 }
 
-nre::gpu::pixel_shader::~pixel_shader() {
+nre::gpu::pixel_shader_t::~pixel_shader_t() {
 }
 
-bool nre::gpu::pixel_shader::operator==(const nre::gpu::pixel_shader& other) const {
+bool nre::gpu::pixel_shader_t::operator==(const nre::gpu::pixel_shader_t& other) const {
     return std::tie(this->type, this->num_of_uvs) == std::tie(other.type, other.num_of_uvs);
 }
 
-std::string nre::gpu::pixel_shader::gen_shader() const {
+std::string nre::gpu::pixel_shader_t::gen_shader() const {
     if (nre::gpu::get_api() == GL || nre::gpu::get_api() == GLES)
-        return NRE_GenGL3PixelShader(*this);
+        return nre::gl3::gen_pixel_shader(*this);
     else if (nre::gpu::get_api() == GLES2)
-        return NRE_GenGLES2PixelShader(*this);
+        return nre::gles2::gen_pixel_shader(*this);
     else
         return "";
     return "";
 }
 
-std::string nre::gpu::pixel_shader::info() const {
+std::string nre::gpu::pixel_shader_t::info() const {
     stringstream ss;
     switch (this->type) {
     case FS_UNDEFINED:
@@ -174,7 +177,7 @@ std::string nre::gpu::pixel_shader::info() const {
 }
 
 
-size_t nre::gpu::pixel_shader::gen_hash() const {
+size_t nre::gpu::pixel_shader_t::gen_hash() const {
     // should only use the last 32
     std::bitset<64> output_bits(0);
 

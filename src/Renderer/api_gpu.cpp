@@ -6,6 +6,14 @@
 void*                 nre::gpu::api          = nullptr;
 nre::gpu::info_struct nre::gpu::backend_info = nre::gpu::info_struct();
 
+int nre::gpu::get_minor_api_version() {
+    return nre::gpu::backend_info.minor;
+}
+
+int nre::gpu::get_major_api_version() {
+    return nre::gpu::backend_info.major;
+}
+
 nre::gpu::vertex_layout_input::vertex_layout_input() {
 }
 
@@ -150,7 +158,7 @@ bool nre::gpu::init(SHADER_BACKEND backend_in, int major, int minor) {
     info_backend.minor          = minor;
     nre::gpu::backend_info      = info_backend;
 
-    nre::gpu::shader_base::init(backend_in, major, minor);
+    // nre::gpu::shader_base_t::init(backend_in, major, minor);
 
     switch (nre::gpu::get_api()) {
     case GL:
@@ -690,7 +698,7 @@ void nre::gpu::del_framebuffer(std::size_t id) {
 }
 
 // vertex shaders
-void nre::gpu::set_program_vertex_shader(std::size_t id, nre::gpu::vertex_shader vs) {
+void nre::gpu::set_program_vertex_shader(std::size_t id, nre::gpu::vertex_shader_t vs) {
     // std::cout << "VS HASH " << std::bitset<64>(vs.gen_hash()) << " " << vs.info() << std::endl;
     switch (nre::gpu::get_api()) {
     case GL:
@@ -704,7 +712,7 @@ void nre::gpu::set_program_vertex_shader(std::size_t id, nre::gpu::vertex_shader
         return;
     }
 }
-void nre::gpu::set_program_pixel_shader(std::size_t id, nre::gpu::pixel_shader fs) {
+void nre::gpu::set_program_pixel_shader(std::size_t id, nre::gpu::pixel_shader_t fs) {
     // std::cout << "FS HASH " << std::bitset<64>(fs.gen_hash()) << " " << fs.info() << std::endl;
     switch (nre::gpu::get_api()) {
     case GL:

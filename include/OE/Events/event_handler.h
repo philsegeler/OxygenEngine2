@@ -58,9 +58,6 @@ namespace oe {
         bool has_pending_events();
 
         oe::event_container_t<oe::event_t> events_list_;
-        // std::map<std::string, std::shared_ptr<oe::event_t>> internal_events;
-        // std::vector<std::string>                            obsolete_events;
-        // std::vector<std::string>                            pending_events;
 
         std::vector<std::size_t>                     happened_events_;
         std::unordered_map<std::size_t, std::size_t> happened_events_counter_;

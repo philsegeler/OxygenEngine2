@@ -3,8 +3,9 @@
 
 #include <OE/Renderer/shaders_gpu.h>
 
-
-std::string NRE_GenGLES2VertexShader(nre::gpu::vertex_shader);
-std::string NRE_GenGLES2PixelShader(nre::gpu::pixel_shader);
+namespace nre { namespace gles2 {
+    std::string gen_vertex_shader(nre::gpu::vertex_shader_t);
+    std::string gen_pixel_shader(nre::gpu::pixel_shader_t);
+}; }; // namespace nre::gles2
 
 #endif

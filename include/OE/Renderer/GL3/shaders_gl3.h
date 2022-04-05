@@ -3,8 +3,9 @@
 
 #include <OE/Renderer/shaders_gpu.h>
 
-
-std::string NRE_GenGL3VertexShader(nre::gpu::vertex_shader);
-std::string NRE_GenGL3PixelShader(nre::gpu::pixel_shader);
+namespace nre { namespace gl3 {
+    std::string gen_vertex_shader(nre::gpu::vertex_shader_t);
+    std::string gen_pixel_shader(nre::gpu::pixel_shader_t);
+}; }; // namespace nre::gl3
 
 #endif

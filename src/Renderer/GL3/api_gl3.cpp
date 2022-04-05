@@ -127,6 +127,10 @@ std::size_t NRE_GL3_API::getVAOSize(std::size_t id) {
 
 NRE_GL3_API::NRE_GL3_API(nre::gpu::info_struct& backend_info) {
     this->vao_ibos_[0] = 0;
+    major_             = backend_info.major;
+    minor_             = backend_info.minor;
+    backend_           = backend_info.underlying_api;
+
 #ifndef OE_PLATFORM_WEB
     if (glDebugMessageCallback) {
         cout << "[NRE GL API Info] Register OpenGL debug callback " << endl;
@@ -918,14 +922,14 @@ void NRE_GL3_API::deleteFrameBuffer(std::size_t id) {
 
 //---------------------Shader Programs-----------------------------//
 
-void NRE_GL3_API::setProgramVS(std::size_t id, nre::gpu::vertex_shader vs) {
+void NRE_GL3_API::setProgramVS(std::size_t id, nre::gpu::vertex_shader_t vs) {
     this->check_prog_id_(id, "setProgramVS");
 
     this->progs[id].vs_setup = false;
     this->progs[id].setup    = false;
     this->progs[id].vs       = vs;
 }
-void NRE_GL3_API::setProgramFS(std::size_t id, nre::gpu::pixel_shader fs) {
+void NRE_GL3_API::setProgramFS(std::size_t id, nre::gpu::pixel_shader_t fs) {
     this->check_prog_id_(id, "setProgramFS");
 
     this->progs[id].fs_setup = false;

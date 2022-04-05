@@ -79,8 +79,8 @@ void NRE_Renderer::initGammaCorrectionProg() {
     // setup gamma correction program
     this->gamma_cor_prog = nre::gpu::new_program();
 
-    nre::gpu::vertex_shader vs_gamma;
-    nre::gpu::pixel_shader  fs_gamma;
+    nre::gpu::vertex_shader_t vs_gamma;
+    nre::gpu::pixel_shader_t  fs_gamma;
 
     vs_gamma.type           = nre::gpu::VS_UNDEFINED;
     vs_gamma.fullscreenQuad = true;
@@ -124,8 +124,8 @@ void NRE_Renderer::initLightUBOProgramFBO() {
     // setup light program
     this->prog_light = nre::gpu::new_program();
 
-    nre::gpu::vertex_shader vs_light;
-    nre::gpu::pixel_shader  fs_light;
+    nre::gpu::vertex_shader_t vs_light;
+    nre::gpu::pixel_shader_t  fs_light;
 
     vs_light.type       = nre::gpu::VS_LIGHT;
     vs_light.num_of_uvs = 0;
@@ -335,13 +335,13 @@ void NRE_Renderer::drawRenderGroup(NRE_RenderGroup& ren_group) {
 
         ren_group.isSetup = true;
 
-        ren_group.vs            = nre::gpu::vertex_shader();
+        ren_group.vs            = nre::gpu::vertex_shader_t();
         ren_group.vs.type       = nre::gpu::VS_REGULAR;
         ren_group.vs.num_of_uvs = data_.meshes_[ren_group.mesh].uvmaps;
 
 
         // choose shading mode
-        ren_group.fs = nre::gpu::pixel_shader();
+        ren_group.fs = nre::gpu::pixel_shader_t();
         lockMutex();
         switch (this->shading_mode) {
         case OE_RENDERER_NORMALS_SHADING:
@@ -387,7 +387,7 @@ void NRE_Renderer::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
 
         ren_group.isZPrePassSetup = true;
 
-        ren_group.vs_z_prepass            = nre::gpu::vertex_shader();
+        ren_group.vs_z_prepass            = nre::gpu::vertex_shader_t();
         ren_group.vs_z_prepass.type       = nre::gpu::VS_Z_PREPASS;
         ren_group.vs_z_prepass.num_of_uvs = data_.meshes_[ren_group.mesh].uvmaps;
 
@@ -441,8 +441,8 @@ void NRE_Renderer::setupBoundingBoxProgram() {
 
     this->prog_bbox = nre::gpu::new_program();
 
-    nre::gpu::vertex_shader vs_bbox;
-    nre::gpu::pixel_shader  fs_bbox;
+    nre::gpu::vertex_shader_t vs_bbox;
+    nre::gpu::pixel_shader_t  fs_bbox;
 
     vs_bbox.type       = nre::gpu::VS_BOUNDING_BOX;
     vs_bbox.num_of_uvs = 0;
@@ -465,8 +465,8 @@ void NRE_Renderer::setupBoundingSphereProgram() {
 
     this->prog_sphere = nre::gpu::new_program();
 
-    nre::gpu::vertex_shader vs_sphere;
-    nre::gpu::pixel_shader  fs_sphere;
+    nre::gpu::vertex_shader_t vs_sphere;
+    nre::gpu::pixel_shader_t  fs_sphere;
 
     vs_sphere.type       = nre::gpu::VS_BOUNDING_SPHERE;
     vs_sphere.num_of_uvs = 0;

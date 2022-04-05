@@ -4,7 +4,7 @@
 
 using namespace std;
 
-std::string NRE_GenGL3VertexShader(nre::gpu::vertex_shader vs) {
+std::string nre::gl3::gen_vertex_shader(nre::gpu::vertex_shader_t vs) {
 
     std::string output = "\n";
 
@@ -203,10 +203,10 @@ std::string NRE_GenGL3VertexShader(nre::gpu::vertex_shader vs) {
 
 
 
-    return nre::gpu::shader_base::shader_prefix + output;
+    return nre::gpu::gen_shader_prefix() + output;
 }
 
-std::string NRE_GenGL3PixelShader(nre::gpu::pixel_shader fs) {
+std::string nre::gl3::gen_pixel_shader(nre::gpu::pixel_shader_t fs) {
 
     std::string output = "\n";
 
@@ -218,7 +218,7 @@ std::string NRE_GenGL3PixelShader(nre::gpu::pixel_shader fs) {
         output.append(NRE_Shader(in vec2 position; out vec4 fragColor;
 
                                  void main() { fragColor = vec4(vec3(0.5), 1.0); }));
-        return nre::gpu::shader_base::shader_prefix + output;
+        return nre::gpu::gen_shader_prefix() + output;
     }
     else if (fs.type == nre::gpu::FS_GAMMA) {
         output.append(NRE_Shader(in vec2 position; out vec4 fragColor;
@@ -237,7 +237,7 @@ std::string NRE_GenGL3PixelShader(nre::gpu::pixel_shader fs) {
                                      // }
                                      fragColor = vec4(pow(sampled_data.xyz, vec3(1.0 / 2.2)), sampled_data.w);
                                  }));
-        return nre::gpu::shader_base::shader_prefix + output;
+        return nre::gpu::gen_shader_prefix() + output;
     }
     else if (fs.type == nre::gpu::FS_LIGHT_INDEX) {
         output.append(NRE_Shader(flat in float instance_num;
@@ -251,7 +251,7 @@ std::string NRE_GenGL3PixelShader(nre::gpu::pixel_shader fs) {
                                  }
 
                                  ));
-        return nre::gpu::shader_base::shader_prefix + output;
+        return nre::gpu::gen_shader_prefix() + output;
     }
 
     output.append(NRE_Shader(in vec3 position; in vec3 normals;));
@@ -329,5 +329,5 @@ std::string NRE_GenGL3PixelShader(nre::gpu::pixel_shader fs) {
             void main() { fragColor = vec4(abs(normals), 1.0); }));
     }
 
-    return nre::gpu::shader_base::shader_prefix + output;
+    return nre::gpu::gen_shader_prefix() + output;
 }

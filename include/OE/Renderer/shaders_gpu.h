@@ -31,23 +31,21 @@ namespace nre { namespace gpu {
         FS_LIGHT_INDEX
     };
 
-    class shader_base {
+    std::string gen_shader_prefix();
+
+    class shader_base_t {
     public:
-        static std::string shader_prefix;
-
-        static void init(SHADER_BACKEND, int, int);
-
-        virtual ~shader_base();
+        virtual ~shader_base_t();
         virtual std::string gen_shader() const;
         virtual std::string info() const;
     };
 
-    class vertex_shader : public shader_base {
+    class vertex_shader_t : public shader_base_t {
     public:
-        vertex_shader();
-        ~vertex_shader();
+        vertex_shader_t();
+        ~vertex_shader_t();
 
-        bool operator==(const vertex_shader&) const;
+        bool operator==(const vertex_shader_t&) const;
 
         std::string gen_shader() const;
         std::string info() const;
@@ -58,12 +56,12 @@ namespace nre { namespace gpu {
         VS_TYPE     type{VS_UNDEFINED};
     };
 
-    class pixel_shader : public shader_base {
+    class pixel_shader_t : public shader_base_t {
     public:
-        pixel_shader();
-        ~pixel_shader();
+        pixel_shader_t();
+        ~pixel_shader_t();
 
-        bool operator==(const pixel_shader&) const;
+        bool operator==(const pixel_shader_t&) const;
 
         std::string gen_shader() const;
         std::string info() const;
@@ -80,8 +78,8 @@ namespace nre { namespace gpu {
 
 namespace std {
     template <>
-    struct hash<nre::gpu::vertex_shader> {
-        auto operator()(const nre::gpu::vertex_shader& xyz) const -> size_t {
+    struct hash<nre::gpu::vertex_shader_t> {
+        auto operator()(const nre::gpu::vertex_shader_t& xyz) const -> size_t {
             return hash<size_t>{}(xyz.gen_hash());
         }
     };
@@ -89,8 +87,8 @@ namespace std {
 
 namespace std {
     template <>
-    struct hash<nre::gpu::pixel_shader> {
-        auto operator()(const nre::gpu::pixel_shader& xyz) const -> size_t {
+    struct hash<nre::gpu::pixel_shader_t> {
+        auto operator()(const nre::gpu::pixel_shader_t& xyz) const -> size_t {
             return hash<size_t>{}(xyz.gen_hash());
         }
     };

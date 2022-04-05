@@ -84,8 +84,10 @@ namespace nre { namespace gpu {
     info_struct    get_backend_info();
     SHADER_BACKEND get_api();
 
-    std::string get_underlying_api_name();
+    int get_minor_api_version();
+    int get_major_api_version();
 
+    std::string get_underlying_api_name();
 
     std::size_t new_vertex_buf();
     std::size_t new_program();
@@ -146,8 +148,8 @@ namespace nre { namespace gpu {
     void clear_framebuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
     void del_framebuffer(std::size_t);
 
-    void set_program_vertex_shader(std::size_t, nre::gpu::vertex_shader);
-    void set_program_pixel_shader(std::size_t, nre::gpu::pixel_shader);
+    void set_program_vertex_shader(std::size_t, nre::gpu::vertex_shader_t);
+    void set_program_pixel_shader(std::size_t, nre::gpu::pixel_shader_t);
     void setup_program(std::size_t);
     void del_program(std::size_t);
 
