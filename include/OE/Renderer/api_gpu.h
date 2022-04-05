@@ -102,7 +102,7 @@ namespace nre { namespace gpu {
     void update(uint32_t, uint32_t);
     void destroy();
 
-    void set_renderbuffer_mode(std::size_t, TEXTURE_TYPE, int, int);
+    void set_renderbuffer_textype(std::size_t, TEXTURE_TYPE, int, int);
     void set_framebuffer_renderbuffer(std::size_t, std::size_t, int);
     ;
 
@@ -125,15 +125,15 @@ namespace nre { namespace gpu {
 
     void set_uniform_buf_state(std::size_t, std::size_t, int, std::size_t, std::size_t);
 
-    void set_program_uniform_buf_slot(std::size_t, std::string, int);
-    int  get_program_uniform_buf_slot(std::size_t, std::string);
+    void set_program_uniform_buf_slot(std::size_t, const std::string&, int);
+    int  get_program_uniform_buf_slot(std::size_t, const std::string&);
 
-    void set_program_texture_slot(std::size_t, std::string, int);
-    void set_program_uniform_data(std::size_t, std::string, uint32_t);
-    void set_program_uniform_data(std::size_t, std::string, float);
-    void set_program_uniform_data(std::size_t, std::string, const std::vector<uint32_t>&);
-    void set_program_uniform_data(std::size_t, std::string, const std::vector<float>&);
-    int  get_program_uniform_slot(std::size_t, std::string);
+    void set_program_texture_slot(std::size_t, const std::string&, int);
+    void set_program_uniform_data(std::size_t, const std::string&, uint32_t);
+    void set_program_uniform_data(std::size_t, const std::string&, float);
+    void set_program_uniform_data(std::size_t, const std::string&, const std::vector<uint32_t>&);
+    void set_program_uniform_data(std::size_t, const std::string&, const std::vector<float>&);
+    int  get_program_uniform_slot(std::size_t, const std::string&);
 
     void set_vertex_layout_format(std::size_t, std::vector<vertex_layout_input>);
     void del_vertex_layout(std::size_t);

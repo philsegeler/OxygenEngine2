@@ -43,16 +43,16 @@ void NRE_Renderer::initOffscreenFrameBuffer() {
                                      this->screen->resolution_y, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
         // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_mode(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                        this->screen->resolution_y);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
+                                           this->screen->resolution_y);
     }
     else {
         nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, this->screen->resolution_x,
                                      this->screen->resolution_y, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
         // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_mode(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                        this->screen->resolution_y);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
+                                           this->screen->resolution_y);
     }
 
     nre::gpu::set_framebuffer_texture(this->framebuffer, this->colortexture, 0);
@@ -181,16 +181,16 @@ bool NRE_Renderer::updateSingleThread() {
                                      this->screen->resolution_y, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
         // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_mode(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                        this->screen->resolution_y);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
+                                           this->screen->resolution_y);
     }
     else {
         nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, this->screen->resolution_x,
                                      this->screen->resolution_y, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
         // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_mode(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                        this->screen->resolution_y);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
+                                           this->screen->resolution_y);
     }
     // update light texture
     nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, this->screen->resolution_x,
