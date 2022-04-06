@@ -57,160 +57,44 @@ namespace csl {
      *
      */
 
-    class token_type_t : public token_type_predef_t {
-    public:
-        static const unsigned lt          = 3;
-        static const unsigned gt          = 4;
-        static const unsigned open_brace  = 5;
-        static const unsigned close_brace = 6;
-        static const unsigned eq          = 7;
-        static const unsigned semicolon   = 8;
-        static const unsigned comma       = 9;
-        static const unsigned slash       = 10;
 
-        static const unsigned string = 11;
-
-        static const unsigned lt_slash = 12;
-        static const unsigned comment  = 13;
-
-        static const unsigned identifier     = 14;
-        static const unsigned integer        = 15;
-        static const unsigned floating_point = 16;
-
-        static const unsigned whitespace = 17;
+    enum class token_type {
+        lt,
+        gt,
+        open_brace,
+        close_brace,
+        eq,
+        semicolon,
+        comma,
+        slash,
+        whitespace,
+        lt_slash,
+        string,
+        identifier,
+        integer,
+        floating_point
     };
 
-    inline bool is_identifier_head_char(char c) {
-        int n = static_cast<int>(c);
 
-        if (((65 <= n) && (n <= 90)) || ((97 <= n) && (n <= 122)) || (n == 95)) {
-
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    inline bool is_identifier_tail_char(char c) {
-        int n = static_cast<int>(c);
-
-        if (((65 <= n) && (n <= 90)) || ((97 <= n) && (n <= 122)) || ((48 <= n) && (n <= 57)) || (n == 95)) {
-
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    inline bool is_number(char c) {
-        int n = static_cast<int>(c);
-
-        if ((48 <= n) && (n <= 57)) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    };
-
-    inline bool is_whitespace(char c) {
-        return ((c == ' ') || (c == '\t') || (c == '\n'));
-    }
+    using lt_def             = token_def_t<token_type::lt, "<">;
+    using gt_def             = token_def_t<token_type::gt, ">">;
+    using open_brace_def     = token_def_t<token_type::open_brace, "\\{">;
+    using close_brace_def    = token_def_t<token_type::close_brace, "\\}">;
+    using eq_def             = token_def_t<token_type::eq, "=">;
+    using semicolon_def      = token_def_t<token_type::semicolon, ";">;
+    using comma_def          = token_def_t<token_type::comma, ",">;
+    using slash_def          = token_def_t<token_type::slash, "/">;
+    using whitespace_def     = token_def_t<token_type::whitespace, "[ \\t\\n]">;
+    using lt_slash_def       = token_def_t<token_type::lt_slash, "</">;
+    using string_def         = token_def_t<token_type::string, "\"(.*?)\"">;
+    using identifier_def     = token_def_t<token_type::identifier, "[\\w][\\w\\d]*">;
+    using integer_def        = token_def_t<token_type::integer, "[\\-]?[\\d]+">;
+    using floating_point_def = token_def_t<token_type::floating_point, "[\\-]?[\\d]+\\.[\\d]+">;
 
 
-    constexpr token_def_t lt_def          = {token_type_t::lt, [](auto& it, auto& end) { return *it == '<'; },
-                                    [](auto& it, auto& end) {}};
-    constexpr token_def_t gt_def          = {token_type_t::gt, [](auto& it, auto& end) { return *it == '>'; },
-                                    [](auto& it, auto& end) {}};
-    constexpr token_def_t open_brace_def  = {token_type_t::open_brace, [](auto& it, auto& end) { return *it == '{'; },
-                                            [](auto& it, auto& end) {}};
-    constexpr token_def_t close_brace_def = {token_type_t::close_brace, [](auto& it, auto& end) { return *it == '}'; },
-                                             [](auto& it, auto& end) {}};
-    constexpr token_def_t eq_def          = {token_type_t::eq, [](auto& it, auto& end) { return *it == '='; },
-                                    [](auto& it, auto& end) {}};
-    constexpr token_def_t semicolon_def   = {token_type_t::semicolon, [](auto& it, auto& end) { return *it == ';'; },
-                                           [](auto& it, auto& end) {}};
-    constexpr token_def_t comma_def       = {token_type_t::comma, [](auto& it, auto& end) { return *it == ','; },
-                                       [](auto& it, auto& end) {}};
-    constexpr token_def_t slash_def       = {token_type_t::slash, [](auto& it, auto& end) { return *it == '/'; },
-                                       [](auto& it, auto& end) {}};
-    constexpr token_def_t whitespace_def  = {token_type_predef_t::skip, [](auto& it, auto& end) { return is_whitespace(*it); },
-                                            [](auto& it, auto& end) {}};
-
-    constexpr token_def_t lt_slash_def = {token_type_t::lt_slash,
-                                          [](auto& it, auto& end) {
-                                              if (*it == '<') {
-                                                  if (*(++it) == '/')
-                                                      return true;
-                                                  else
-                                                      it--;
-                                              }
-
-                                              return false;
-                                          },
-                                          [](auto& it, auto& end) {}};
-
-    constexpr token_def_t string_def = {token_type_t::string, [](auto& it, auto& end) { return *it == '"'; },
-                                        [](auto& it, auto& end) {
-                                            while (*it != '"')
-                                                it++;
-                                            it++;
-                                        }};
-
-    constexpr token_def_t identifier_def = {token_type_t::identifier,
-                                            [](auto& it, auto& end) { return is_identifier_head_char(*it); },
-                                            [](auto& it, auto& end) {
-                                                while (is_identifier_tail_char(*it))
-                                                    it++;
-                                            }};
-
-    constexpr token_def_t integer_def = {token_type_t::integer,
-                                         [](auto& it, auto& end) { return (is_number(*it) || (*it == '-')); },
-                                         [](auto& it, auto& end) {
-                                             while (is_number(*it))
-                                                 it++;
-                                         }};
-
-    // TODO: Can this somehow be combined with the integer type, in order to not have to look
-    // at any character twice?
-    constexpr token_def_t floating_point_def = {token_type_t::floating_point,
-                                                [](auto& it, auto& end) {
-                                                    auto temp = it;
-
-                                                    if (*it == '-') it++;
-
-                                                    while ((it != end) && is_number(*it))
-                                                        it++;
-
-                                                    if (*it != '.') {
-                                                        it = temp;
-                                                        return false;
-                                                    }
-
-                                                    it++;
-
-                                                    while (is_number(*it))
-                                                        it++;
-
-                                                    // Needed, because, in contrast to the action lambda, after the condition
-                                                    // lambda another character gets consumed by the lexer
-                                                    it--;
-
-                                                    return true;
-                                                },
-                                                [](auto& it, auto& end) {}};
-
-
-#ifdef CPP20
     using lexer_t =
         generic_lexer_t<whitespace_def, floating_point_def, integer_def, semicolon_def, eq_def, open_brace_def, close_brace_def,
                         identifier_def, lt_slash_def, lt_def, gt_def, slash_def, string_def, comma_def>;
-#else
-    using Lexer = Generic_Lexer<token_def, token_def, token_def, token_def, token_def, token_def, token_def, token_def,
-                                token_def, token_def, token_def, token_def, token_def, token_def>;
-#endif
 
 
     /*
@@ -219,55 +103,47 @@ namespace csl {
      *
      */
 
-    inline std::string get_token_type_string_rep(const unsigned t) {
+
+    inline std::string get_token_type_string_rep(token_type t) {
         switch (t) {
-        case token_type_t::identifier:
+        case token_type::identifier:
             return "Identifier, ";
             break;
-        case token_type_t::string:
+        case token_type::string:
             return "String, ";
             break;
-        case token_type_t::integer:
+        case token_type::integer:
             return "Integer, ";
             break;
-        case token_type_t::floating_point:
+        case token_type::floating_point:
             return "Float, ";
             break;
-        case token_type_t::lt:
+        case token_type::lt:
             return "'<', ";
             break;
-        case token_type_t::gt:
+        case token_type::gt:
             return "'>', ";
             break;
-        case token_type_t::lt_slash:
+        case token_type::lt_slash:
             return "\"</\", ";
             break;
-        case token_type_t::open_brace:
+        case token_type::open_brace:
             return "'{', ";
             break;
-        case token_type_t::close_brace:
+        case token_type::close_brace:
             return "'}', ";
             break;
-        case token_type_t::eq:
+        case token_type::eq:
             return "'=', ";
             break;
-        case token_type_t::comma:
+        case token_type::comma:
             return "',', ";
             break;
-        case token_type_t::semicolon:
+        case token_type::semicolon:
             return "';', ";
             break;
-        case token_type_t::comment:
-            return "Comment, ";
-            break;
-        case token_type_t::slash:
+        case token_type::slash:
             return "'/', ";
-            break;
-        case token_type_t::eoi:
-            return "EOI, ";
-            break;
-        case token_type_t::undef:
-            return "Undefined Token, ";
             break;
         default:
             return "[Unknown Type]";
@@ -415,22 +291,16 @@ namespace csl {
      */
 
     // TODO: See if this can be implemented with a FSM
-    // TODO: How does performance change if the values aren't return but set with a reference
+    // TODO: How does performance change if the values aren't returned but set with a reference
     // that was passed in as an argument?
     class parser_t {
     public:
-#ifdef CPP20
+        
         parser_t(std::string& input) : lexer_(input), token_it_(lexer_.begin()) {
         }
-#else
-        parser_t(std::string& input)
-            : lexer_(input, whitespace_def, floating_point_def, integer_def, semicolon_def, eq_def, open_brace_def,
-                     close_brace_def, identifier_def, lt_slash_def, lt_def, gt_def, slash_def, string_def, comma_def),
-              token_it_(lexer_.begin()) {
-        }
-#endif
+        
         element parse() {
-            expect_token(token_type_t::lt);
+            expect_token(token_type::lt);
             token_it_++;
 
             return parse_element();
@@ -447,23 +317,23 @@ namespace csl {
             // Parse opening tag
 
 
-            expect_token(token_type_t::identifier);
+            expect_token(token_type::identifier);
 
             std::string_view el_name = token_it_->content;
             token_it_++;
 
-            while (has_type(token_type_t::identifier)) {
+            while (has_type(token_type::identifier)) {
                 std::string_view att_name = token_it_->content;
                 token_it_++;
 
-                expect_token(token_type_t::eq);
+                expect_token(token_type::eq);
                 token_it_++;
 
                 // TODO: Is emplace_back (or the equivalent for maps) applicable here?
                 result.attributes[att_name] = parse_single_assignment();
             }
 
-            expect_token(token_type_t::gt);
+            expect_token(token_type::gt);
             token_it_++;
 
 
@@ -471,18 +341,18 @@ namespace csl {
 
 
             while (token_it_ != lexer_.end()) {
-                if (has_type(token_type_t::identifier)) {
+                if (has_type(token_type::identifier)) {
                     std::string_view as_name = token_it_->content;
 
                     token_it_++;
 
-                    expect_token(token_type_t::eq);
+                    expect_token(token_type::eq);
                     token_it_++;
 
                     generic_assignment_t as_generic = parse_assignment();
 
                     // TODO: Is access by index more efficient? This option weirdly seems to
-                    // not to documented as well
+                    // not be documented as well
                     // TODO: Is emplace_back (or the equivalent for maps) applicable here?
                     if (std::holds_alternative<single_assignment_t>(as_generic)) {
                         result.single_assignments[as_name] = std::get<single_assignment_t>(as_generic);
@@ -491,7 +361,7 @@ namespace csl {
                         result.list_assignments[as_name] = std::get<list_assignment_t>(as_generic);
                     }
                 }
-                else if (has_type(token_type_t::lt)) {
+                else if (has_type(token_type::lt)) {
                     token_it_++;
                     std::string_view sub_el_name = token_it_->content;
                     result.elements[sub_el_name].push_back(parse_element());
@@ -505,10 +375,10 @@ namespace csl {
             // Parse closing tag
 
 
-            expect_token(token_type_t::identifier, token_type_t::lt, token_type_t::lt_slash);
+            expect_token(token_type::identifier, token_type::lt, token_type::lt_slash);
             token_it_++;
 
-            expect_token(token_type_t::identifier);
+            expect_token(token_type::identifier);
 
             if (token_it_->content != el_name)
                 throw semantic_error_t("Closing tag identifier does not match opening tag"
@@ -516,7 +386,7 @@ namespace csl {
 
             token_it_++;
 
-            expect_token(token_type_t::gt);
+            expect_token(token_type::gt);
             token_it_++;
 
             return result;
@@ -525,10 +395,10 @@ namespace csl {
         // TODO: Get rid of RTTI use
         generic_assignment_t parse_assignment() {
             // TODO: Check where to put this in order to get better performance
-            expect_token(token_type_t::integer, token_type_t::floating_point, token_type_t::identifier,
-                         token_type_t::open_brace, token_type_t::string);
+            expect_token(token_type::integer, token_type::floating_point, token_type::identifier,
+                         token_type::open_brace, token_type::string);
 
-            if (has_type(token_type_t::open_brace)) {
+            if (has_type(token_type::open_brace)) {
                 token_it_++;
                 return parse_list_assignment();
             }
@@ -552,7 +422,7 @@ namespace csl {
                 result.push_back(token_it_->content);
                 token_it_++;
 
-                while (has_type(token_type_t::semicolon)) {
+                while (has_type(token_type::semicolon)) {
                     token_it_++;
                     expect_value();
 
@@ -563,7 +433,7 @@ namespace csl {
             }
 
             // TODO: Not only '}' is expected
-            expect_token(token_type_t::close_brace);
+            expect_token(token_type::close_brace);
             token_it_++;
 
             return result;
@@ -581,23 +451,24 @@ namespace csl {
                 std::string unexpected(token_it_->content);
 
                 // TODO
-                throw unexpected_symbol_error_t(unexpected, expected, lexer_.get_line_num(),
-                                                lexer_.get_col_num() - token_it_->content.size());
+                throw 1;
+//                throw unexpected_symbol_error_t(unexpected, expected, lexer_.get_line_num(),
+//                                                lexer_.get_col_num() - token_it_->content.size());
             }
         }
 
         // TODO: Rename to match_type? Check literature
-        bool has_type(unsigned type) const {
+        bool has_type(token_type type) const {
             return (token_it_->type == type);
         }
 
         bool is_value() {
-            return (has_type(token_type_t::integer) || has_type(token_type_t::floating_point) ||
-                    has_type(token_type_t::identifier) || has_type(token_type_t::string));
+            return (has_type(token_type::integer) || has_type(token_type::floating_point) ||
+                    has_type(token_type::identifier) || has_type(token_type::string));
         }
 
         void expect_value() {
-            expect_token(token_type_t::integer, token_type_t::floating_point, token_type_t::identifier, token_type_t::string);
+            expect_token(token_type::integer, token_type::floating_point, token_type::identifier, token_type::string);
         }
     };
 

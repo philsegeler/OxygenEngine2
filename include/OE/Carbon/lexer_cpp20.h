@@ -1,8 +1,8 @@
 #include <ctre.hpp>
-#include <fstream>
 #include <iostream>
+#include <optional>
+#include <ranges>
 #include <string>
-#include <string_view>
 
 
 namespace csl {
@@ -18,24 +18,20 @@ namespace csl {
     using lexer_input_it_t = std::string_view::iterator;
 
 
-    // The predefined token types are implemented with a class instead of an enum,
-    // in order to be able to inherit from the predefined types when defining the application-specific types
-    class token_type_predef_t {
-    public:
-        static const unsigned eoi   = 0;
-        static const unsigned undef = 1;
-        static const unsigned skip  = 2;
-    };
-
-    template <unsigned Type_, ctll::fixed_string Regex_>
+    template <auto Type_, ctll::fixed_string Regex_>
     struct token_def_t {
-        constexpr static unsigned type    = Type_;
-        constexpr static auto     matcher = ctre::starts_with<Regex_>;
+        constexpr static auto token_type = Type_;
+        constexpr static auto matcher    = ctre::starts_with<Regex_>;
     };
 
+    template <typename Type_>
     struct token_t {
-        unsigned         type = token_type_predef_t::undef;
+        Type_            type;
         std::string_view content;
+
+        constexpr bool operator==(const token_t& rhs) const {
+            return ((type == rhs.type) && (content == rhs.content));
+        }
     };
 
 
@@ -46,16 +42,36 @@ namespace csl {
      */
 
 
-    template <typename First, typename... Rest>
-    constexpr inline void for_each(unsigned& type, lexer_input_it_t& it, const lexer_input_it_t& end_it) {
+    template <typename ReturnType, typename First, typename... Rest>
+    constexpr inline std::optional<ReturnType> for_each(lexer_input_it_t& it) {
         if (const auto m = First::matcher(it)) {
-            type = First::type;
-            it += m.to_view().size();
+            std::optional<ReturnType> result = ReturnType{First::token_type, m.to_view()};
+            return result;
         }
         else {
-            if constexpr (sizeof...(Rest) > 0) for_each<Rest...>(type, it, end_it);
+            if constexpr (sizeof...(Rest) > 0)
+                return for_each<ReturnType, Rest...>(it);
+            else {
+                return std::nullopt;
+            }
         }
     }
+
+    template <typename First_, typename... Rest_>
+    struct get_first_pack_type {
+        using type = First_;
+    };
+
+
+    template <typename... TokenDefs_>
+    struct get_token_defs_token_type {
+    private:
+        using first_token_def  = typename get_first_pack_type<TokenDefs_...>::type;
+        using first_token_type = decltype(first_token_def::token_type);
+
+    public:
+        using type = typename std::remove_cv<first_token_type>::type;
+    };
 
 
     /*
@@ -65,32 +81,36 @@ namespace csl {
      */
 
 
-    template <token_def_t... TokenDefs_>
+    template <typename... TokenDefs_>
     class generic_lexer_t {
     public:
         class iterator_t {
+
+            using token_t_type = typename get_token_defs_token_type<TokenDefs_...>::type;
+
         public:
-            // TODO: Make this forward at some point
             using iterator_category = std::input_iterator_tag;
-            using value_type        = token_t;
-            using difference_type   = std::size_t;
-            using reference         = token_t&;
-            using pointer           = token_t*;
+            using value_type        = token_t<token_t_type>;
+            using difference_type   = std::ptrdiff_t;
+            using reference         = token_t<token_t_type>&;
+            using pointer           = token_t<token_t_type>*;
 
-            iterator_t(generic_lexer_t<TokenDefs_...>* lexer) : lexer_(lexer) {
-                t_ = lexer_->next_token();
+            iterator_t() = default;
+            iterator_t(const std::string_view& input) : input_it_(input.begin()), end_it_(input.end()) {
             }
-            iterator_t(token_t t) : t_(t){};
+            iterator_t(const std::string_view::iterator& input_it, const std::string_view::iterator& end_it)
+                : input_it_(input_it), end_it_(end_it) {
+            }
 
-            const token_t* operator->() const {
+            const token_t<token_t_type>* operator->() const {
                 return &t_;
             }
-            const token_t& operator*() const {
+            const token_t<token_t_type>& operator*() const {
                 return t_;
             }
 
             iterator_t& operator++() {
-                t_ = lexer_->next_token();
+                next();
                 return *this;
             }
             iterator_t operator++(int) {
@@ -99,82 +119,48 @@ namespace csl {
                 return tmp;
             }
 
-            bool operator==(const iterator_t& rhs) {
-                return (this == &rhs) || ((t_.type == token_type_predef_t::eoi) && ((*rhs).type == token_type_predef_t::eoi));
+            bool operator==(const iterator_t& rhs) const {
+                return ((t_ == rhs.t_) && (input_it_ == rhs.input_it_));
             }
-            bool operator!=(const iterator_t& rhs) {
+            bool operator!=(const iterator_t& rhs) const {
                 return !((*this) == rhs);
             }
 
         private:
-            generic_lexer_t<TokenDefs_...>* lexer_;
-            token_t                         t_;
+            token_t<token_t_type>      t_;
+            std::string_view::iterator input_it_;
+            std::string_view::iterator end_it_;
+
+            void next() {
+                if (input_it_ == end_it_) {
+                    t_ = token_t<token_t_type>{{}, end_it_};
+                    return;
+                }
+
+                std::optional<token_t<token_t_type>> opt = for_each<token_t<token_t_type>, TokenDefs_...>(input_it_);
+                if (opt) {
+                    t_ = *opt;
+                    input_it_ += t_.content.size();
+                }
+                else {
+                    throw 1;
+                }
+            }
         };
 
 
-        generic_lexer_t(std::string& input) : input_(input), input_it_(input_.begin()), end_it_(input_.end()){};
+        generic_lexer_t(const std::string_view input) : input_(input){};
 
-        constexpr token_t next_token() {
-            if (input_it_ == end_it_)
-                return {token_type_predef_t::eoi, std::string_view(*&input_it_, 0)};
-
-
-            next_token_type_ = token_type_predef_t::undef;
-
-            auto temp = input_it_;
-            for_each<TokenDefs_...>(next_token_type_, input_it_, end_it_);
-
-            if (next_token_type_ == token_type_predef_t::undef) {
-                input_it_++;
-                return {token_type_predef_t::undef, std::string_view(*&temp, input_it_ - temp)};
-            }
-            else if (next_token_type_ == token_type_predef_t::skip) {
-                return next_token();
-            }
-
-
-            return {next_token_type_, std::string_view(*&temp, input_it_ - temp)};
+        iterator_t& begin() {
+            return ++iterator_t{input_.begin(), input_.end()};
         }
 
-        iterator_t begin() {
-            return iterator_t(this);
-        }
-
-        iterator_t end() {
-            return iterator_t({token_type_predef_t::eoi, std::string_view(*&end_it_, 0)});
-        }
-
-        std::size_t get_line_num() const {
-            std::size_t result = 1;
-
-            auto it = input_.begin();
-            while (it != input_it_) {
-                if (*it == '\n') result++;
-                it++;
-            }
-
-            return result;
-        }
-
-        std::size_t get_col_num() const {
-            std::size_t result = 1;
-
-            auto it = input_it_;
-
-            while ((*it != '\n') && (it != input_.begin())) {
-                result++;
-                it--;
-            }
-
-            return result;
+        iterator_t& end() {
+            return ++iterator_t{input_.end(), input_.end()};
         }
 
     private:
-        const std::string_view input_;
-        lexer_input_it_t       input_it_;
-        const lexer_input_it_t end_it_;
-
-        unsigned next_token_type_ = token_type_predef_t::undef;
+        std::string_view input_;
     };
 
 
