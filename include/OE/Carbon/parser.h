@@ -8,6 +8,7 @@
 
 
 #include <map>
+#include <ranges>
 #include <sstream>
 #include <variant>
 #include <vector>
@@ -290,15 +291,16 @@ namespace csl {
      *
      */
 
+
     // TODO: See if this can be implemented with a FSM
     // TODO: How does performance change if the values aren't returned but set with a reference
     // that was passed in as an argument?
+    template <typename TokenIteratorType_>
     class parser_t {
     public:
-        
-        parser_t(std::string& input) : lexer_(input), token_it_(lexer_.begin()) {
+        parser_t(TokenIteratorType_ begin, TokenIteratorType_ end) : token_it_{begin}, end_it_{end} {
         }
-        
+
         element parse() {
             expect_token(token_type::lt);
             token_it_++;
@@ -307,8 +309,8 @@ namespace csl {
         }
 
     private:
-        lexer_t             lexer_;
-        lexer_t::iterator_t token_it_;
+        TokenIteratorType_ token_it_;
+        TokenIteratorType_ end_it_;
 
         element parse_element() {
             element result;
@@ -319,11 +321,11 @@ namespace csl {
 
             expect_token(token_type::identifier);
 
-            std::string_view el_name = token_it_->content;
+            std::string_view el_name = (*token_it_).content;
             token_it_++;
 
             while (has_type(token_type::identifier)) {
-                std::string_view att_name = token_it_->content;
+                std::string_view att_name = (*token_it_).content;
                 token_it_++;
 
                 expect_token(token_type::eq);
@@ -340,9 +342,9 @@ namespace csl {
             // Parse element content
 
 
-            while (token_it_ != lexer_.end()) {
+            while (token_it_ != end_it_) {
                 if (has_type(token_type::identifier)) {
-                    std::string_view as_name = token_it_->content;
+                    std::string_view as_name = (*token_it_).content;
 
                     token_it_++;
 
@@ -363,7 +365,7 @@ namespace csl {
                 }
                 else if (has_type(token_type::lt)) {
                     token_it_++;
-                    std::string_view sub_el_name = token_it_->content;
+                    std::string_view sub_el_name = (*token_it_).content;
                     result.elements[sub_el_name].push_back(parse_element());
                 }
                 else {
@@ -380,7 +382,7 @@ namespace csl {
 
             expect_token(token_type::identifier);
 
-            if (token_it_->content != el_name)
+            if ((*token_it_).content != el_name)
                 throw semantic_error_t("Closing tag identifier does not match opening tag"
                                        " identifier");
 
@@ -395,8 +397,8 @@ namespace csl {
         // TODO: Get rid of RTTI use
         generic_assignment_t parse_assignment() {
             // TODO: Check where to put this in order to get better performance
-            expect_token(token_type::integer, token_type::floating_point, token_type::identifier,
-                         token_type::open_brace, token_type::string);
+            expect_token(token_type::integer, token_type::floating_point, token_type::identifier, token_type::open_brace,
+                         token_type::string);
 
             if (has_type(token_type::open_brace)) {
                 token_it_++;
@@ -408,7 +410,7 @@ namespace csl {
         }
 
         single_assignment_t parse_single_assignment() {
-            single_assignment_t value = token_it_->content;
+            single_assignment_t value = (*token_it_).content;
             token_it_++;
 
             return value;
@@ -419,7 +421,7 @@ namespace csl {
 
             if (is_value()) {
                 // TODO: Try emplace_back
-                result.push_back(token_it_->content);
+                result.push_back((*token_it_).content);
                 token_it_++;
 
                 while (has_type(token_type::semicolon)) {
@@ -427,7 +429,7 @@ namespace csl {
                     expect_value();
 
                     // TODO: Try emplace_back
-                    result.push_back(token_it_->content);
+                    result.push_back((*token_it_).content);
                     token_it_++;
                 }
             }
@@ -448,23 +450,23 @@ namespace csl {
                 // TODO: Regardles, make all of this evaluate at compile-time
                 std::string expected = (get_token_type_string_rep(type) + ...);
                 expected.erase(expected.size() - 2, 2);
-                std::string unexpected(token_it_->content);
+                std::string unexpected((*token_it_).content);
 
                 // TODO
-                throw 1;
-//                throw unexpected_symbol_error_t(unexpected, expected, lexer_.get_line_num(),
-//                                                lexer_.get_col_num() - token_it_->content.size());
+                throw unexpected_symbol_error_t(unexpected, expected, 0, 0);
+                //                throw unexpected_symbol_error_t(unexpected, expected, lexer_.get_line_num(),
+                //                                                lexer_.get_col_num() - (*token_it_).content.size());
             }
         }
 
         // TODO: Rename to match_type? Check literature
         bool has_type(token_type type) const {
-            return (token_it_->type == type);
+            return ((*token_it_).type == type);
         }
 
         bool is_value() {
-            return (has_type(token_type::integer) || has_type(token_type::floating_point) ||
-                    has_type(token_type::identifier) || has_type(token_type::string));
+            return (has_type(token_type::integer) || has_type(token_type::floating_point) || has_type(token_type::identifier) ||
+                    has_type(token_type::string));
         }
 
         void expect_value() {
@@ -474,7 +476,21 @@ namespace csl {
 
     // TODO: Forwarding reference?
     inline element parse(std::string& input) {
-        parser_t parser(input);
+        lexer_t lexer(input);
+
+        constexpr auto is_not_whitespace    = [](auto token) { return (token.type != token_type::whitespace); };
+        constexpr auto remove_string_quotes = [](auto token) -> decltype(token) {
+            if (token.type == token_type::string)
+                return {token_type::string, token.content.substr(1, token.content.size()-2)};
+            else
+                return token;
+        };
+
+        auto token_range = lexer | std::views::filter(is_not_whitespace) | std::views::transform(remove_string_quotes);
+        auto begin       = token_range.begin();
+        auto end         = token_range.end();
+
+        parser_t parser(begin, end);
         return parser.parse();
     }
 } // namespace csl
