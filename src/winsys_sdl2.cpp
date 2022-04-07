@@ -87,16 +87,17 @@ oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::
     if (not use_legacy_renderer) {
 
 #ifndef OE_PLATFORM_WEB
-        this->context = SDL_GL_CreateContext(this->window);
-        if (context == NULL) {
-            cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
-            SDL_DestroyWindow(window);
-            this->createWindow(x, y);
+        if (init_info.requested_backend == nre::gpu::GL) {
+            this->context = SDL_GL_CreateContext(this->window);
+            if (context == NULL) {
+                cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
+                SDL_DestroyWindow(window);
+                this->createWindow(x, y);
+            }
+            else {
+                return this->finishInit();
+            }
         }
-        else {
-            return this->finishInit();
-        }
-
 #endif
         // Request an OpenGL ES 3.0 context
 

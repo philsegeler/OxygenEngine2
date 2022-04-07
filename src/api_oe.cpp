@@ -19,6 +19,14 @@ void oe::preinit::request_gles2() {
 #endif
 }
 
+void oe::preinit::request_gles31() {
+    // NOTE: Windows needs ANGLE to support OpenGL ES. For now let's use the other renderer
+    // ANGLE is not easy to install as a library and use
+#ifndef OE_PLATFORM_WINDOWS
+    oe::preinit::winsys_parameters.requested_backend = nre::gpu::GLES;
+#endif
+}
+
 size_t oe::init() {
     OE_Main = new OE_TaskManager();
     return OE_Main->Init("Oxygen Engine Test", 800, 600, false, preinit::renderer_parameters, preinit::winsys_parameters,

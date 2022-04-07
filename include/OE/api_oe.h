@@ -58,6 +58,7 @@ namespace oe {
         extern oe::networking_init_info networking_parameters;
 
         void request_gles2();
+        void request_gles31();
     }; // namespace preinit
 
     /** Basic API functions for starting the Oxygen Engine
