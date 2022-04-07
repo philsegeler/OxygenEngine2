@@ -10,9 +10,10 @@ public:
     NRE_Renderer();
     ~NRE_Renderer();
 
-    bool init();
-    bool updateSingleThread();
-    bool updateData();
+    bool init(oe::renderer_init_info, oe::renderer_update_info, oe::winsys_output);
+    bool updateSingleThread(oe::renderer_update_info, oe::winsys_output);
+    // last bool is true if the renderer has been restarted. This is useful so as to fetch all the data again
+    bool updateData(oe::renderer_update_info, oe::winsys_output, bool);
 
     bool updateMultiThread(OE_Task*, int);
     void destroy();
@@ -80,6 +81,17 @@ protected:
     void updateMaterialGPUData();
     void updateCameraGPUData();
     void updateLightGPUData();
+
+    oe::RENDERER_SHADING_MODE shading_mode{oe::RENDERER_REGULAR_SHADING};
+    bool                      use_wireframe{false};
+    bool                      render_bounding_boxes{false};
+    bool                      render_bounding_spheres{false};
+    bool                      use_HDR{false};
+    bool                      use_z_prepass{false};
+
+    int                    res_x_{0};
+    int                    res_y_{0};
+    oe::renderer_init_info init_info;
 };
 
 #endif

@@ -10,7 +10,7 @@ NRE_Renderer::NRE_Renderer() {
 NRE_Renderer::~NRE_Renderer() {
 }
 
-bool NRE_Renderer::init() {
+bool NRE_Renderer::init(oe::renderer_init_info init_info, oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
 
 
     // make sure there are no stored objects
@@ -20,8 +20,8 @@ bool NRE_Renderer::init() {
     cout << "NRE Vgroups: " << data_.vgroups.size() << endl;*/
 
     // make sure we use the right API
-    // it should have been initialized from the window manager
-    nre::gpu::init(nre::gpu::get_api(), nre::gpu::backend_info.major, nre::gpu::backend_info.minor);
+    this->init_info = init_info;
+    nre::gpu::init(winsys_info.backend, winsys_info.major, winsys_info.minor);
 
     this->initOffscreenFrameBuffer();
     this->initFullscreenQuad();
@@ -38,21 +38,15 @@ void NRE_Renderer::initOffscreenFrameBuffer() {
     this->colortexture = nre::gpu::new_texture();
     this->depthrbo     = nre::gpu::new_renderbuffer();
 
-    if (this->use_HDR.load(std::memory_order_relaxed) == false) {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGB10_A2, nre::gpu::NEAREST, this->screen->resolution_x,
-                                     this->screen->resolution_y, 0);
-        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
-        // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                           this->screen->resolution_y);
+    if (this->use_HDR == false) {
+        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGB10_A2, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     else {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, this->screen->resolution_x,
-                                     this->screen->resolution_y, 0);
-        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
-        // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                           this->screen->resolution_y);
+        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
 
     nre::gpu::set_framebuffer_texture(this->framebuffer, this->colortexture, 0);
@@ -144,8 +138,7 @@ void NRE_Renderer::initLightUBOProgramFBO() {
     // setup light own texture and framebuffer to be used for storing the indices
     this->tex_light = nre::gpu::new_texture();
 
-    nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, this->screen->resolution_x,
-                                 this->screen->resolution_y, 0);
+    nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_, res_y_, 0);
 
     this->fbo_light = nre::gpu::new_framebuffer();
     nre::gpu::set_framebuffer_texture(this->fbo_light, this->tex_light, 0);
@@ -154,47 +147,57 @@ void NRE_Renderer::initLightUBOProgramFBO() {
 
 //------------------------updateData---------------------------//
 
-bool NRE_Renderer::updateData() {
+bool NRE_Renderer::updateData(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                              bool has_renderer_restarted) {
     assert(this->world != nullptr);
-    bool temp_restart_renderer     = this->screen->restart_renderer;
-    this->screen->restart_renderer = false;
+    bool temp_restart_renderer = has_renderer_restarted or (this->shading_mode != update_info.shading_mode);
+    res_x_                     = winsys_info.res_x;
+    res_y_                     = winsys_info.res_y;
+
+    this->use_wireframe           = update_info.use_wireframe;
+    this->render_bounding_boxes   = update_info.render_bounding_boxes;
+    this->render_bounding_spheres = update_info.render_bounding_spheres;
+    this->use_HDR                 = update_info.use_hdr;
+    this->use_z_prepass           = update_info.use_z_prepass;
 
     if (temp_restart_renderer) {
         this->destroy();
-        this->init();
+        this->init(this->init_info, update_info, winsys_info);
     }
-
-    data_.update(temp_restart_renderer, this->render_bounding_boxes.load(std::memory_order_relaxed) or
-                                            this->render_bounding_spheres.load(std::memory_order_relaxed));
+    this->shading_mode = update_info.shading_mode;
+    data_.update(temp_restart_renderer, this->render_bounding_boxes or this->render_bounding_spheres);
 
     return true;
 }
 
 //------------------------updateSIngleThread-------------------//
 
-bool NRE_Renderer::updateSingleThread() {
+bool NRE_Renderer::updateSingleThread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
 
-    nre::gpu::update(this->screen->resolution_x, this->screen->resolution_y);
+    res_x_ = winsys_info.res_x;
+    res_y_ = winsys_info.res_y;
 
-    if (this->use_HDR.load(std::memory_order_relaxed) == false) {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGB10_A2, nre::gpu::NEAREST, this->screen->resolution_x,
-                                     this->screen->resolution_y, 0);
-        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
-        // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                           this->screen->resolution_y);
+    this->use_wireframe           = update_info.use_wireframe;
+    this->render_bounding_boxes   = update_info.render_bounding_boxes;
+    this->render_bounding_spheres = update_info.render_bounding_spheres;
+    this->use_HDR                 = update_info.use_hdr;
+    this->use_z_prepass           = update_info.use_z_prepass;
+
+    nre::gpu::update(res_x_, res_y_);
+
+    if (this->use_HDR == false) {
+        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGB10_A2, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     else {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, this->screen->resolution_x,
-                                     this->screen->resolution_y, 0);
+        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, res_x_, res_y_, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
-        // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                           this->screen->resolution_y);
+        // res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     // update light texture
-    nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, this->screen->resolution_x,
-                                 this->screen->resolution_y, 0);
+    nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_, res_y_, 0);
 
     // generate draw calls
     this->generateDrawCalls();
@@ -207,7 +210,7 @@ bool NRE_Renderer::updateSingleThread() {
 
 
     // render viewport
-    nre::gpu::use_wireframe(this->use_wireframe.load(std::memory_order_relaxed));
+    nre::gpu::use_wireframe(this->use_wireframe);
 
     /*cout << "NRE Cameras: " << data_.cameras.size() << endl;
     cout << "NRE Materials: " << data_.materials.size() << endl;
@@ -279,8 +282,8 @@ bool NRE_Renderer::updateSingleThread() {
         this->sce_ren_groups[scene_id].update();
 
         // optionally draw a bounding box/sphere for each object (in wireframe mode)
-        bool render_bboxes  = this->render_bounding_boxes.load(std::memory_order_relaxed);
-        bool render_spheres = this->render_bounding_spheres.load(std::memory_order_relaxed);
+        bool render_bboxes  = this->render_bounding_boxes;
+        bool render_spheres = this->render_bounding_spheres;
         nre::gpu::use_wireframe(true);
 
         if (render_bboxes) {

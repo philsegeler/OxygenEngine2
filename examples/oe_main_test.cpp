@@ -178,7 +178,7 @@ int OnLoadObject(oe::task load_event_task, string event_name){
 int main(){
     
     // everything in namespace oe::preinit needs to be run before oe::init() to take effect
-    oe::preinit::use_legacy_renderer = true;
+    oe::preinit::request_gles2();
 
     oe::init("Oxygen Engine Demo", 800, 480, false);
     //oe::pause(20);

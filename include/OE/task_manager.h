@@ -108,16 +108,25 @@ public:
     std::atomic<bool> done;
 
 
-    OE_THREAD_SAFETY_OBJECT renderer_mutex;
-    oe::renderer_base_t*    renderer{nullptr};
+    OE_THREAD_SAFETY_OBJECT  renderer_mutex;
+    oe::renderer_base_t*     renderer{nullptr};
+    oe::renderer_init_info   renderer_init_info;
+    oe::renderer_update_info renderer_info;
+    std::atomic<bool>        restart_renderer{false};
 
     OE_THREAD_SAFETY_OBJECT physics_mutex;
     oe::physics_base_t*     physics{nullptr};
+    oe::physics_update_info physics_info;
+    oe::physics_init_info   physics_init_info;
 
     OE_THREAD_SAFETY_OBJECT window_mutex;
     oe::winsys_base_t*      window{nullptr};
+    oe::winsys_update_info  window_info;
+    oe::winsys_init_info    window_init_info;
+    oe::winsys_output       window_output;
 
-    oe::networking_base_t* network{nullptr};
+    oe::networking_base_t*   network{nullptr};
+    oe::networking_init_info network_init_info;
 
     std::shared_ptr<OE_World> world{nullptr};
 
@@ -145,7 +154,8 @@ public:
 
 
     // Main functions
-    int  Init(std::string, int, int, bool, bool);
+    int  Init(std::string, int, int, bool, oe::renderer_init_info, oe::winsys_init_info, oe::physics_init_info,
+              oe::networking_init_info);
     void CreateNewThread(std::string);
     void CreateUnsyncThread(std::string, const OE_METHOD);
     void Step();
@@ -191,10 +201,10 @@ private:
     void tryRun_renderer_updateData();
     bool tryRun_winsys_update();
 
-    void tryRun_winsys_init(int, int, std::string, bool, bool, void*);
-    void tryRun_physics_init();
-    void tryRun_renderer_init();
-    void tryRun_network_init();
+    void tryRun_winsys_init(int, int, std::string, bool, oe::winsys_init_info);
+    void tryRun_physics_init(oe::physics_init_info);
+    void tryRun_renderer_init(oe::renderer_init_info);
+    void tryRun_network_init(oe::networking_init_info);
 };
 
 #endif

@@ -18,10 +18,10 @@ int OE_API_Helpers::load_world(OE_Task task, string filename) {
 int OE_API_Helpers::manage_mouse(OE_Task task, std::string event_name) {
 
     if (event_name == "mouse-lock") {
-        OE_Main->window->lockMouse();
+        OE_Main->window->lock_mouse();
     }
     else if (event_name == "mouse-unlock") {
-        OE_Main->window->unlockMouse();
+        OE_Main->window->unlock_mouse();
     }
     return 0;
 }

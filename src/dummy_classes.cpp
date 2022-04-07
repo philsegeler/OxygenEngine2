@@ -13,23 +13,23 @@ oe::winsys_base_t::winsys_base_t() {
 oe::winsys_base_t::~winsys_base_t() {
 }
 
-bool oe::winsys_base_t::init(int x, int y, string titlea, bool isFullscreen, bool use_legacy_renderer, void* data) {
-    return true;
+oe::winsys_output oe::winsys_base_t::init(oe::winsys_init_info init_info, oe::winsys_update_info update_info) {
+    return oe::winsys_output();
 }
 
-bool oe::winsys_base_t::getMouseLockedState() {
-    return mouse_locked;
+bool oe::winsys_base_t::is_mouse_locked() {
+    return false;
 }
-void oe::winsys_base_t::lockMouse() {
+void oe::winsys_base_t::lock_mouse() {
 }
-void oe::winsys_base_t::unlockMouse() {
-}
-
-bool oe::winsys_base_t::update() {
-    return true;
+void oe::winsys_base_t::unlock_mouse() {
 }
 
-bool oe::winsys_base_t::updateEvents() {
+oe::winsys_output oe::winsys_base_t::update(oe::winsys_update_info update_info) {
+    return oe::winsys_output();
+}
+
+bool oe::winsys_base_t::update_events() {
     return true;
 }
 
@@ -43,15 +43,17 @@ oe::renderer_base_t::renderer_base_t() {
 oe::renderer_base_t::~renderer_base_t() {
 }
 
-bool oe::renderer_base_t::init() {
+bool oe::renderer_base_t::init(oe::renderer_init_info init_info, oe::renderer_update_info update_info,
+                               oe::winsys_output winsys_info) {
     return true;
 }
 
-bool oe::renderer_base_t::updateSingleThread() {
+bool oe::renderer_base_t::updateSingleThread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
     return true;
 }
 
-bool oe::renderer_base_t::updateData() {
+bool oe::renderer_base_t::updateData(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                                     bool has_renderer_restarted) {
     return true;
 }
 
@@ -69,8 +71,12 @@ oe::physics_base_t::physics_base_t() {
 oe::physics_base_t::~physics_base_t() {
 }
 
-bool oe::physics_base_t::init() {
+bool oe::physics_base_t::init(physics_init_info params) {
     return true;
+}
+
+void oe::physics_base_t::update_info(oe::physics_update_info params) {
+    // update the parameters in one place
 }
 
 bool oe::physics_base_t::updateMultiThread(OE_Task* task, int thread_num) {
@@ -87,7 +93,7 @@ oe::networking_base_t::networking_base_t() {
 oe::networking_base_t::~networking_base_t() {
 }
 
-void oe::networking_base_t::init() {
+void oe::networking_base_t::init(networking_init_info params) {
 }
 
 int oe::networking_base_t::execute(OE_Task) {

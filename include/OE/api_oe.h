@@ -52,9 +52,13 @@ namespace oe {
     // API functions to be executed before the engine runs
     namespace preinit {
 
-        extern bool use_legacy_renderer; // default: false
+        extern oe::renderer_init_info   renderer_parameters;
+        extern oe::winsys_init_info     winsys_parameters;
+        extern oe::physics_init_info    physics_parameters;
+        extern oe::networking_init_info networking_parameters;
 
-    };
+        void request_gles2();
+    }; // namespace preinit
 
     /** Basic API functions for starting the Oxygen Engine
      *  and assigning tasks

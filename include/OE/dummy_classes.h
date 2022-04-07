@@ -27,7 +27,7 @@ namespace oe {
 
     // initial parameters
     struct winsys_init_info {
-        nre::gpu::SHADER_BACKEND requested_backend{nre::gpu::GLES2};
+        nre::gpu::SHADER_BACKEND requested_backend{nre::gpu::GL};
     };
 
     // dynamic parameters
@@ -47,6 +47,7 @@ namespace oe {
         nre::gpu::SHADER_BACKEND backend{nre::gpu::GLES2};
         int                      major{2};
         int                      minor{0};
+        bool                     mouse_moved{false};
         bool                     restart_renderer{false};
         bool                     done{false};
         int                      dpi{96};
@@ -58,35 +59,18 @@ namespace oe {
         virtual ~winsys_base_t();
 
 
-        virtual bool init(int, int, std::string, bool, bool, void*);
-        virtual bool update();
+        virtual winsys_output init(winsys_init_info, winsys_update_info);
+        virtual winsys_output update(winsys_update_info);
 
-        virtual bool getMouseLockedState();
-        virtual void lockMouse();
-        virtual void unlockMouse();
+        virtual bool is_mouse_locked();
+        virtual void lock_mouse();
+        virtual void unlock_mouse();
 
-        virtual bool updateEvents();
+        virtual bool update_events();
         virtual void destroy();
 
-        int  resolution_x{0};
-        int  resolution_y{0};
-        int  dpi{96};
-        bool vsync{true};
-
-        OS     os{OS_UNDEFINED};
-        WINSYS winsys{WINSYS_NONE};
-
-        // For different OpenGL versions
-        std::string title;
-        bool        fullscreen{false};
-        int         major{0};
-        int         minor{0};
-        bool        isES{false};
-
-        bool mouse_locked{false};
-
-        std::atomic<bool> reset_renderer{false};
-        std::atomic<bool> restart_renderer{false};
+        OS     os_{OS_UNDEFINED};
+        WINSYS winsys_{WINSYS_NONE};
 
         // The global event handler is here and must be initialized in all sub classes
         oe::event_handler_t event_handler_;
@@ -117,23 +101,17 @@ namespace oe {
         renderer_base_t();
         virtual ~renderer_base_t();
 
-        virtual bool init();
-        virtual bool updateSingleThread();
-        virtual bool updateData();
+        virtual bool init(renderer_init_info, renderer_update_info, winsys_output);
+        virtual bool updateSingleThread(renderer_update_info, winsys_output);
+        // last bool is true if the renderer has been restarted. This is useful so as to fetch all the data again
+        virtual bool updateData(renderer_update_info, winsys_output, bool);
 
-        virtual bool updateMultiThread(OE_Task*, int);
+        virtual bool updateMultiThread(OE_Task*, int); // stub for now
         virtual void destroy();
 
         bool                      isMultiThreaded{false};
         std::shared_ptr<OE_World> world{nullptr};
-        winsys_base_t*            screen{nullptr};
         std::string               name{"default"};
-
-        RENDERER_SHADING_MODE shading_mode{RENDERER_REGULAR_SHADING};
-        std::atomic<bool>     use_wireframe{false};
-        std::atomic<bool>     render_bounding_boxes{false};
-        std::atomic<bool>     render_bounding_spheres{false};
-        std::atomic<bool>     use_HDR{false};
     };
 
     /** This is a dummy class aimed to be a base class for
@@ -155,8 +133,9 @@ namespace oe {
         physics_base_t();
         virtual ~physics_base_t();
 
-        virtual bool init();
+        virtual bool init(physics_init_info);
 
+        virtual void update_info(physics_update_info);
         virtual bool updateMultiThread(OE_Task*, int);
         virtual void destroy();
 
@@ -172,13 +151,16 @@ namespace oe {
      *  a netwotking manager
      * plus relevant structs for getting info in and out
      */
+    struct networking_init_info {
+        bool some_var{false};
+    };
 
     class networking_base_t : public OE_THREAD_SAFETY_OBJECT {
     public:
         networking_base_t();
         virtual ~networking_base_t();
 
-        virtual void init();
+        virtual void init(networking_init_info);
         virtual int  execute(OE_Task);
         virtual void destroy();
 

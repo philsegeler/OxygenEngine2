@@ -144,6 +144,7 @@ int OE_TaskManager::tryRun_task(const std::string& name, OE_Task& task) {
 
 void OE_TaskManager::tryRun_physics_updateMultiThread(const std::string& name, const int& comp_threads_copy) {
 
+
     try {
         this->physics->updateMultiThread(&this->threads[name].physics_task, comp_threads_copy);
     } catch (oe::api_error& e) {
@@ -181,10 +182,12 @@ void OE_TaskManager::tryRun_physics_updateMultiThread(const std::string& name, c
 
 bool OE_TaskManager::tryRun_renderer_updateSingleThread() {
 
-    bool output = false;
+    this->renderer_mutex.lockMutex();
+    auto renderer_info_copy = this->renderer_info;
+    this->renderer_mutex.unlockMutex();
 
     try {
-        output = this->renderer->updateSingleThread();
+        return this->renderer->updateSingleThread(renderer_info_copy, this->window_output);
     } catch (oe::api_error& e) {
         std::string error_str =
             "[NRE Error] " + e.name_ + " thrown in updateSingleThread, invocation: " + std::to_string(this->countar);
@@ -209,13 +212,17 @@ bool OE_TaskManager::tryRun_renderer_updateSingleThread() {
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     }
-    return output;
+    return false;
 }
 
 void OE_TaskManager::tryRun_renderer_updateData() {
 
+    this->renderer_mutex.lockMutex();
+    auto renderer_info_copy = this->renderer_info;
+    this->renderer_mutex.unlockMutex();
+
     try {
-        this->renderer->updateData();
+        this->renderer->updateData(renderer_info_copy, this->window_output, this->restart_renderer);
     } catch (oe::api_error& e) {
         std::string error_str =
             "[NRE Error] " + e.name_ + " thrown in updateData, invocation: " + std::to_string(this->countar);
@@ -244,9 +251,13 @@ void OE_TaskManager::tryRun_renderer_updateData() {
 
 bool OE_TaskManager::tryRun_winsys_update() {
 
-    bool output = true;
+    this->window_mutex.lockMutex();
+    auto winsys_info = this->window_info;
+    this->window_mutex.unlockMutex();
+
     try {
-        output = this->window->update();
+        this->window_output = this->window->update(winsys_info);
+        return this->window_output.done;
     } catch (oe::winsys_error& e) {
         std::string error_str =
             "[OE WINSYS Error] " + e.name_ + " thrown in winsys update, invocation: " + std::to_string(this->countar);
@@ -266,14 +277,19 @@ bool OE_TaskManager::tryRun_winsys_update() {
         OE_WriteToLog(error_str + "\n");
     }
 
-    return output;
+    return true;
 }
 
-void OE_TaskManager::tryRun_winsys_init(int x, int y, std::string titlea, bool fullscreen, bool use_legacy_renderer,
-                                        void* params) {
+void OE_TaskManager::tryRun_winsys_init(int x, int y, std::string titlea, bool fullscreen, oe::winsys_init_info params) {
+
+    this->window_init_info           = params;
+    this->window_info.res_x          = x;
+    this->window_info.res_y          = y;
+    this->window_info.use_fullscreen = fullscreen;
+    this->window_info.title          = titlea;
 
     try {
-        this->window->init(x, y, titlea, fullscreen, use_legacy_renderer, params);
+        this->window_output = this->window->init(this->window_init_info, this->window_info);
     } catch (oe::winsys_error& e) {
         std::string error_str = "[OE WINSYS Error] " + e.name_ + " thrown in window system initialization";
         error_str += "\n\t" + e.what();
@@ -292,10 +308,11 @@ void OE_TaskManager::tryRun_winsys_init(int x, int y, std::string titlea, bool f
     }
 }
 
-void OE_TaskManager::tryRun_physics_init() {
+void OE_TaskManager::tryRun_physics_init(oe::physics_init_info params) {
 
     try {
-        this->physics->init();
+        this->physics_init_info = params;
+        this->physics->init(params);
     } catch (oe::physics_error& e) {
         std::string error_str = "[OE Error] " + e.name_ + " thrown in physics engine initialization";
         error_str += "\n\t" + e.what();
@@ -313,10 +330,11 @@ void OE_TaskManager::tryRun_physics_init() {
     }
 }
 
-void OE_TaskManager::tryRun_renderer_init() {
+void OE_TaskManager::tryRun_renderer_init(oe::renderer_init_info params) {
 
     try {
-        this->renderer->init();
+        this->renderer_init_info = params;
+        this->renderer->init(this->renderer_init_info, this->renderer_info, this->window_output);
     } catch (oe::renderer_error& e) {
         std::string error_str = "[NRE Error] " + e.name_ + " thrown in renderer initialization";
         error_str += "\n\t" + e.what();
@@ -334,9 +352,10 @@ void OE_TaskManager::tryRun_renderer_init() {
     }
 }
 
-void OE_TaskManager::tryRun_network_init() {
+void OE_TaskManager::tryRun_network_init(oe::networking_init_info params) {
     try {
-        this->network->init();
+        this->network_init_info = params;
+        this->network->init(params);
     } catch (oe::networking_error& e) {
         std::string error_str = "[SLC Error] " + e.name_ + " thrown in networking initialization";
         error_str += "\n\t" + e.what();

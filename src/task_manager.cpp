@@ -119,38 +119,30 @@ OE_TaskManager::~OE_TaskManager() {
  *  INIT
  * ***********************/
 
-int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, bool use_legacy_renderer) {
-
-    // NOTE: Windows needs ANGLE to support OpenGL ES. For now let's use the other renderer
-    // ANGLE is not easy to install as a library and use
-#ifdef OE_PLATFORM_WINDOWS
-    bool use_legacy_renderer_really = false;
-#else
-    bool use_legacy_renderer_really = use_legacy_renderer;
-#endif
-
+int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, oe::renderer_init_info renderer_init_info_in,
+                         oe::winsys_init_info winsys_init_info_in, oe::physics_init_info physics_init_info_in,
+                         oe::networking_init_info networking_init_info_in) {
 
     this->window_mutex.lockMutex();
     this->window = new OE_SDL_WindowSystem();
-    this->tryRun_winsys_init(x, y, titlea, fullscreen, use_legacy_renderer_really, nullptr);
+    this->tryRun_winsys_init(x, y, titlea, fullscreen, winsys_init_info_in);
     this->window_mutex.unlockMutex();
 
     this->renderer_mutex.lockMutex();
-    if (use_legacy_renderer_really)
+    if (winsys_init_info_in.requested_backend == nre::gpu::GLES2)
         this->renderer = new NRE_RendererLegacy();
     else
         this->renderer = new NRE_Renderer();
-    this->renderer->screen = this->window;
-    this->tryRun_renderer_init();
+    this->tryRun_renderer_init(renderer_init_info_in);
     this->renderer_mutex.unlockMutex();
 
     this->physics_mutex.lockMutex();
     this->physics = new oe::physics_base_t();
-    this->tryRun_physics_init();
+    this->tryRun_physics_init(physics_init_info_in);
     this->physics_mutex.unlockMutex();
 
     this->network = new oe::networking_base_t();
-    this->tryRun_network_init();
+    this->tryRun_network_init(networking_init_info_in);
 
     this->createCondition();
     this->createCondition();
@@ -179,7 +171,7 @@ void OE_TaskManager::CreateUnsyncThread(string thread_name, const OE_METHOD func
 #ifdef OE_PLATFORM_WEB
     auto threaddata = new (std::align_val_t(16)) OE_UnsyncThreadData();
 #else
-    auto threaddata                 = new OE_UnsyncThreadData();
+    auto threaddata = new OE_UnsyncThreadData();
 #endif
     threaddata->func    = func;
     threaddata->name    = thread_name;
@@ -276,6 +268,7 @@ void OE_TaskManager::Step() {
         // this->renderer->world = this->world;
         // auto t=clock();
         this->tryRun_renderer_updateData();
+        this->restart_renderer = false;
         // cout << "NRE UPDATE DATA " << (float)(clock()-t)/CLOCKS_PER_SEC << endl;
     }
 
@@ -399,6 +392,7 @@ void OE_TaskManager::updateThread(const string name) {
             comp_threads_copy = physics_threads;
             if (physics_threads > (getReadyThreads() - 1)) {
                 physics_threads = 0;
+                this->physics->update_info(this->physics_info);
                 condBroadcast(3);
             }
             else {

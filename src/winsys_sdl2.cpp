@@ -6,18 +6,18 @@
 using namespace std;
 
 OE_SDL_WindowSystem::OE_SDL_WindowSystem() {
-    this->winsys = oe::WINSYS_SDL;
+    this->winsys_ = oe::WINSYS_SDL;
 #ifdef OE_PLATFORM_LINUX
-    this->os = oe::OS_LINUX;
+    this->os_ = oe::OS_LINUX;
 #endif
 #ifdef OE_PLATFORM_WINDOWS
-    this->os = oe::OS_WINDOWS;
+    this->os_ = oe::OS_WINDOWS;
 #endif
 #ifdef OE_PLATFORM_ANDROID
-    this->os = oe::OS_ANDROID;
+    this->os_ = oe::OS_ANDROID;
 #endif
 #ifdef OE_PLATFORM_WEB
-    this->os = oe::OS_WEB
+    this->os_ = oe::OS_WEB;
 #endif
 }
 
@@ -40,10 +40,15 @@ void OE_SDL_WindowSystem::createWindow(int x, int y) {
                                         SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL);
 }
 
-bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, bool use_legacy_renderer, void* data) {
+oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::winsys_update_info update_info) {
 
-    this->title      = titlea;
-    this->fullscreen = isFullscreen;
+    int x = update_info.res_x;
+    int y = update_info.res_y;
+
+    bool use_legacy_renderer = init_info.requested_backend == nre::gpu::GLES2;
+
+    this->title      = update_info.title;
+    this->fullscreen = update_info.use_fullscreen;
 
 #ifndef OE_PLATFORM_WEB
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -89,8 +94,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
             this->createWindow(x, y);
         }
         else {
-            this->finishInit();
-            return true;
+            return this->finishInit();
         }
 
 #endif
@@ -119,8 +123,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
             this->createWindow(x, y);
         }
         else {
-            this->finishInit();
-            return true;
+            return this->finishInit();
         }
     }
 
@@ -152,14 +155,13 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
         this->createWindow(x, y);
     }
     else {
-        this->finishInit();
-        return true;
+        return this->finishInit();
     }
 
-    return false;
+    return oe::winsys_output();
 }
 
-void OE_SDL_WindowSystem::finishInit() {
+oe::winsys_output OE_SDL_WindowSystem::finishInit() {
 
 #ifndef OE_PLATFORM_WEB
     if (!this->isES)
@@ -190,42 +192,51 @@ void OE_SDL_WindowSystem::finishInit() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     SDL_GL_SwapWindow(this->window);
 
+    oe::winsys_output output;
+
     if (!this->isES) {
-        nre::gpu::init(nre::gpu::GL, this->major, this->minor);
+        output.backend = nre::gpu::GL;
     }
     else {
-        if (this->major != 2)
-            nre::gpu::init(nre::gpu::GLES, this->major, this->minor);
+        if ((this->major != 2) or (this->major == 3 and this->minor == 0)) {
+            output.backend = nre::gpu::GLES;
+        }
         else {
-            nre::gpu::init(nre::gpu::GLES2, this->major, this->minor);
+            output.backend = nre::gpu::GLES2;
         }
     }
 
     this->event_handler_.init();
+    output.res_x = this->resolution_x;
+    output.res_y = this->resolution_y;
+    output.major = this->major;
+    output.minor = this->minor;
+
+    return output;
 }
 
-bool OE_SDL_WindowSystem::getMouseLockedState() {
+bool OE_SDL_WindowSystem::is_mouse_locked() {
     lockMutex();
     bool output = mouse_locked;
     unlockMutex();
     return output;
 }
 
-void OE_SDL_WindowSystem::lockMouse() {
+void OE_SDL_WindowSystem::lock_mouse() {
     SDL_SetRelativeMouseMode(SDL_TRUE);
     lockMutex();
     this->mouse_locked = true;
     unlockMutex();
 }
 
-void OE_SDL_WindowSystem::unlockMouse() {
+void OE_SDL_WindowSystem::unlock_mouse() {
     SDL_SetRelativeMouseMode(SDL_FALSE);
     lockMutex();
     this->mouse_locked = false;
     unlockMutex();
 }
 
-bool OE_SDL_WindowSystem::update() {
+oe::winsys_output OE_SDL_WindowSystem::update(oe::winsys_update_info update_info) {
 
     this->counter++;
     this->counter = this->counter % 100;
@@ -248,10 +259,12 @@ bool OE_SDL_WindowSystem::update() {
 
         // exit before handling SDL events
         if (event.type == SDL_QUIT) {
+            oe::winsys_output output;
             this->event_handler_.done_ = true;
-            return this->event_handler_.done_;
+            output.done                = this->event_handler_.done_;
+            return output;
         }
-        this->updateEvents();
+        this->update_events();
         this->updateWindowEvents();
     }
 
@@ -270,10 +283,28 @@ bool OE_SDL_WindowSystem::update() {
     }
 
     // This is needed to support things like OE_Finish()
-    return this->event_handler_.done_;
+    oe::winsys_output output;
+    if (!this->isES) {
+        output.backend = nre::gpu::GL;
+    }
+    else {
+        if ((this->major != 2) or (this->major == 3 and this->minor == 0)) {
+            output.backend = nre::gpu::GLES;
+        }
+        else {
+            output.backend = nre::gpu::GLES2;
+        }
+    }
+    output.done        = this->event_handler_.done_;
+    output.res_x       = this->resolution_x;
+    output.res_y       = this->resolution_y;
+    output.major       = this->major;
+    output.minor       = this->minor;
+    output.mouse_moved = this->mouse_moved;
+    return output;
 }
 
-bool OE_SDL_WindowSystem::updateEvents() {
+bool OE_SDL_WindowSystem::update_events() {
 
     switch (this->event.type) {
     // check for key presses
