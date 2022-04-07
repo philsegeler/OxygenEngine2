@@ -6,15 +6,18 @@
 using namespace std;
 
 OE_SDL_WindowSystem::OE_SDL_WindowSystem() {
-    this->winsys = OE_SDL;
+    this->winsys = oe::WINSYS_SDL;
 #ifdef OE_PLATFORM_LINUX
-    this->os = OE_LINUX;
+    this->os = oe::OS_LINUX;
 #endif
 #ifdef OE_PLATFORM_WINDOWS
-    this->os = OE_WINDOWS;
+    this->os = oe::OS_WINDOWS;
 #endif
 #ifdef OE_PLATFORM_ANDROID
-    this->os = OE_ANDROID;
+    this->os = oe::OS_ANDROID;
+#endif
+#ifdef OE_PLATFORM_WEB
+    this->os = oe::OS_WEB
 #endif
 }
 

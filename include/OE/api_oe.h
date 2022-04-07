@@ -48,29 +48,6 @@ namespace oe {
 
     typedef OE_METHOD method_type;
 
-    namespace os {
-        typedef OE_OS type;
-        const type    undefined = (type)0;
-        const type    linux     = (type)1;
-        const type    windows   = (type)2;
-    }; // namespace os
-
-    namespace winsys {
-        typedef OE_WINSYS type;
-        const type        none           = (type)0;
-        const type        sdl            = (type)1;
-        const type        something_else = (type)2;
-    }; // namespace winsys
-
-    namespace renderer { namespace shading_mode {
-
-        typedef OE_RENDERER_SHADING_MODE type;
-        const type                       normals        = (type)0;
-        const type                       no_light       = (type)1;
-        const type                       dir_lights     = (type)2;
-        const type                       indexed_lights = (type)3;
-        const type                       regular        = (type)4;
-    }; }; // namespace renderer::shading_mode
     //------------------------BLOCK-------------------------//
     // API functions to be executed before the engine runs
     namespace preinit {
@@ -416,9 +393,9 @@ namespace oe {
      * All those parameters require a call to OE_RestartRenderer to take effect
      */
 
-    void                             restart_renderer();
-    void                             set_shading_mode(oe::renderer::shading_mode::type);
-    oe::renderer::shading_mode::type get_shading_mode();
+    void                      restart_renderer();
+    void                      set_shading_mode(oe::RENDERER_SHADING_MODE);
+    oe::RENDERER_SHADING_MODE get_shading_mode();
 
     void render_wireframe(bool);
     void toggle_wireframe_rendering();

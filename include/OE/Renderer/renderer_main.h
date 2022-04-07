@@ -5,7 +5,7 @@
 #include <OE/Renderer/renderer_utils.h>
 #include <OE/dummy_classes.h>
 
-class NRE_Renderer : public OE_RendererBase {
+class NRE_Renderer : public oe::renderer_base_t {
 public:
     NRE_Renderer();
     ~NRE_Renderer();

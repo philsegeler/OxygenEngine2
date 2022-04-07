@@ -547,7 +547,7 @@ void oe::restart_renderer() {
     OE_Main->window_mutex.unlockMutex();
 }
 
-void oe::set_shading_mode(OE_RENDERER_SHADING_MODE shading_mode) {
+void oe::set_shading_mode(oe::RENDERER_SHADING_MODE shading_mode) {
     OE_API_Helpers::checkIfInit();
     OE_Main->renderer_mutex.lockMutex();
     if (OE_Main->renderer != nullptr) {
@@ -559,9 +559,9 @@ void oe::set_shading_mode(OE_RENDERER_SHADING_MODE shading_mode) {
     oe::restart_renderer();
 }
 
-OE_RENDERER_SHADING_MODE oe::get_shading_mode() {
+oe::RENDERER_SHADING_MODE oe::get_shading_mode() {
     OE_API_Helpers::checkIfInit();
-    OE_RENDERER_SHADING_MODE output = OE_RENDERER_REGULAR_SHADING;
+    oe::RENDERER_SHADING_MODE output = oe::RENDERER_REGULAR_SHADING;
     OE_Main->renderer_mutex.lockMutex();
     if (OE_Main->renderer != nullptr) {
         OE_Main->renderer->lockMutex();

@@ -109,15 +109,15 @@ public:
 
 
     OE_THREAD_SAFETY_OBJECT renderer_mutex;
-    OE_RendererBase*        renderer{nullptr};
+    oe::renderer_base_t*    renderer{nullptr};
 
     OE_THREAD_SAFETY_OBJECT physics_mutex;
-    OE_PhysicsEngineBase*   physics{nullptr};
+    oe::physics_base_t*     physics{nullptr};
 
     OE_THREAD_SAFETY_OBJECT window_mutex;
-    OE_WindowSystemBase*    window{nullptr};
+    oe::winsys_base_t*      window{nullptr};
 
-    OE_NetworkingBase* network{nullptr};
+    oe::networking_base_t* network{nullptr};
 
     std::shared_ptr<OE_World> world{nullptr};
 

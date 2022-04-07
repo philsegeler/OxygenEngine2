@@ -4,7 +4,7 @@
 #include <OE/dummy_classes.h>
 #include <OE/types/libs_oe.h>
 
-class OE_SDL_WindowSystem : public OE_WindowSystemBase {
+class OE_SDL_WindowSystem : public oe::winsys_base_t {
 public:
     OE_SDL_WindowSystem();
     ~OE_SDL_WindowSystem();

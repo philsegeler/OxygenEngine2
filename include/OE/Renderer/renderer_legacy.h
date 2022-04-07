@@ -5,7 +5,7 @@
 #include <OE/Renderer/renderer_utils.h>
 #include <OE/dummy_classes.h>
 
-class NRE_RendererLegacy : public OE_RendererBase {
+class NRE_RendererLegacy : public oe::renderer_base_t {
 public:
     NRE_RendererLegacy();
     ~NRE_RendererLegacy();

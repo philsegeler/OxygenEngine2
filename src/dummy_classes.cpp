@@ -7,90 +7,90 @@
 
 using namespace std;
 
-OE_WindowSystemBase::OE_WindowSystemBase() {
+oe::winsys_base_t::winsys_base_t() {
 }
 
-OE_WindowSystemBase::~OE_WindowSystemBase() {
+oe::winsys_base_t::~winsys_base_t() {
 }
 
-bool OE_WindowSystemBase::init(int x, int y, string titlea, bool isFullscreen, bool use_legacy_renderer, void* data) {
+bool oe::winsys_base_t::init(int x, int y, string titlea, bool isFullscreen, bool use_legacy_renderer, void* data) {
     return true;
 }
 
-bool OE_WindowSystemBase::getMouseLockedState() {
+bool oe::winsys_base_t::getMouseLockedState() {
     return mouse_locked;
 }
-void OE_WindowSystemBase::lockMouse() {
+void oe::winsys_base_t::lockMouse() {
 }
-void OE_WindowSystemBase::unlockMouse() {
+void oe::winsys_base_t::unlockMouse() {
 }
 
-bool OE_WindowSystemBase::update() {
+bool oe::winsys_base_t::update() {
     return true;
 }
 
-bool OE_WindowSystemBase::updateEvents() {
+bool oe::winsys_base_t::updateEvents() {
     return true;
 }
 
-void OE_WindowSystemBase::destroy() {
+void oe::winsys_base_t::destroy() {
 }
 
 
-OE_RendererBase::OE_RendererBase() {
+oe::renderer_base_t::renderer_base_t() {
 }
 
-OE_RendererBase::~OE_RendererBase() {
+oe::renderer_base_t::~renderer_base_t() {
 }
 
-bool OE_RendererBase::init() {
+bool oe::renderer_base_t::init() {
     return true;
 }
 
-bool OE_RendererBase::updateSingleThread() {
+bool oe::renderer_base_t::updateSingleThread() {
     return true;
 }
 
-bool OE_RendererBase::updateData() {
+bool oe::renderer_base_t::updateData() {
     return true;
 }
 
-bool OE_RendererBase::updateMultiThread(OE_Task*, int) {
+bool oe::renderer_base_t::updateMultiThread(OE_Task*, int) {
     return true;
 }
 
-void OE_RendererBase::destroy() {
+void oe::renderer_base_t::destroy() {
 }
 
 
-OE_PhysicsEngineBase::OE_PhysicsEngineBase() {
+oe::physics_base_t::physics_base_t() {
 }
 
-OE_PhysicsEngineBase::~OE_PhysicsEngineBase() {
+oe::physics_base_t::~physics_base_t() {
 }
 
-bool OE_PhysicsEngineBase::init() {
+bool oe::physics_base_t::init() {
     return true;
 }
 
-bool OE_PhysicsEngineBase::updateMultiThread(OE_Task* task, int thread_num) {
+bool oe::physics_base_t::updateMultiThread(OE_Task* task, int thread_num) {
     // throw 5;
     return true;
 }
 
-void OE_PhysicsEngineBase::destroy() {
+void oe::physics_base_t::destroy() {
     return;
 }
 
-OE_NetworkingBase::OE_NetworkingBase() {
+oe::networking_base_t::networking_base_t() {
 }
-OE_NetworkingBase::~OE_NetworkingBase() {
-}
-
-void OE_NetworkingBase::init() {
+oe::networking_base_t::~networking_base_t() {
 }
 
-int OE_NetworkingBase::execute(OE_Task) {
+void oe::networking_base_t::init() {
+}
+
+int oe::networking_base_t::execute(OE_Task) {
 
     // int a =0;
 
@@ -103,6 +103,6 @@ int OE_NetworkingBase::execute(OE_Task) {
     }
     return 0;
 }
-void OE_NetworkingBase::destroy() {
+void oe::networking_base_t::destroy() {
     done = true;
 }

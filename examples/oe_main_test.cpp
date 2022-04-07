@@ -60,10 +60,10 @@ int renderer_toggle_bounding_spheres( oe::task, string event_name){
 
 int set_renderer_mode_normals( oe::task, string event_name){
     
-    if (oe::get_shading_mode() == oe::renderer::shading_mode::regular)
-        oe::set_shading_mode(oe::renderer::shading_mode::normals);
+    if (oe::get_shading_mode() == oe::RENDERER_REGULAR_SHADING)
+        oe::set_shading_mode(oe::RENDERER_NORMALS_SHADING);
     else
-        oe::set_shading_mode(oe::renderer::shading_mode::regular);
+        oe::set_shading_mode(oe::RENDERER_REGULAR_SHADING);
     return 0;
 }
 

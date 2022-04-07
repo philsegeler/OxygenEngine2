@@ -344,19 +344,19 @@ void NRE_Renderer::drawRenderGroup(NRE_RenderGroup& ren_group) {
         ren_group.fs = nre::gpu::pixel_shader_t();
         lockMutex();
         switch (this->shading_mode) {
-        case OE_RENDERER_NORMALS_SHADING:
+        case oe::RENDERER_NORMALS_SHADING:
             ren_group.fs.type = nre::gpu::FS_NORMALS;
             break;
-        case OE_RENDERER_NO_LIGHTS_SHADING:
+        case oe::RENDERER_NO_LIGHTS_SHADING:
             ren_group.fs.type = nre::gpu::FS_MATERIAL;
             break;
-        case OE_RENDERER_DIR_LIGHTS_SHADING:
+        case oe::RENDERER_DIR_LIGHTS_SHADING:
 
             break;
-        case OE_RENDERER_INDEXED_LIGHTS_SHADING:
+        case oe::RENDERER_INDEXED_LIGHTS_SHADING:
 
             break;
-        case OE_RENDERER_REGULAR_SHADING:
+        case oe::RENDERER_REGULAR_SHADING:
             ren_group.fs.type = nre::gpu::FS_MATERIAL;
             break;
         }

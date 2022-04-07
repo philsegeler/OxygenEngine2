@@ -145,11 +145,11 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, bool
     this->renderer_mutex.unlockMutex();
 
     this->physics_mutex.lockMutex();
-    this->physics = new OE_PhysicsEngineBase();
+    this->physics = new oe::physics_base_t();
     this->tryRun_physics_init();
     this->physics_mutex.unlockMutex();
 
-    this->network = new OE_NetworkingBase();
+    this->network = new oe::networking_base_t();
     this->tryRun_network_init();
 
     this->createCondition();
@@ -165,7 +165,7 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, bool
 #ifdef OE_PLATFORM_WEB
 
 #endif
-    oe::create_unsync_thread_method("network", &OE_NetworkingBase::execute, this->network);
+    oe::create_unsync_thread_method("network", &oe::networking_base_t::execute, this->network);
 
 #ifdef OE_PLATFORM_WEB
     oe_threads_ready_to_start = true;
