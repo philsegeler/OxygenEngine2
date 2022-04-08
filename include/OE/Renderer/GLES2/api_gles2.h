@@ -105,7 +105,7 @@ namespace nre { namespace gles2 {
         api_t(nre::gpu::info_struct&);
         ~api_t();
 
-        void update(uint32_t, uint32_t);
+        void update(uint32_t, uint32_t, bool);
 
         void destroy();
 
@@ -247,6 +247,7 @@ namespace nre { namespace gles2 {
         uint32_t y_{0};
         int      major_{2};
         int      minor_{0};
+        bool     sanity_checks_{true};
     };
 }; }; // namespace nre::gles2
 #endif

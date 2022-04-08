@@ -185,7 +185,7 @@ bool NRE_Renderer::update_single_thread(oe::renderer_update_info update_info, oe
     this->use_HDR                 = update_info.use_hdr;
     this->use_z_prepass           = update_info.use_z_prepass;
 
-    nre::gpu::update(res_x_, res_y_);
+    nre::gpu::update(res_x_, res_y_, update_info.sanity_checks);
 
     if (this->use_HDR == false) {
         nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGB10_A2, nre::gpu::NEAREST, res_x_, res_y_, 0);

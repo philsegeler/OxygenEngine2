@@ -115,7 +115,7 @@ namespace nre { namespace gl3 {
         api_t(nre::gpu::info_struct&);
         ~api_t();
 
-        void update(uint32_t, uint32_t);
+        void update(uint32_t, uint32_t, bool);
 
         void destroy();
 
@@ -261,6 +261,7 @@ namespace nre { namespace gl3 {
         nre::gpu::SHADER_BACKEND backend_;
         int                      major_{3};
         int                      minor_{3};
+        bool                     sanity_checks_{true};
     };
 }; }; // namespace nre::gl3
 

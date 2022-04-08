@@ -99,7 +99,7 @@ namespace nre { namespace gpu {
     std::size_t new_renderbuffer();
 
     bool init(SHADER_BACKEND, int, int);
-    void update(uint32_t, uint32_t);
+    void update(uint32_t, uint32_t, bool);
     void destroy();
 
     void set_renderbuffer_textype(std::size_t, TEXTURE_TYPE, int, int);

@@ -133,8 +133,9 @@ nre::gl3::api_t::api_t(nre::gpu::info_struct& backend_info) {
 nre::gl3::api_t::~api_t() {
 }
 
-void nre::gl3::api_t::update(uint32_t x_in, uint32_t y_in) {
+void nre::gl3::api_t::update(uint32_t x_in, uint32_t y_in, bool sanity_checks) {
 
+    sanity_checks_ = sanity_checks;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     if (x_in != x_ or y_in != y_) {
         glViewport(0, 0, x_in, y_in);

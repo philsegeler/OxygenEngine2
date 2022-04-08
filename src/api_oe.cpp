@@ -652,6 +652,24 @@ void oe::toggle_render_HDR() {
     OE_Main->renderer_mutex.unlockMutex();
 }
 
+void oe::set_renderer_sanity_checks(bool value) {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->renderer_mutex.lockMutex();
+    OE_Main->renderer_info.sanity_checks = value;
+    OE_Main->renderer_mutex.unlockMutex();
+}
+
+void oe::toggle_renderer_sanity_checks() {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->renderer_mutex.lockMutex();
+    if (OE_Main->renderer_info.sanity_checks)
+        OE_Main->renderer_info.sanity_checks = false;
+    else
+        OE_Main->renderer_info.sanity_checks = true;
+    OE_Main->renderer_mutex.unlockMutex();
+}
+
+
 void oe::set_window_title(std::string title) {
     OE_API_Helpers::checkIfInit();
     OE_Main->window_mutex.lockMutex();

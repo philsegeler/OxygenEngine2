@@ -98,6 +98,10 @@ namespace oe {
         bool                  render_bounding_spheres{false};
         bool                  use_z_prepass{true};
         RENDERER_SHADING_MODE shading_mode{RENDERER_REGULAR_SHADING};
+
+        /// Without sanity checks the renderer may segfault or silently fail without warning or error messages
+        /// Tradeoff: Higher performance
+        bool sanity_checks{true};
     };
 
     class renderer_base_t : public OE_THREAD_SAFETY_OBJECT {

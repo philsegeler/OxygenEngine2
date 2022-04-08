@@ -140,6 +140,11 @@ int test_task3(oe::task task){
     return task.CONTINUE();
 }
 
+int toggle_debug_mode(oe::task task, string event_name){
+    oe::toggle_renderer_sanity_checks();
+    return 0;
+}
+
 int OnLoadObject(oe::task load_event_task, string event_name){
     cout << "SUCCESSFULLY loaded '" << event_name << "'" << endl;
     
@@ -163,6 +168,7 @@ int OnLoadObject(oe::task load_event_task, string event_name){
     oe::set_event_func("keyboard-f6+", &renderer_toggle_bounding_spheres);
     oe::set_event_func("keyboard-f7+", &renderer_toggle_wireframe);
     oe::set_event_func("keyboard-f8+", &renderer_toggle_bounding_boxes);
+    oe::set_event_func("keyboard-f9+", &toggle_debug_mode);
     
     oe::add_task_func("test_task1", &test_task1, "\"Camera\"");
     oe::add_task_func("test_task0", 2, &test_task0);

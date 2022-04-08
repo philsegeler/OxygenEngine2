@@ -178,14 +178,14 @@ bool nre::gpu::init(SHADER_BACKEND backend_in, int major, int minor) {
     return true;
 }
 
-void nre::gpu::update(uint32_t x, uint32_t y) {
+void nre::gpu::update(uint32_t x, uint32_t y, bool sanity_checks) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
-        static_cast<nre::gl3::api_t*>(nre::gpu::api)->update(x, y);
+        static_cast<nre::gl3::api_t*>(nre::gpu::api)->update(x, y, sanity_checks);
         break;
     case GLES2:
-        static_cast<nre::gles2::api_t*>(nre::gpu::api)->update(x, y);
+        static_cast<nre::gles2::api_t*>(nre::gpu::api)->update(x, y, sanity_checks);
         break;
     default:
         return;

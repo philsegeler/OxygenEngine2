@@ -106,10 +106,9 @@ nre::gles2::api_t::api_t(nre::gpu::info_struct& backend_info) {
 nre::gles2::api_t::~api_t() {
 }
 
-void nre::gles2::api_t::update(uint32_t x_in, uint32_t y_in) {
+void nre::gles2::api_t::update(uint32_t x_in, uint32_t y_in, bool sanity_checks) {
 
-
-
+    sanity_checks_ = sanity_checks;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     if (x_in != x_ or y_in != y_) {
         glViewport(0, 0, x_in, y_in);
@@ -167,53 +166,62 @@ std::string nre::gles2::api_t::get_rendering_api() {
 //-------------------Handle errors--------------------------------//
 
 void nre::gles2::api_t::check_rbo_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (this->rbos_.count(id) == 0) {
         throw nre::gpu::invalid_render_buffer(id, func);
     }
 }
 
 void nre::gles2::api_t::check_vbo_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (this->vbos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_buffer(id, func);
     }
 }
 void nre::gles2::api_t::check_ibo_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (this->ibos_.count(id) == 0) {
         throw nre::gpu::invalid_index_buffer(id, func);
     }
 }
 
 void nre::gles2::api_t::check_vbo_offset_length(std::size_t id, std::size_t off_len, const std::string& func) {
+    if (not sanity_checks_) return;
     if (off_len > this->vbos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "vertex", func);
     }
 }
 
 void nre::gles2::api_t::check_ibo_offset_length(std::size_t id, std::size_t off_len, const std::string& func) {
+    if (not sanity_checks_) return;
     if (off_len > this->ibos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "index", func);
     }
 }
 
 void nre::gles2::api_t::check_vao_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (this->vaos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_layout(id, func);
     }
 }
 
 void nre::gles2::api_t::check_prog_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (this->progs_.count(id) == 0) {
         throw nre::gpu::invalid_program_id(id, func);
     }
 }
 
 void nre::gles2::api_t::check_prog_complete(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (not this->progs_[id].setup) {
         throw nre::gpu::incomplete_program(id, func);
     }
 }
 
 void nre::gles2::api_t::check_prog_uniform(std::size_t id, const std::string& name, const std::string& func) {
+    if (not sanity_checks_) return;
     if (not this->prog_db_[this->progs_[id]].has_uniform(name)) {
         throw nre::gpu::invalid_program_uniform(id, name, func);
     }
@@ -221,6 +229,7 @@ void nre::gles2::api_t::check_prog_uniform(std::size_t id, const std::string& na
 
 void nre::gles2::api_t::check_prog_uniform_property(std::size_t id, const std::string& name, std::size_t length,
                                                     const std::string& func, bool is_type_problem) {
+    if (not sanity_checks_) return;
     auto uniform_typ = this->prog_db_[this->progs_[id]].uniforms[name].type;
     bool is_vec2     = (uniform_typ == GL_FLOAT_VEC2) and (length >= 2);
     bool is_vec3     = (uniform_typ == GL_FLOAT_VEC3) and (length >= 3);
@@ -234,18 +243,21 @@ void nre::gles2::api_t::check_prog_uniform_property(std::size_t id, const std::s
 }
 
 void nre::gles2::api_t::check_vao_vbo(std::size_t id, std::size_t vbo_id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (this->vbos_.count(vbo_id) == 0) {
         throw nre::gpu::invalid_vertex_layout_buffer(id, vbo_id, func);
     }
 }
 
 void nre::gles2::api_t::check_fbo_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (this->fbos_.count(id) == 0) {
         throw nre::gpu::invalid_framebuffer(id, func);
     }
 }
 
 void nre::gles2::api_t::check_texture_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
     if (this->textures_.count(id) == 0) {
         throw nre::gpu::invalid_texture(id, func);
     }
@@ -253,6 +265,7 @@ void nre::gles2::api_t::check_texture_id(std::size_t id, const std::string& func
 
 void nre::gles2::api_t::check_draw_range(std::size_t id, std::size_t length, std::size_t offset, std::size_t count,
                                          const std::string& func) {
+    if (not sanity_checks_) return;
     if ((offset + count) > length) {
         throw nre::gpu::invalid_draw_range(id, length, offset, count, func);
     }
