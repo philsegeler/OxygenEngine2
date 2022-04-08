@@ -123,11 +123,9 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, oe::
                          oe::winsys_init_info winsys_init_info_in, oe::physics_init_info physics_init_info_in,
                          oe::networking_init_info networking_init_info_in) {
 
-    bool status = false;
-
     this->window_mutex.lockMutex();
-    this->window = new OE_SDL_WindowSystem();
-    status       = status or this->tryRun_winsys_init(x, y, titlea, fullscreen, winsys_init_info_in);
+    this->window             = new OE_SDL_WindowSystem();
+    this->winsys_init_errors = this->tryRun_winsys_init(x, y, titlea, fullscreen, winsys_init_info_in);
     this->window_mutex.unlockMutex();
 
     this->renderer_mutex.lockMutex();
@@ -135,16 +133,16 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, oe::
         this->renderer = new NRE_RendererLegacy();
     else
         this->renderer = new NRE_Renderer();
-    status = status or this->tryRun_renderer_init(renderer_init_info_in);
+    this->renderer_init_errors = this->tryRun_renderer_init(renderer_init_info_in);
     this->renderer_mutex.unlockMutex();
 
     this->physics_mutex.lockMutex();
-    this->physics = new oe::physics_base_t();
-    status        = status or this->tryRun_physics_init(physics_init_info_in);
+    this->physics             = new oe::physics_base_t();
+    this->physics_init_errors = this->tryRun_physics_init(physics_init_info_in);
     this->physics_mutex.unlockMutex();
 
-    this->network = new oe::networking_base_t();
-    status        = status or this->tryRun_network_init(networking_init_info_in);
+    this->network             = new oe::networking_base_t();
+    this->network_init_errors = this->tryRun_network_init(networking_init_info_in);
 
     this->createCondition();
     this->createCondition();
@@ -159,12 +157,14 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, oe::
 #ifdef OE_PLATFORM_WEB
 
 #endif
-    oe::create_unsync_thread_method("network", &oe::networking_base_t::execute, this->network);
+    if (not this->network_init_errors)
+        oe::create_unsync_thread_method("network", &oe::networking_base_t::execute, this->network);
 
 #ifdef OE_PLATFORM_WEB
     oe_threads_ready_to_start = true;
 #endif
-    this->errors_on_init = status;
+    this->errors_on_init =
+        this->renderer_init_errors or this->physics_init_errors or this->winsys_init_errors or this->network_init_errors;
     // cout << "just ran init" << endl;
     return 0;
 }
@@ -271,7 +271,7 @@ void OE_TaskManager::Step() {
         // this->physics->world = this->world;
         // this->renderer->world = this->world;
         // auto t=clock();
-        temp_done              = temp_done or this->tryRun_renderer_updateData();
+        if (not this->renderer_init_errors) temp_done = temp_done or this->tryRun_renderer_updateData();
         this->restart_renderer = false;
         // cout << "NRE UPDATE DATA " << (float)(clock()-t)/CLOCKS_PER_SEC << endl;
     }
@@ -282,9 +282,10 @@ void OE_TaskManager::Step() {
 
     this->syncBeginFrame();
 
-    temp_done = temp_done or this->tryRun_renderer_updateSingleThread();
+    if (not this->renderer_init_errors) temp_done = temp_done or this->tryRun_renderer_updateSingleThread();
 
-    temp_done = temp_done or this->tryRun_winsys_update();
+    if (not this->winsys_init_errors) temp_done = temp_done or this->tryRun_winsys_update();
+    temp_done = temp_done or this->window->event_handler_.done_;
     // count how many times the step function has been called
     countar++;
 
@@ -298,6 +299,7 @@ void OE_TaskManager::Step() {
 void OE_TaskManager::Start() {
     done = false;
     if (this->errors_on_init) {
+        this->Destroy();
         return;
     }
     // starts and maintains the game engine
@@ -318,13 +320,20 @@ void OE_TaskManager::Start() {
  * ***********************/
 
 void OE_TaskManager::Destroy() {
+
+    // finish everything
+    if (!done) {
+        this->window->event_handler_.done_ = true;
+        this->Step();
+    }
+
     lockMutex();
     completed_threads++;
     unlockMutex();
 
 
-    this->network->destroy();
 
+    if (not this->network_init_errors) this->network->destroy();
     int thread_output = 0;
     for (auto thread : this->threadIDs) {
         SDL_WaitThread(thread.second, &thread_output);
@@ -337,12 +346,14 @@ void OE_TaskManager::Destroy() {
     }
     cout << this->countar << endl;
 
-    this->renderer->destroy();
-    this->physics->destroy();
+    if (not this->renderer_init_errors) this->renderer->destroy();
 
-    this->window->event_handler_.cleanup();
-    this->window->destroy();
+    if (not this->physics_init_errors) this->physics->destroy();
 
+    if (not this->winsys_init_errors) {
+        this->window->event_handler_.cleanup();
+        this->window->destroy();
+    }
     delete this->renderer;
     delete this->physics;
     delete this->window;
@@ -399,7 +410,9 @@ void OE_TaskManager::updateThread(const string name) {
             comp_threads_copy = physics_threads;
             if (physics_threads > (getReadyThreads() - 1)) {
                 physics_threads = 0;
-                this->physics->update_info(this->physics_info);
+                this->physics_mutex.lockMutex();
+                if (not this->physics_init_errors) this->physics->update_info(this->physics_info);
+                this->physics_mutex.unlockMutex();
                 condBroadcast(3);
             }
             else {
@@ -411,7 +424,7 @@ void OE_TaskManager::updateThread(const string name) {
             /**************************/
             // This is where physics are run
             this->threads[name].physics_task.update();
-            done = done or this->tryRun_physics_updateMultiThread(name, comp_threads_copy);
+            if (not this->physics_init_errors) done = done or this->tryRun_physics_updateMultiThread(name, comp_threads_copy);
             /**************************/
 
             this->syncEndFrame();

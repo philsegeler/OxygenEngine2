@@ -135,7 +135,7 @@ namespace oe {
 
         virtual bool init(physics_init_info);
 
-        virtual void update_info(physics_update_info);
+        virtual void update_info(physics_update_info) noexcept;
         virtual bool update_multi_thread(OE_Task*, int);
         virtual void destroy();
 

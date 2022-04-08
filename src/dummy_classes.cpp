@@ -75,7 +75,7 @@ bool oe::physics_base_t::init(physics_init_info params) {
     return true;
 }
 
-void oe::physics_base_t::update_info(oe::physics_update_info params) {
+void oe::physics_base_t::update_info(oe::physics_update_info params) noexcept {
     // update the parameters in one place
 }
 
@@ -99,7 +99,6 @@ void oe::networking_base_t::init(networking_init_info params) {
 int oe::networking_base_t::execute(OE_Task) {
 
     // int a =0;
-
     while (!done) {
         // manage networking stuff, use your own threads etc.
         // YOU control the loop. Upon a call on this->destroy() it should stop though

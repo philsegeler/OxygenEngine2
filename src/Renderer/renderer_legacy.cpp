@@ -31,7 +31,6 @@ bool NRE_RendererLegacy::init(oe::renderer_init_info init_info, oe::renderer_upd
     this->initGammaCorrectionProg();
 
     this->initGPUSphere();
-
     return true;
 }
 

@@ -28,7 +28,6 @@ bool NRE_Renderer::init(oe::renderer_init_info init_info, oe::renderer_update_in
     this->initGammaCorrectionProg();
     this->initGPUSphere();
     this->initLightUBOProgramFBO();
-
     return true;
 }
 

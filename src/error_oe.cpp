@@ -149,22 +149,22 @@ bool OE_TaskManager::tryRun_physics_updateMultiThread(const std::string& name, c
         this->physics->update_multi_thread(&this->threads[name].physics_task, comp_threads_copy);
         return false;
     } catch (oe::api_error& e) {
-        std::string error_str = "[OE Error] " + e.name_ + " thrown in updateMultiThread in thread: '" + name +
+        std::string error_str = "[HPE Error] " + e.name_ + " thrown in update_multi_thread in thread: '" + name +
                                 "', thread_num: " + std::to_string(comp_threads_copy);
         error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.counter) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (oe::physics_error& e) {
-        std::string error_str = "[OE Error] " + e.name_ + " thrown in updateMultiThread in thread: '" + name +
+        std::string error_str = "[HPE Error] " + e.name_ + " thrown in update_multi_thread in thread: '" + name +
                                 "', thread_num: " + std::to_string(comp_threads_copy);
         error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.counter) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (std::exception& e) {
-        std::string error_str = "[OE Error] " + string(typeid(e).name()) + " thrown in updateMultiThread in thread: '" + name +
-                                "', thread_num: " + std::to_string(comp_threads_copy);
+        std::string error_str = "[HPE Error] " + string(typeid(e).name()) + " thrown in update_multi_thread in thread: '" +
+                                name + "', thread_num: " + std::to_string(comp_threads_copy);
         error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.counter) + "\n";
         error_str += "\t" + string(e.what()) + "\n";
         cout << error_str;
@@ -173,7 +173,7 @@ bool OE_TaskManager::tryRun_physics_updateMultiThread(const std::string& name, c
         /// universal error handling. will catch any exception
         /// feel free to add specific handling for specific errors
         auto   task    = this->threads[name].physics_task;
-        string outputa = string("[OE Error] Physics exception thrown in updateMultiThread in thread: '" + name +
+        string outputa = string("[HPE Error] Physics exception thrown in update_multi_thread in thread: '" + name +
                                 "', thread_num: " + std::to_string(comp_threads_copy));
         outputa += ", invocation: " + std::to_string(task.counter);
         cout << outputa << endl;
@@ -193,25 +193,25 @@ bool OE_TaskManager::tryRun_renderer_updateSingleThread() {
         return false;
     } catch (oe::api_error& e) {
         std::string error_str =
-            "[NRE Error] " + e.name_ + " thrown in updateSingleThread, invocation: " + std::to_string(this->countar);
+            "[NRE Error] " + e.name_ + " thrown in update_single_thread, invocation: " + std::to_string(this->countar);
         error_str += "\n\t" + e.what();
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     } catch (oe::renderer_error& e) {
         std::string error_str =
-            "[NRE Error] " + e.name_ + " thrown in updateSingleThread, invocation: " + std::to_string(this->countar);
+            "[NRE Error] " + e.name_ + " thrown in update_single_thread, invocation: " + std::to_string(this->countar);
         error_str += "\n\t" + e.what();
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     } catch (std::exception& e) {
         std::string error_str = "[NRE Error] " + string(typeid(e).name()) +
-                                " thrown in updateSingleThread, invocation: " + std::to_string(this->countar);
+                                " thrown in update_single_thread, invocation: " + std::to_string(this->countar);
         error_str += "\n\t" + string(e.what());
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     } catch (...) {
         std::string error_str =
-            "[NRE Error] Renderer exception thrown in updateSingleThread, invocation: " + std::to_string(this->countar);
+            "[NRE Error] Renderer exception thrown in update_single_thread, invocation: " + std::to_string(this->countar);
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     }
@@ -229,25 +229,25 @@ bool OE_TaskManager::tryRun_renderer_updateData() {
         return false;
     } catch (oe::api_error& e) {
         std::string error_str =
-            "[NRE Error] " + e.name_ + " thrown in updateData, invocation: " + std::to_string(this->countar);
+            "[NRE Error] " + e.name_ + " thrown in update_data, invocation: " + std::to_string(this->countar);
         error_str += "\n\t" + e.what();
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     } catch (oe::renderer_error& e) {
         std::string error_str =
-            "[NRE Error] " + e.name_ + " thrown in updateData, invocation: " + std::to_string(this->countar);
+            "[NRE Error] " + e.name_ + " thrown in update_data, invocation: " + std::to_string(this->countar);
         error_str += "\n\t" + e.what();
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     } catch (std::exception& e) {
         std::string error_str =
-            "[NRE Error] " + string(typeid(e).name()) + " thrown in updateData, invocation: " + std::to_string(this->countar);
+            "[NRE Error] " + string(typeid(e).name()) + " thrown in update_data, invocation: " + std::to_string(this->countar);
         error_str += "\n\t" + string(e.what());
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     } catch (...) {
         std::string error_str =
-            "[NRE Error] Renderer exception thrown in updateData, invocation: " + std::to_string(this->countar);
+            "[NRE Error] Renderer exception thrown in update_data, invocation: " + std::to_string(this->countar);
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     }
@@ -277,7 +277,7 @@ bool OE_TaskManager::tryRun_winsys_update() {
         OE_WriteToLog(error_str + "\n");
     } catch (...) {
         std::string error_str =
-            "[OE WINSYS Error] Exception thrown in winsys update, invocation: " + std::to_string(this->countar);
+            "[OE WINSYS Error] Exception thrown in winsys->update(), invocation: " + std::to_string(this->countar);
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     }
@@ -322,17 +322,17 @@ bool OE_TaskManager::tryRun_physics_init(oe::physics_init_info params) {
         this->physics->init(params);
         return false;
     } catch (oe::physics_error& e) {
-        std::string error_str = "[OE Error] " + e.name_ + " thrown in physics engine initialization";
+        std::string error_str = "[HPE Error] " + e.name_ + " thrown in physics engine initialization";
         error_str += "\n\t" + e.what();
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     } catch (std::exception& e) {
-        std::string error_str = "[OE Error] " + string(typeid(e).name()) + " thrown in physics engine initialization";
+        std::string error_str = "[HPE Error] " + string(typeid(e).name()) + " thrown in physics engine initialization";
         error_str += "\n\t" + string(e.what());
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     } catch (...) {
-        std::string error_str = "[OE Error] Could not initialize physics engine due to thrown exception in physics->init()";
+        std::string error_str = "[HPE Error] Could not initialize physics engine due to thrown exception in physics->init()";
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     }

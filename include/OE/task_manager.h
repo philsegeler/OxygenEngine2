@@ -112,11 +112,13 @@ public:
     oe::renderer_base_t*     renderer{nullptr};
     oe::renderer_init_info   renderer_init_info;
     oe::renderer_update_info renderer_info;
+    bool                     renderer_init_errors{false};
     std::atomic<bool>        restart_renderer{false};
 
     OE_THREAD_SAFETY_OBJECT physics_mutex;
     oe::physics_base_t*     physics{nullptr};
     oe::physics_update_info physics_info;
+    bool                    physics_init_errors{false};
     oe::physics_init_info   physics_init_info;
 
     OE_THREAD_SAFETY_OBJECT window_mutex;
@@ -124,9 +126,11 @@ public:
     oe::winsys_update_info  window_info;
     oe::winsys_init_info    window_init_info;
     oe::winsys_output       window_output;
+    bool                    winsys_init_errors{false};
 
     oe::networking_base_t*   network{nullptr};
     oe::networking_init_info network_init_info;
+    bool                     network_init_errors{false};
 
     std::shared_ptr<OE_World> world{nullptr};
 
