@@ -651,3 +651,36 @@ void oe::toggle_render_HDR() {
         OE_Main->renderer_info.use_hdr = true;
     OE_Main->renderer_mutex.unlockMutex();
 }
+
+void oe::set_window_title(std::string title) {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->window_mutex.lockMutex();
+    OE_Main->window_info.title = title;
+    OE_Main->window_mutex.unlockMutex();
+}
+
+std::string oe::get_window_title() {
+    OE_API_Helpers::checkIfInit();
+    std::string output;
+    OE_Main->window_mutex.lockMutex();
+    output = OE_Main->window_info.title;
+    OE_Main->window_mutex.unlockMutex();
+    return output;
+}
+
+void oe::toggle_window_fullscreen() {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->window_mutex.lockMutex();
+    if (OE_Main->window_info.use_fullscreen)
+        OE_Main->window_info.use_fullscreen = false;
+    else
+        OE_Main->window_info.use_fullscreen = true;
+    OE_Main->window_mutex.unlockMutex();
+}
+
+void oe::set_window_fullscreen(bool value) {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->window_mutex.lockMutex();
+    OE_Main->window_info.use_fullscreen = value;
+    OE_Main->window_mutex.unlockMutex();
+}

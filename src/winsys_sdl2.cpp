@@ -244,15 +244,21 @@ oe::winsys_output OE_SDL_WindowSystem::update(oe::winsys_update_info update_info
     this->counter = this->counter % 100;
 
     SDL_GL_SwapWindow(this->window);
-    // Change viewport resolution if desired
+
+    // change title
+    if (this->title != update_info.title) {
+        this->title = update_info.title;
+        SDL_SetWindowTitle(this->window, this->title.c_str());
+    }
+
+    // Change viewport resolution
     int x;
     int y;
     SDL_GetWindowSize(window, &x, &y);
 
-    lockMutex();
     this->resolution_x = x;
     this->resolution_y = y;
-    unlockMutex();
+
 
     this->event_handler_.update_input();
     this->mouse_moved = false;

@@ -35,9 +35,13 @@ namespace oe {
         std::string title;
         int         res_x{640};
         int         res_y{480};
-        bool        use_fullscreen{false};
-        bool        vsync{true};
-        bool        mouse_locked{true};
+        bool        changed_resolution{false};
+
+        bool use_fullscreen{false};
+        bool changed_fullscreen{false};
+
+        bool vsync{true};
+        bool mouse_locked{true};
     };
 
     // output to the renderer

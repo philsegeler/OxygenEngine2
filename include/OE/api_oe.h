@@ -395,7 +395,6 @@ namespace oe {
 
     /** API functions to control the renderer
      *  These should work for ANY renderer
-     * All those parameters require a call to OE_RestartRenderer to take effect
      */
 
     void                      restart_renderer();
@@ -414,6 +413,16 @@ namespace oe {
     // These two do not require a call to OE_RestartRenderer
     void render_HDR(bool);
     void toggle_render_HDR();
+
+    /** API functions to control the window system
+     *  These should work for ANY window system
+     */
+    void        set_window_title(std::string title);
+    std::string get_window_title();
+
+    // not functional yet
+    void toggle_window_fullscreen();
+    void set_window_fullscreen(bool);
 }; // namespace oe
 
 

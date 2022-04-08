@@ -136,10 +136,9 @@ int test_task3(oe::task task){
     else {
     
     }
-    
+
     return task.CONTINUE();
 }
-
 
 int OnLoadObject(oe::task load_event_task, string event_name){
     cout << "SUCCESSFULLY loaded '" << event_name << "'" << endl;
@@ -159,7 +158,6 @@ int OnLoadObject(oe::task load_event_task, string event_name){
     oe::set_event_func("keyboard-d+", &update_monkey_rot_neg_z);
     
     oe::set_event_func("keyboard-space+", &toggle_mouse_locked_state);
-    
     // Useful for debugging
     oe::set_event_func("keyboard-f5+", &set_renderer_mode_normals);
     oe::set_event_func("keyboard-f6+", &renderer_toggle_bounding_spheres);
@@ -172,6 +170,7 @@ int OnLoadObject(oe::task load_event_task, string event_name){
     oe::add_task_func("test_task3", 4, &test_task3);
     oe::mouse_lock();
 
+    oe::set_window_title("Oxygen Engine - " + event_name);
     return 0;
 }
 

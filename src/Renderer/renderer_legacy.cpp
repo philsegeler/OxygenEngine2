@@ -127,14 +127,17 @@ bool NRE_RendererLegacy::update_data(oe::renderer_update_info update_info, oe::w
     this->render_bounding_spheres = update_info.render_bounding_spheres;
     this->use_HDR                 = update_info.use_hdr;
     this->use_z_prepass           = update_info.use_z_prepass;
-    bool temp_restart_renderer    = has_renderer_restarted or (this->shading_mode != update_info.shading_mode);
+    bool temp_restart_renderer    = (this->shading_mode != update_info.shading_mode);
 
     if (temp_restart_renderer) {
         this->destroy();
         this->init(this->init_info, update_info, winsys_info);
     }
+    else if (has_renderer_restarted) {
+        this->init(this->init_info, update_info, winsys_info);
+    }
     this->shading_mode = update_info.shading_mode;
-    data_.update(temp_restart_renderer, this->render_bounding_boxes or this->render_bounding_spheres);
+    data_.update(temp_restart_renderer or has_renderer_restarted, this->render_bounding_boxes or this->render_bounding_spheres);
 
     return true;
 }
