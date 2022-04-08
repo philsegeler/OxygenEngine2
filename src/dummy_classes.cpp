@@ -48,16 +48,16 @@ bool oe::renderer_base_t::init(oe::renderer_init_info init_info, oe::renderer_up
     return true;
 }
 
-bool oe::renderer_base_t::updateSingleThread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
+bool oe::renderer_base_t::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
     return true;
 }
 
-bool oe::renderer_base_t::updateData(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
-                                     bool has_renderer_restarted) {
+bool oe::renderer_base_t::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                                      bool has_renderer_restarted) {
     return true;
 }
 
-bool oe::renderer_base_t::updateMultiThread(OE_Task*, int) {
+bool oe::renderer_base_t::update_multi_thread(OE_Task*, int) {
     return true;
 }
 
@@ -79,7 +79,7 @@ void oe::physics_base_t::update_info(oe::physics_update_info params) {
     // update the parameters in one place
 }
 
-bool oe::physics_base_t::updateMultiThread(OE_Task* task, int thread_num) {
+bool oe::physics_base_t::update_multi_thread(OE_Task* task, int thread_num) {
     // throw 5;
     return true;
 }

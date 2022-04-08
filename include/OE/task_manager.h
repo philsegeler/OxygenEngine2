@@ -106,7 +106,7 @@ public:
 
     // very important variable
     std::atomic<bool> done;
-
+    bool              errors_on_init{false};
 
     OE_THREAD_SAFETY_OBJECT  renderer_mutex;
     oe::renderer_base_t*     renderer{nullptr};
@@ -196,15 +196,16 @@ private:
     int tryRun_unsync_thread(OE_UnsyncThreadData*);
     int tryRun_task(const std::string&, OE_Task&);
 
-    void tryRun_physics_updateMultiThread(const std::string&, const int&);
+    // ALL these return true if error is found so it terminates the engine
+    bool tryRun_physics_updateMultiThread(const std::string&, const int&);
     bool tryRun_renderer_updateSingleThread();
-    void tryRun_renderer_updateData();
+    bool tryRun_renderer_updateData();
     bool tryRun_winsys_update();
 
-    void tryRun_winsys_init(int, int, std::string, bool, oe::winsys_init_info);
-    void tryRun_physics_init(oe::physics_init_info);
-    void tryRun_renderer_init(oe::renderer_init_info);
-    void tryRun_network_init(oe::networking_init_info);
+    bool tryRun_winsys_init(int, int, std::string, bool, oe::winsys_init_info);
+    bool tryRun_physics_init(oe::physics_init_info);
+    bool tryRun_renderer_init(oe::renderer_init_info);
+    bool tryRun_network_init(oe::networking_init_info);
 };
 
 #endif

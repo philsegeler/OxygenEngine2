@@ -102,11 +102,11 @@ namespace oe {
         virtual ~renderer_base_t();
 
         virtual bool init(renderer_init_info, renderer_update_info, winsys_output);
-        virtual bool updateSingleThread(renderer_update_info, winsys_output);
+        virtual bool update_single_thread(renderer_update_info, winsys_output);
         // last bool is true if the renderer has been restarted. This is useful so as to fetch all the data again
-        virtual bool updateData(renderer_update_info, winsys_output, bool);
+        virtual bool update_data(renderer_update_info, winsys_output, bool);
 
-        virtual bool updateMultiThread(OE_Task*, int); // stub for now
+        virtual bool update_multi_thread(OE_Task*, int); // stub for now
         virtual void destroy();
 
         bool                      isMultiThreaded{false};
@@ -136,7 +136,7 @@ namespace oe {
         virtual bool init(physics_init_info);
 
         virtual void update_info(physics_update_info);
-        virtual bool updateMultiThread(OE_Task*, int);
+        virtual bool update_multi_thread(OE_Task*, int);
         virtual void destroy();
 
         bool                      isMultiThreaded{false};

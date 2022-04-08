@@ -117,8 +117,8 @@ void NRE_RendererLegacy::initGPUSphere() {
 
 //------------------------updateData---------------------------//
 
-bool NRE_RendererLegacy::updateData(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
-                                    bool has_renderer_restarted) {
+bool NRE_RendererLegacy::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                                     bool has_renderer_restarted) {
     assert(this->world != nullptr);
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
@@ -142,7 +142,7 @@ bool NRE_RendererLegacy::updateData(oe::renderer_update_info update_info, oe::wi
 
 //------------------------updateSIngleThread-------------------//
 
-bool NRE_RendererLegacy::updateSingleThread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
+bool NRE_RendererLegacy::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
 
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
@@ -621,7 +621,7 @@ void NRE_RendererLegacy::updateLightGPUData() {
     }
 }
 
-bool NRE_RendererLegacy::updateMultiThread(OE_Task*, int) {
+bool NRE_RendererLegacy::update_multi_thread(OE_Task*, int) {
     return false;
 }
 

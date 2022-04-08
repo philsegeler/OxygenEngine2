@@ -147,8 +147,8 @@ void NRE_Renderer::initLightUBOProgramFBO() {
 
 //------------------------updateData---------------------------//
 
-bool NRE_Renderer::updateData(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
-                              bool has_renderer_restarted) {
+bool NRE_Renderer::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                               bool has_renderer_restarted) {
     assert(this->world != nullptr);
     bool temp_restart_renderer = has_renderer_restarted or (this->shading_mode != update_info.shading_mode);
     res_x_                     = winsys_info.res_x;
@@ -172,7 +172,7 @@ bool NRE_Renderer::updateData(oe::renderer_update_info update_info, oe::winsys_o
 
 //------------------------updateSIngleThread-------------------//
 
-bool NRE_Renderer::updateSingleThread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
+bool NRE_Renderer::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
 
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
@@ -680,7 +680,7 @@ void NRE_Renderer::updateLightGPUData() {
     nre::gpu::set_uniform_buf_data(this->pt_light_ubo, pt_light_data, 0);
 }
 
-bool NRE_Renderer::updateMultiThread(OE_Task*, int) {
+bool NRE_Renderer::update_multi_thread(OE_Task*, int) {
     return false;
 }
 

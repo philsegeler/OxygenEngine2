@@ -11,11 +11,11 @@ public:
     ~NRE_RendererLegacy();
 
     bool init(oe::renderer_init_info, oe::renderer_update_info, oe::winsys_output);
-    bool updateSingleThread(oe::renderer_update_info, oe::winsys_output);
+    bool update_single_thread(oe::renderer_update_info, oe::winsys_output);
     // last bool is true if the renderer has been restarted. This is useful so as to fetch all the data again
-    bool updateData(oe::renderer_update_info, oe::winsys_output, bool);
+    bool update_data(oe::renderer_update_info, oe::winsys_output, bool);
 
-    bool updateMultiThread(OE_Task*, int);
+    bool update_multi_thread(OE_Task*, int);
     void destroy();
 
     // holds all rendering data from the engine
