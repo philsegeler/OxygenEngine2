@@ -133,7 +133,12 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, oe::
         this->renderer = new NRE_RendererLegacy();
     else
         this->renderer = new NRE_Renderer();
-    this->renderer_init_errors = this->tryRun_renderer_init(renderer_init_info_in);
+
+    // do NOT try to initialise the renderer if the window system is borked
+    if (not this->winsys_init_errors)
+        this->renderer_init_errors = this->tryRun_renderer_init(renderer_init_info_in);
+    else
+        this->renderer_init_errors = true;
     this->renderer_mutex.unlockMutex();
 
     this->physics_mutex.lockMutex();
