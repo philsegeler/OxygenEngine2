@@ -52,9 +52,10 @@ oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::
 
 #ifndef OE_PLATFORM_WEB
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-        cout << "OE ERROR: Could not initialize SDL2, " << SDL_GetError() << endl;
+        std::stringstream ss;
+        ss << "Could not initialize SDL2, " << SDL_GetError();
+        throw oe::winsys_init_failed(ss.str());
     }
-
 
     SDL_GL_LoadLibrary(NULL);
 
