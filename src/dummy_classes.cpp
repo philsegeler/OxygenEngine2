@@ -7,93 +7,98 @@
 
 using namespace std;
 
-OE_WindowSystemBase::OE_WindowSystemBase() {
+oe::winsys_base_t::winsys_base_t() {
 }
 
-OE_WindowSystemBase::~OE_WindowSystemBase() {
+oe::winsys_base_t::~winsys_base_t() {
 }
 
-bool OE_WindowSystemBase::init(int x, int y, string titlea, bool isFullscreen, bool use_legacy_renderer, void* data) {
+oe::winsys_output oe::winsys_base_t::init(oe::winsys_init_info init_info, oe::winsys_update_info update_info) {
+    return oe::winsys_output();
+}
+
+bool oe::winsys_base_t::is_mouse_locked() {
+    return false;
+}
+void oe::winsys_base_t::lock_mouse() {
+}
+void oe::winsys_base_t::unlock_mouse() {
+}
+
+oe::winsys_output oe::winsys_base_t::update(oe::winsys_update_info update_info) {
+    return oe::winsys_output();
+}
+
+bool oe::winsys_base_t::update_events() {
     return true;
 }
 
-bool OE_WindowSystemBase::getMouseLockedState() {
-    return mouse_locked;
-}
-void OE_WindowSystemBase::lockMouse() {
-}
-void OE_WindowSystemBase::unlockMouse() {
+void oe::winsys_base_t::destroy() {
 }
 
-bool OE_WindowSystemBase::update() {
+
+oe::renderer_base_t::renderer_base_t() {
+}
+
+oe::renderer_base_t::~renderer_base_t() {
+}
+
+bool oe::renderer_base_t::init(oe::renderer_init_info init_info, oe::renderer_update_info update_info,
+                               oe::winsys_output winsys_info) {
     return true;
 }
 
-bool OE_WindowSystemBase::updateEvents() {
+bool oe::renderer_base_t::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
     return true;
 }
 
-void OE_WindowSystemBase::destroy() {
-}
-
-
-OE_RendererBase::OE_RendererBase() {
-}
-
-OE_RendererBase::~OE_RendererBase() {
-}
-
-bool OE_RendererBase::init() {
+bool oe::renderer_base_t::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                                      bool has_renderer_restarted) {
     return true;
 }
 
-bool OE_RendererBase::updateSingleThread() {
+bool oe::renderer_base_t::update_multi_thread(OE_Task*, int) {
     return true;
 }
 
-bool OE_RendererBase::updateData() {
+void oe::renderer_base_t::destroy() {
+}
+
+
+oe::physics_base_t::physics_base_t() {
+}
+
+oe::physics_base_t::~physics_base_t() {
+}
+
+bool oe::physics_base_t::init(physics_init_info params) {
     return true;
 }
 
-bool OE_RendererBase::updateMultiThread(OE_Task*, int) {
-    return true;
+void oe::physics_base_t::update_info(oe::physics_update_info params) noexcept {
+    // update the parameters in one place
 }
 
-void OE_RendererBase::destroy() {
-}
-
-
-OE_PhysicsEngineBase::OE_PhysicsEngineBase() {
-}
-
-OE_PhysicsEngineBase::~OE_PhysicsEngineBase() {
-}
-
-bool OE_PhysicsEngineBase::init() {
-    return true;
-}
-
-bool OE_PhysicsEngineBase::updateMultiThread(OE_Task* task, int thread_num) {
+bool oe::physics_base_t::update_multi_thread(OE_Task* task, int thread_num) {
     // throw 5;
     return true;
 }
 
-void OE_PhysicsEngineBase::destroy() {
+void oe::physics_base_t::destroy() {
     return;
 }
 
-OE_NetworkingBase::OE_NetworkingBase() {
+oe::networking_base_t::networking_base_t() {
 }
-OE_NetworkingBase::~OE_NetworkingBase() {
-}
-
-void OE_NetworkingBase::init() {
+oe::networking_base_t::~networking_base_t() {
 }
 
-int OE_NetworkingBase::execute(OE_Task) {
+void oe::networking_base_t::init(networking_init_info params) {
+}
+
+int oe::networking_base_t::execute(OE_Task) {
 
     // int a =0;
-
     while (!done) {
         // manage networking stuff, use your own threads etc.
         // YOU control the loop. Upon a call on this->destroy() it should stop though
@@ -103,6 +108,6 @@ int OE_NetworkingBase::execute(OE_Task) {
     }
     return 0;
 }
-void OE_NetworkingBase::destroy() {
+void oe::networking_base_t::destroy() {
     done = true;
 }

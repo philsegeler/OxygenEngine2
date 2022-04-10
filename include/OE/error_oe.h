@@ -94,6 +94,18 @@ namespace oe {
         std::string data_;
     };
 
+    class winsys_init_failed : public winsys_error {
+    public:
+        winsys_init_failed(std::string arg) {
+            name_ = "oe::winsys_init_failed";
+            data_ = arg;
+        }
+        std::string what() const throw() {
+            return data_;
+        };
+        std::string data_;
+    };
+
 }; // namespace oe
 
 #endif

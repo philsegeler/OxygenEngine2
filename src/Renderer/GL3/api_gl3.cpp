@@ -58,7 +58,7 @@ void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id, GLen
 
 // small utility function to translate the buffer usages to something opengl understands
 // This should be different on other APIs
-GLenum NRE2GL_BufferUse(nre::gpu::BUFFER_USAGE usage) {
+GLenum nre::gl3::buffer_use(nre::gpu::BUFFER_USAGE usage) {
     GLenum buf_usage;
     switch (usage) {
     case nre::gpu::STATIC:
@@ -77,62 +77,46 @@ GLenum NRE2GL_BufferUse(nre::gpu::BUFFER_USAGE usage) {
 }
 
 // get index of a uniform block variable in a shader program
-std::size_t NRE_GL3_ProgramData::hasUniformBlock(std::string name) {
-    size_t index = 0;
-    for (auto x : this->uniform_blocks) {
-        if (x.name == name) {
-            return index;
-        }
-        index++;
-    }
-    return this->uniform_blocks.size();
+bool nre::gl3::program_data_t::has_uniform_block(const std::string& name) {
+    return this->uniform_blocks.contains(name);
 }
 
 // get index of a uniform variable in a shader program
-std::size_t NRE_GL3_ProgramData::hasUniform(std::string name) {
-    size_t index = 0;
-    for (auto x : this->uniforms) {
-        if (x.name == name) {
-            return index;
-        }
-        index++;
-    }
-    return this->uniforms.size();
+bool nre::gl3::program_data_t::has_uniform(const std::string& name) {
+    return this->uniforms.contains(name);
 }
 
-bool NRE_GL3_Program::operator<(const NRE_GL3_Program& other) const {
-    if (this->vs < other.vs) {
-        return true;
-    }
-    else if (this->vs == other.vs) {
-        return this->fs < other.fs;
-    }
-    else {
-        return false;
-    }
-    return false;
+bool nre::gl3::program_t::operator==(const nre::gl3::program_t& other) const {
+    return std::tie(this->vs, this->fs) == std::tie(other.vs, other.fs);
+}
+size_t nre::gl3::program_t::gen_hash() const {
+    return this->vs.gen_hash() + this->fs.gen_hash();
 }
 
-bool NRE_GL3_Texture::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, nre::gpu::TEXTURE_FILTER filter_in, int x_in, int y_in,
-                                    int mipmaps_in) {
+bool nre::gl3::texture_t::has_not_changed(nre::gpu::TEXTURE_TYPE type_in, nre::gpu::TEXTURE_FILTER filter_in, int x_in,
+                                          int y_in, int mipmaps_in) {
     return (this->type == type_in) and (this->filter == filter_in) and (this->x == x_in) and (this->y == y_in) and
            (this->mipmaps == mipmaps_in);
 }
 
-bool NRE_GL3_RenderBuffer::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, int x_in, int y_in) {
+bool nre::gl3::renderbuffer_t::has_not_changed(nre::gpu::TEXTURE_TYPE type_in, int x_in, int y_in) {
     return (this->type == type_in) and (this->x == x_in) and (this->y == y_in);
 }
 
 // ------------------------ API ---------------------- //
 
-std::size_t NRE_GL3_API::getVAOSize(std::size_t id) {
-    this->check_vao_id_(id, "getVAOSize");
-    return this->vbos[this->vaos[id].layout[0].vertex_buffer].size / this->vaos[id].layout[0].stride;
+std::size_t nre::gl3::api_t::get_vao_size(std::size_t id) {
+    this->check_vao_id_(id, "get_vao_size");
+    return this->vbos_[this->vaos_[id].layout[0].vertex_buffer].size / this->vaos_[id].layout[0].stride;
 }
 
 
-NRE_GL3_API::NRE_GL3_API(nre::gpu::info_struct& backend_info) {
+nre::gl3::api_t::api_t(nre::gpu::info_struct& backend_info) {
     this->vao_ibos_[0] = 0;
+    major_             = backend_info.major;
+    minor_             = backend_info.minor;
+    backend_           = backend_info.underlying_api;
+
 #ifndef OE_PLATFORM_WEB
     if (glDebugMessageCallback) {
         cout << "[NRE GL API Info] Register OpenGL debug callback " << endl;
@@ -146,18 +130,19 @@ NRE_GL3_API::NRE_GL3_API(nre::gpu::info_struct& backend_info) {
         cout << "[NRE GL API Info] glDebugMessageCallback not available" << endl;
 }
 
-NRE_GL3_API::~NRE_GL3_API() {
+nre::gl3::api_t::~api_t() {
 }
 
-void NRE_GL3_API::update(uint32_t x_in, uint32_t y_in) {
+void nre::gl3::api_t::update(uint32_t x_in, uint32_t y_in, bool sanity_checks) {
 
-    if (x_in != nre::gpu::x or y_in != nre::gpu::y) {
+    sanity_checks_ = sanity_checks;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (x_in != x_ or y_in != y_) {
         glViewport(0, 0, x_in, y_in);
-        nre::gpu::x = x_in;
-        nre::gpu::y = y_in;
+        x_ = x_in;
+        y_ = y_in;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDepthMask(GL_TRUE);
     glStencilMask(0xFF);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -173,39 +158,37 @@ void NRE_GL3_API::update(uint32_t x_in, uint32_t y_in) {
     }
 }
 
-void NRE_GL3_API::destroy() {
-    for (auto x : std::exchange(rbos, {}))
+void nre::gl3::api_t::destroy() {
+    for (auto x : std::exchange(rbos_, {}))
         glDeleteRenderbuffers(1, &x.second.handle);
-    for (auto x : std::exchange(vbos, {}))
+    for (auto x : std::exchange(vbos_, {}))
         glDeleteBuffers(1, &x.second.handle);
-    for (auto x : std::exchange(vaos, {}))
+    for (auto x : std::exchange(vaos_, {}))
         glDeleteVertexArrays(1, &x.second.handle);
-    for (auto x : std::exchange(ibos, {}))
+    for (auto x : std::exchange(ibos_, {}))
         glDeleteBuffers(1, &x.second.handle);
-    for (auto x : std::exchange(ubos, {}))
+    for (auto x : std::exchange(ubos_, {}))
         glDeleteBuffers(1, &x.second.handle);
-    for (auto x : std::exchange(fbos, {}))
+    for (auto x : std::exchange(fbos_, {}))
         glDeleteFramebuffers(1, &x.second.handle);
-    for (auto x : std::exchange(textures, {}))
+    for (auto x : std::exchange(textures_, {}))
         glDeleteTextures(1, &x.second.handle);
-    for (auto x : std::exchange(prog_db, {})) {
+    for (auto x : std::exchange(prog_db_, {})) {
         glDeleteProgram(x.second.handle);
     }
-    for (auto x : std::exchange(vs_db, {})) {
+    for (auto x : std::exchange(vs_db_, {})) {
         glDeleteShader(x.second);
     }
-    for (auto x : std::exchange(fs_db, {})) {
+    for (auto x : std::exchange(fs_db_, {})) {
         glDeleteShader(x.second);
     }
 }
 
-std::string NRE_GL3_API::getRenderingAPI() {
+std::string nre::gl3::api_t::get_rendering_api() {
     if (nre::gpu::get_api() == nre::gpu::GLES)
-        return "OpenGL ES 3/WebGL 2.0";
+        return "OpenGL ES 3.1+/WebGL 2.0+";
     else if (nre::gpu::get_api() == nre::gpu::GL)
-        return "OpenGL 3";
-    else if (nre::gpu::get_api() == nre::gpu::GLES2)
-        return "OpenGL ES 2/WebGL 1.0";
+        return "OpenGL 3.3+";
     else {
         return "Unknown";
     }
@@ -213,80 +196,80 @@ std::string NRE_GL3_API::getRenderingAPI() {
 
 //-------------------Handle errors--------------------------------//
 
-void NRE_GL3_API::check_rbo_id_(std::size_t id, const std::string& func) {
-    if (this->rbos.count(id) == 0) {
+void nre::gl3::api_t::check_rbo_id_(std::size_t id, const std::string& func) {
+    if (this->rbos_.count(id) == 0) {
         throw nre::gpu::invalid_render_buffer(id, func);
     }
 }
 
-void NRE_GL3_API::check_vbo_id_(std::size_t id, const std::string& func) {
-    if (this->vbos.count(id) == 0) {
+void nre::gl3::api_t::check_vbo_id_(std::size_t id, const std::string& func) {
+    if (this->vbos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_buffer(id, func);
     }
 }
-void NRE_GL3_API::check_ubo_id_(std::size_t id, const std::string& func) {
-    if (this->ubos.count(id) == 0) {
+void nre::gl3::api_t::check_ubo_id_(std::size_t id, const std::string& func) {
+    if (this->ubos_.count(id) == 0) {
         throw nre::gpu::invalid_uniform_buffer(id, func);
     }
 }
-void NRE_GL3_API::check_ibo_id_(std::size_t id, const std::string& func) {
-    if (this->ibos.count(id) == 0) {
+void nre::gl3::api_t::check_ibo_id_(std::size_t id, const std::string& func) {
+    if (this->ibos_.count(id) == 0) {
         throw nre::gpu::invalid_index_buffer(id, func);
     }
 }
 
-void NRE_GL3_API::check_vbo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
-    if (off_len > this->vbos[id].size) {
+void nre::gl3::api_t::check_vbo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
+    if (off_len > this->vbos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "vertex", func);
     }
 }
 
-void NRE_GL3_API::check_ubo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
-    if (off_len > this->ubos[id].size) {
+void nre::gl3::api_t::check_ubo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
+    if (off_len > this->ubos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "uniform", func);
     }
 }
 
-void NRE_GL3_API::check_ibo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
-    if (off_len > this->ibos[id].size) {
+void nre::gl3::api_t::check_ibo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
+    if (off_len > this->ibos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "index", func);
     }
 }
 
-void NRE_GL3_API::check_vao_id_(std::size_t id, const std::string& func) {
-    if (this->vaos.count(id) == 0) {
+void nre::gl3::api_t::check_vao_id_(std::size_t id, const std::string& func) {
+    if (this->vaos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_layout(id, func);
     }
 }
 
-void NRE_GL3_API::check_prog_id_(std::size_t id, const std::string& func) {
-    if (this->progs.count(id) == 0) {
+void nre::gl3::api_t::check_prog_id_(std::size_t id, const std::string& func) {
+    if (this->progs_.count(id) == 0) {
         throw nre::gpu::invalid_program_id(id, func);
     }
 }
 
-void NRE_GL3_API::check_prog_complete_(std::size_t id, const std::string& func) {
-    if (not this->progs[id].setup) {
+void nre::gl3::api_t::check_prog_complete_(std::size_t id, const std::string& func) {
+    if (not this->progs_[id].setup) {
         throw nre::gpu::incomplete_program(id, func);
     }
 }
 
 
-void NRE_GL3_API::check_prog_uniform_block_(std::size_t id, const std::string& name, const std::string& func) {
-    if (this->prog_db[this->progs[id]].hasUniformBlock(name) == this->prog_db[this->progs[id]].uniform_blocks.size()) {
+void nre::gl3::api_t::check_prog_uniform_block_(std::size_t id, const std::string& name, const std::string& func) {
+    if (not this->prog_db_[this->progs_[id]].has_uniform_block(name)) {
         throw nre::gpu::invalid_program_uniform_block(id, name, func);
     }
 }
 
-void NRE_GL3_API::check_prog_uniform_(std::size_t id, const std::string& name, const std::string& func) {
-    if (this->prog_db[this->progs[id]].hasUniform(name) == this->prog_db[this->progs[id]].uniforms.size()) {
+void nre::gl3::api_t::check_prog_uniform_(std::size_t id, const std::string& name, const std::string& func) {
+    if (not this->prog_db_[this->progs_[id]].has_uniform(name)) {
         throw nre::gpu::invalid_program_uniform(id, name, func);
     }
 }
 
-void NRE_GL3_API::check_prog_uniform_property_(std::size_t id, const std::string& name, std::size_t length,
-                                               const std::string& func, bool is_type_problem) {
-    auto uniform_typ = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+void nre::gl3::api_t::check_prog_uniform_property_(std::size_t id, const std::string& name, std::size_t length,
+                                                   const std::string& func, bool is_type_problem) {
+    auto uniform_typ = this->prog_db_[this->progs_[id]].uniforms[name].type;
     bool is_vec2     = (uniform_typ == GL_FLOAT_VEC2) and (length >= 2);
     bool is_vec3     = (uniform_typ == GL_FLOAT_VEC3) and (length >= 3);
     bool is_vec4     = (uniform_typ == GL_FLOAT_VEC4) and (length >= 4);
@@ -298,54 +281,54 @@ void NRE_GL3_API::check_prog_uniform_property_(std::size_t id, const std::string
     }
 }
 
-void NRE_GL3_API::check_vao_vbo_(std::size_t id, std::size_t vbo_id, const std::string& func) {
-    if (this->vbos.count(vbo_id) == 0) {
+void nre::gl3::api_t::check_vao_vbo_(std::size_t id, std::size_t vbo_id, const std::string& func) {
+    if (this->vbos_.count(vbo_id) == 0) {
         throw nre::gpu::invalid_vertex_layout_buffer(id, vbo_id, func);
     }
 }
 
-void NRE_GL3_API::check_fbo_id_(std::size_t id, const std::string& func) {
-    if (this->fbos.count(id) == 0) {
+void nre::gl3::api_t::check_fbo_id_(std::size_t id, const std::string& func) {
+    if (this->fbos_.count(id) == 0) {
         throw nre::gpu::invalid_framebuffer(id, func);
     }
 }
 
-void NRE_GL3_API::check_texture_id_(std::size_t id, const std::string& func) {
-    if (this->textures.count(id) == 0) {
+void nre::gl3::api_t::check_texture_id_(std::size_t id, const std::string& func) {
+    if (this->textures_.count(id) == 0) {
         throw nre::gpu::invalid_texture(id, func);
     }
 }
 
-void NRE_GL3_API::check_draw_range_(std::size_t id, std::size_t length, std::size_t offset, std::size_t count,
-                                    const std::string& func) {
+void nre::gl3::api_t::check_draw_range_(std::size_t id, std::size_t length, std::size_t offset, std::size_t count,
+                                        const std::string& func) {
     if ((offset + count) > length) {
         throw nre::gpu::invalid_draw_range(id, length, offset, count, func);
     }
 }
 
-void NRE_GL3_API::get_program_all_uniforms_(std::size_t id) {
+void nre::gl3::api_t::get_program_all_uniforms_(std::size_t id) {
 
     /// get all active uniform blocks (again)
     GLint numBlocks = 0;
-    glGetProgramiv(this->prog_db[this->progs[id]].handle, GL_ACTIVE_UNIFORM_BLOCKS, &numBlocks);
+    glGetProgramiv(this->prog_db_[this->progs_[id]].handle, GL_ACTIVE_UNIFORM_BLOCKS, &numBlocks);
     for (int ida = 0; ida < numBlocks; ida++) {
 
         GLint name_length = 0;
 
-        glGetActiveUniformBlockiv(this->prog_db[this->progs[id]].handle, ida, GL_UNIFORM_BLOCK_NAME_LENGTH, &name_length);
+        glGetActiveUniformBlockiv(this->prog_db_[this->progs_[id]].handle, ida, GL_UNIFORM_BLOCK_NAME_LENGTH, &name_length);
 
         GLchar ubo_name[name_length];
-        glGetActiveUniformBlockName(this->prog_db[this->progs[id]].handle, ida, name_length, NULL, &ubo_name[0]);
+        glGetActiveUniformBlockName(this->prog_db_[this->progs_[id]].handle, ida, name_length, NULL, &ubo_name[0]);
 
-        string actual_name = string(ubo_name);
-        auto   ubo_state   = NRE_GL3_ProgramUniformState();
-        ubo_state.name     = actual_name;
-        ubo_state.slot     = -1;
-        this->prog_db[this->progs[id]].uniform_blocks.push_back(ubo_state);
+        string actual_name                                                  = string(ubo_name);
+        auto   ubo_state                                                    = nre::gl3::program_uniform_state_t();
+        ubo_state.slot                                                      = -1;
+        this->prog_db_[this->progs_[id]].uniform_blocks[actual_name]        = ubo_state;
+        this->prog_db_[this->progs_[id]].uniform_block_indices[actual_name] = ida;
     }
 
     GLint numUniforms = 0;
-    glGetProgramiv(this->prog_db[this->progs[id]].handle, GL_ACTIVE_UNIFORMS, &numUniforms);
+    glGetProgramiv(this->prog_db_[this->progs_[id]].handle, GL_ACTIVE_UNIFORMS, &numUniforms);
     for (GLint ida = 0; ida < numUniforms; ida++) {
 
         GLint name_length = 0;
@@ -353,30 +336,29 @@ void NRE_GL3_API::get_program_all_uniforms_(std::size_t id) {
 
 #ifndef __EMSCRIPTEN__
         GLuint idb = ida;
-        glGetActiveUniformsiv(this->prog_db[this->progs[id]].handle, 1, &idb, GL_UNIFORM_NAME_LENGTH, &name_length);
+        glGetActiveUniformsiv(this->prog_db_[this->progs_[id]].handle, 1, &idb, GL_UNIFORM_NAME_LENGTH, &name_length);
 #else
 
-        glGetProgramiv(this->prog_db[this->progs[id]].handle, GL_ACTIVE_UNIFORM_MAX_LENGTH, &name_length);
+        glGetProgramiv(this->prog_db_[this->progs_[id]].handle, GL_ACTIVE_UNIFORM_MAX_LENGTH, &name_length);
         // cout << "uniforms:" << ida << " name length:" << name_length << endl;
 #endif
         GLchar uniform_name[name_length];
         GLenum var_enum;
         GLint  uniform_size;
-        glGetActiveUniform(this->prog_db[this->progs[id]].handle, ida, name_length, &name_length, &uniform_size, &var_enum,
+        glGetActiveUniform(this->prog_db_[this->progs_[id]].handle, ida, name_length, &name_length, &uniform_size, &var_enum,
                            &uniform_name[0]);
 
         string actual_name   = string(uniform_name);
-        auto   uniform_state = NRE_GL3_ProgramUniformState();
-        uniform_state.name   = actual_name;
+        auto   uniform_state = nre::gl3::program_uniform_state_t();
         uniform_state.slot   = -1;
         uniform_state.type   = var_enum;
         uniform_state.size   = uniform_size;
         // cout << uniform_state.name << " " << uniform_state.type << " " << uniform_state.size << endl;
-        this->prog_db[this->progs[id]].uniforms.push_back(uniform_state);
+        this->prog_db_[this->progs_[id]].uniforms[actual_name] = uniform_state;
     }
 }
 
-int NRE_GL3_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type) {
+int nre::gl3::api_t::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type) {
     switch (type) {
 
     case nre::gpu::FLOAT:
@@ -399,7 +381,7 @@ int NRE_GL3_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type) {
     return GL_RGB;
 }
 
-int NRE_GL3_API::teximage_format_(nre::gpu::TEXTURE_TYPE type) {
+int nre::gl3::api_t::teximage_format_(nre::gpu::TEXTURE_TYPE type) {
     switch (type) {
     case nre::gpu::FLOAT:
         return GL_RGB32F;
@@ -421,7 +403,7 @@ int NRE_GL3_API::teximage_format_(nre::gpu::TEXTURE_TYPE type) {
     return GL_RGB;
 }
 
-int NRE_GL3_API::teximage_type_(nre::gpu::TEXTURE_TYPE type) {
+int nre::gl3::api_t::teximage_type_(nre::gpu::TEXTURE_TYPE type) {
     switch (type) {
     case nre::gpu::FLOAT:
         return GL_FLOAT;
@@ -447,88 +429,88 @@ int NRE_GL3_API::teximage_type_(nre::gpu::TEXTURE_TYPE type) {
 
 //---------------------Create Objects-----------------------------//
 
-std::size_t NRE_GL3_API::newVertexBuffer() {
-    cur_vbo++;
-    this->vbos[cur_vbo] = NRE_GL3_VertexBuffer();
-    glGenBuffers(1, &vbos[cur_vbo].handle);
-    return cur_vbo;
+std::size_t nre::gl3::api_t::new_vertex_buffer() {
+    cur_vbo_++;
+    this->vbos_[cur_vbo_] = nre::gl3::vertex_buffer_t();
+    glGenBuffers(1, &vbos_[cur_vbo_].handle);
+    return cur_vbo_;
 }
-std::size_t NRE_GL3_API::newVertexLayout() {
-    cur_vao++;
-    this->vaos[cur_vao] = NRE_GL3_VertexArray();
-    glGenVertexArrays(1, &vaos[cur_vao].handle);
-    this->vao_ibos_[vaos[cur_vao].handle] = 0;
-    return cur_vao;
+std::size_t nre::gl3::api_t::new_vertex_layout() {
+    cur_vao_++;
+    this->vaos_[cur_vao_] = nre::gl3::vertex_layout_t();
+    glGenVertexArrays(1, &vaos_[cur_vao_].handle);
+    this->vao_ibos_[vaos_[cur_vao_].handle] = 0;
+    return cur_vao_;
 }
-std::size_t NRE_GL3_API::newIndexBuffer() {
-    cur_ibo++;
-    this->ibos[cur_ibo] = NRE_GL3_IndexBuffer();
-    glGenBuffers(1, &ibos[cur_ibo].handle);
-    return cur_ibo;
+std::size_t nre::gl3::api_t::new_index_buffer() {
+    cur_ibo_++;
+    this->ibos_[cur_ibo_] = nre::gl3::index_buffer_t();
+    glGenBuffers(1, &ibos_[cur_ibo_].handle);
+    return cur_ibo_;
 }
-std::size_t NRE_GL3_API::newProgram() {
-    cur_prog++;
-    this->progs[cur_prog] = NRE_GL3_Program();
-    return cur_prog;
-}
-
-std::size_t NRE_GL3_API::newUniformBuffer() {
-    cur_ubo++;
-    this->ubos[cur_ubo] = NRE_GL3_UniformBuffer();
-    glGenBuffers(1, &ubos[cur_ubo].handle);
-    return cur_ubo;
+std::size_t nre::gl3::api_t::new_program() {
+    cur_prog_++;
+    this->progs_[cur_prog_] = nre::gl3::program_t();
+    return cur_prog_;
 }
 
-std::size_t NRE_GL3_API::newFrameBuffer() {
-    cur_fbo++;
-    this->fbos[cur_fbo] = NRE_GL3_FrameBuffer();
-    glGenFramebuffers(1, &fbos[cur_fbo].handle);
-    return cur_fbo;
+std::size_t nre::gl3::api_t::new_uniform_buffer() {
+    cur_ubo_++;
+    this->ubos_[cur_ubo_] = nre::gl3::uniform_buffer_t();
+    glGenBuffers(1, &ubos_[cur_ubo_].handle);
+    return cur_ubo_;
 }
 
-std::size_t NRE_GL3_API::newTexture() {
-    cur_texture++;
-    this->textures[cur_texture] = NRE_GL3_Texture();
-    glGenTextures(1, &textures[cur_texture].handle);
-    return cur_texture;
+std::size_t nre::gl3::api_t::new_framebuffer() {
+    cur_fbo_++;
+    this->fbos_[cur_fbo_] = nre::gl3::framebuffer_t();
+    glGenFramebuffers(1, &fbos_[cur_fbo_].handle);
+    return cur_fbo_;
 }
 
-std::size_t NRE_GL3_API::newRenderBuffer() {
-    cur_rbo++;
-    this->rbos[cur_rbo] = NRE_GL3_RenderBuffer();
-    glGenRenderbuffers(1, &rbos[cur_rbo].handle);
-    return cur_rbo;
+std::size_t nre::gl3::api_t::new_texture() {
+    cur_texture_++;
+    this->textures_[cur_texture_] = nre::gl3::texture_t();
+    glGenTextures(1, &textures_[cur_texture_].handle);
+    return cur_texture_;
+}
+
+std::size_t nre::gl3::api_t::new_renderbuffer() {
+    cur_rbo_++;
+    this->rbos_[cur_rbo_] = nre::gl3::renderbuffer_t();
+    glGenRenderbuffers(1, &rbos_[cur_rbo_].handle);
+    return cur_rbo_;
 }
 
 //--------------------Render Buffer -------------------------------//
 
-void NRE_GL3_API::setRenderBufferType(std::size_t id, nre::gpu::TEXTURE_TYPE a_type, int x, int y) {
-    this->check_rbo_id_(id, "setRenderBufferType");
+void nre::gl3::api_t::set_renderbuffer_textype(std::size_t id, nre::gpu::TEXTURE_TYPE a_type, int x, int y) {
+    this->check_rbo_id_(id, "set_renderbuffer_textype");
 
-    if (this->rbos[id].hasNotChanged(a_type, x, y)) {
+    if (this->rbos_[id].has_not_changed(a_type, x, y)) {
         return;
     }
 
-    this->rbos[id].type = a_type;
-    this->rbos[id].x    = a_type;
-    this->rbos[id].y    = a_type;
+    this->rbos_[id].type = a_type;
+    this->rbos_[id].x    = a_type;
+    this->rbos_[id].y    = a_type;
 
-    glBindRenderbuffer(GL_RENDERBUFFER, this->rbos[id].handle);
+    glBindRenderbuffer(GL_RENDERBUFFER, this->rbos_[id].handle);
     glRenderbufferStorage(GL_RENDERBUFFER, this->teximage_internalformat_(a_type), x, y);
 }
 
-void NRE_GL3_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t rbo_id, int slot) {
-    this->check_rbo_id_(rbo_id, "setFrameBufferRenderBuffer");
-    this->check_fbo_id_(fbo_id, "setFrameBufferRenderBuffer");
+void nre::gl3::api_t::set_framebuffer_renderbuffer(std::size_t fbo_id, std::size_t rbo_id, int slot) {
+    this->check_rbo_id_(rbo_id, "set_framebuffer_renderbuffer");
+    this->check_fbo_id_(fbo_id, "set_framebuffer_renderbuffer");
 
-    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[fbo_id].handle);
-    glBindRenderbuffer(GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[fbo_id].handle);
+    glBindRenderbuffer(GL_RENDERBUFFER, this->rbos_[rbo_id].handle);
 
-    if (this->rbos[rbo_id].type != nre::gpu::DEPTHSTENCIL) {
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+    if (this->rbos_[rbo_id].type != nre::gpu::DEPTHSTENCIL) {
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_RENDERBUFFER, this->rbos_[rbo_id].handle);
     }
     else {
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos_[rbo_id].handle);
     }
 
     if (glGetError() > 0) cout << glGetError() << endl;
@@ -536,241 +518,244 @@ void NRE_GL3_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t rbo
 
 //---------------------Vertex Buffer-----------------------------//
 
-void NRE_GL3_API::setVertexBufferMemory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gl3::api_t::set_vertex_buffer_memory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_vbo_id_(id, "setVertexBufferMemory");
+    this->check_vbo_id_(id, "set_vertex_buffer_memory");
 
-    this->vbos[id].size  = memory_size;
-    this->vbos[id].usage = buf_usage;
-    if (this->active_vbo_ != this->vbos[id].handle) {
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbos[id].handle);
-        this->active_vbo_ = this->vbos[id].handle;
+    this->vbos_[id].size  = memory_size;
+    this->vbos_[id].usage = buf_usage;
+    if (this->active_vbo_ != this->vbos_[id].handle) {
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbos_[id].handle);
+        this->active_vbo_ = this->vbos_[id].handle;
     }
-    glBufferData(GL_ARRAY_BUFFER, memory_size * sizeof(float), NULL, NRE2GL_BufferUse(buf_usage));
+    glBufferData(GL_ARRAY_BUFFER, memory_size * sizeof(float), NULL, nre::gl3::buffer_use(buf_usage));
 }
-void NRE_GL3_API::setVertexBufferData(std::size_t id, const std::vector<float>& v, std::size_t offset) {
+void nre::gl3::api_t::set_vertex_buffer_data(std::size_t id, const std::vector<float>& v, std::size_t offset) {
 
-    this->check_vbo_id_(id, "setVertexBufferData");
-    this->check_vbo_offset_length_(id, offset + v.size(), "setVertexBufferData");
+    this->check_vbo_id_(id, "set_vertex_buffer_data");
+    this->check_vbo_offset_length_(id, offset + v.size(), "set_vertex_buffer_data");
 
-    if (this->active_vbo_ != this->vbos[id].handle) {
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbos[id].handle);
-        this->active_vbo_ = this->vbos[id].handle;
+    if (this->active_vbo_ != this->vbos_[id].handle) {
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbos_[id].handle);
+        this->active_vbo_ = this->vbos_[id].handle;
     }
     glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLuint>(offset) * sizeof(float), v.size() * sizeof(float), &v[0]);
 }
 
-void NRE_GL3_API::setVertexBufferMemoryData(std::size_t id, const std::vector<float>& v, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gl3::api_t::set_vertex_buffer_memory_data(std::size_t id, const std::vector<float>& v,
+                                                    nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_vbo_id_(id, "setVertexBufferMemoryData");
+    this->check_vbo_id_(id, "set_vertex_buffer_memory_data");
 
-    this->vbos[id].size  = v.size();
-    this->vbos[id].usage = buf_usage;
-    if (this->active_vbo_ != this->vbos[id].handle) {
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbos[id].handle);
-        this->active_vbo_ = this->vbos[id].handle;
+    this->vbos_[id].size  = v.size();
+    this->vbos_[id].usage = buf_usage;
+    if (this->active_vbo_ != this->vbos_[id].handle) {
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbos_[id].handle);
+        this->active_vbo_ = this->vbos_[id].handle;
     }
-    glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(float), &v[0], NRE2GL_BufferUse(buf_usage));
+    glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(float), &v[0], nre::gl3::buffer_use(buf_usage));
 }
 
-void NRE_GL3_API::deleteVertexBuffer(std::size_t id) {
-    this->check_vbo_id_(id, "deleteVertexBuffer");
+void nre::gl3::api_t::delete_vertex_buffer(std::size_t id) {
+    this->check_vbo_id_(id, "delete_vertex_buffer");
 
-    glDeleteBuffers(1, &this->vbos[id].handle);
+    glDeleteBuffers(1, &this->vbos_[id].handle);
     this->active_vbo_ = 0;
-    this->vbos.erase(id);
+    this->vbos_.erase(id);
 }
 
 //--------------------Index Buffer-------------------------------//
 
-void NRE_GL3_API::setIndexBufferMemory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gl3::api_t::set_index_buffer_memory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_ibo_id_(id, "setIndexBufferMemory");
+    this->check_ibo_id_(id, "set_index_buffer_memory");
 
-    this->ibos[id].size  = memory_size;
-    this->ibos[id].usage = buf_usage;
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
+    this->ibos_[id].size  = memory_size;
+    this->ibos_[id].usage = buf_usage;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[id].handle;
     }
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, memory_size * sizeof(uint32_t), NULL, NRE2GL_BufferUse(buf_usage));
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, memory_size * sizeof(uint32_t), NULL, nre::gl3::buffer_use(buf_usage));
 }
 
-void NRE_GL3_API::setIndexBufferData(std::size_t id, const std::vector<uint32_t>& v, std::size_t offset) {
+void nre::gl3::api_t::set_index_buffer_data(std::size_t id, const std::vector<uint32_t>& v, std::size_t offset) {
 
-    this->check_ibo_id_(id, "setIndexBufferData");
-    this->check_ibo_offset_length_(id, offset + v.size(), "setIndexBufferData");
+    this->check_ibo_id_(id, "set_index_buffer_data");
+    this->check_ibo_offset_length_(id, offset + v.size(), "set_index_buffer_data");
 
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[id].handle;
     }
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(offset) * sizeof(uint32_t), v.size() * sizeof(uint32_t),
                     &v[0]);
 }
 
-void NRE_GL3_API::setIndexBufferMemoryData(std::size_t id, const std::vector<uint32_t>& v, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gl3::api_t::set_index_buffer_memory_data(std::size_t id, const std::vector<uint32_t>& v,
+                                                   nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_ibo_id_(id, "setIndexBufferMemoryData");
+    this->check_ibo_id_(id, "set_index_buffer_memory_data");
 
-    this->ibos[id].size  = v.size();
-    this->ibos[id].usage = buf_usage;
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
+    this->ibos_[id].size  = v.size();
+    this->ibos_[id].usage = buf_usage;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[id].handle;
     }
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size() * sizeof(uint32_t), &v[0], NRE2GL_BufferUse(buf_usage));
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size() * sizeof(uint32_t), &v[0], nre::gl3::buffer_use(buf_usage));
 }
 
-void NRE_GL3_API::deleteIndexBuffer(std::size_t id) {
+void nre::gl3::api_t::delete_index_buffer(std::size_t id) {
 
-    this->check_ibo_id_(id, "deleteIndexBuffer");
+    this->check_ibo_id_(id, "delete_index_buffer");
 
-    glDeleteBuffers(1, &this->ibos[id].handle);
+    glDeleteBuffers(1, &this->ibos_[id].handle);
     this->vao_ibos_[this->active_vao_] = 0;
-    this->ibos.erase(id);
+    this->ibos_.erase(id);
 }
 
 //--------------------Uniform Buffer-----------------------------//
 
-void NRE_GL3_API::setUniformBufferMemory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gl3::api_t::set_uniform_buffer_memory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_ubo_id_(id, "setUniformBufferMemory");
+    this->check_ubo_id_(id, "set_uniform_buffer_memory");
 
-    this->ubos[id].size  = memory_size;
-    this->ubos[id].usage = buf_usage;
-    if (this->active_ubo_ != this->ubos[id].handle) {
-        glBindBuffer(GL_UNIFORM_BUFFER, this->ubos[id].handle);
-        this->active_ubo_ = this->ubos[id].handle;
+    this->ubos_[id].size  = memory_size;
+    this->ubos_[id].usage = buf_usage;
+    if (this->active_ubo_ != this->ubos_[id].handle) {
+        glBindBuffer(GL_UNIFORM_BUFFER, this->ubos_[id].handle);
+        this->active_ubo_ = this->ubos_[id].handle;
     }
-    glBufferData(GL_UNIFORM_BUFFER, memory_size * sizeof(float), NULL, NRE2GL_BufferUse(buf_usage));
+    glBufferData(GL_UNIFORM_BUFFER, memory_size * sizeof(float), NULL, nre::gl3::buffer_use(buf_usage));
 }
 
-void NRE_GL3_API::setUniformBufferData(std::size_t id, const std::vector<float>& v, std::size_t offset) {
+void nre::gl3::api_t::set_uniform_buffer_data(std::size_t id, const std::vector<float>& v, std::size_t offset) {
 
-    this->check_ubo_id_(id, "setUniformBufferData");
-    this->check_ubo_offset_length_(id, offset + v.size(), "setUniformBufferData");
+    this->check_ubo_id_(id, "set_uniform_buffer_data");
+    this->check_ubo_offset_length_(id, offset + v.size(), "set_uniform_buffer_data");
 
-    if (this->active_ubo_ != this->ubos[id].handle) {
-        glBindBuffer(GL_UNIFORM_BUFFER, this->ubos[id].handle);
-        this->active_ubo_ = this->ubos[id].handle;
+    if (this->active_ubo_ != this->ubos_[id].handle) {
+        glBindBuffer(GL_UNIFORM_BUFFER, this->ubos_[id].handle);
+        this->active_ubo_ = this->ubos_[id].handle;
     }
     glBufferSubData(GL_UNIFORM_BUFFER, static_cast<GLuint>(offset) * sizeof(float), v.size() * sizeof(float), &v[0]);
 }
 
-void NRE_GL3_API::setUniformBufferData(std::size_t id, const std::vector<uint32_t>& v, std::size_t offset) {
+void nre::gl3::api_t::set_uniform_buffer_data(std::size_t id, const std::vector<uint32_t>& v, std::size_t offset) {
 
-    this->check_ubo_id_(id, "setUniformBufferData");
-    this->check_ubo_offset_length_(id, offset + v.size(), "setUniformBufferData");
+    this->check_ubo_id_(id, "set_uniform_buffer_data");
+    this->check_ubo_offset_length_(id, offset + v.size(), "set_uniform_buffer_data");
 
-    if (this->active_ubo_ != this->ubos[id].handle) {
-        glBindBuffer(GL_UNIFORM_BUFFER, this->ubos[id].handle);
-        this->active_ubo_ = this->ubos[id].handle;
+    if (this->active_ubo_ != this->ubos_[id].handle) {
+        glBindBuffer(GL_UNIFORM_BUFFER, this->ubos_[id].handle);
+        this->active_ubo_ = this->ubos_[id].handle;
     }
     glBufferSubData(GL_UNIFORM_BUFFER, static_cast<GLuint>(offset) * sizeof(uint32_t), v.size() * sizeof(uint32_t), &v[0]);
 }
 
 //----------------------Uniform State ----------------//
 
-void NRE_GL3_API::setProgramTextureSlot(std::size_t id, std::string name, int slot) {
-    this->check_prog_id_(id, "setProgramTextureSlot");
-    this->check_prog_complete_(id, "setProgramUniformData");
-    this->check_prog_uniform_(id, name, "setProgramTextureSlot");
+void nre::gl3::api_t::set_program_texture_slot(std::size_t id, const std::string& name, int slot) {
+    this->check_prog_id_(id, "set_program_texture_slot");
+    this->check_prog_complete_(id, "set_program_texture_slot");
+    this->check_prog_uniform_(id, name, "set_program_texture_slot");
 
 
-    if (this->active_prog_ != this->progs[id].handle) {
-        glUseProgram(this->progs[id].handle);
-        this->active_prog_ = this->progs[id].handle;
+    if (this->active_prog_ != this->progs_[id].handle) {
+        glUseProgram(this->progs_[id].handle);
+        this->active_prog_ = this->progs_[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
     if ((uniform_type_enum == GL_SAMPLER_2D) or (uniform_type_enum == GL_SAMPLER_2D_SHADOW)) {
-        glUniform1i(this->prog_db[this->progs[id]].hasUniform(name), slot);
+        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[name].slot, slot);
     }
     else {
         cout << "[NRE Warning] No sampler2D uniform named '" << name << "' in program ID: " << id << "." << endl;
         OE_WriteToLog("[NRE Warning] No sampler2D uniform named '" + name + "' in program ID: " + to_string(id) + ".");
     }
 }
-void NRE_GL3_API::setProgramUniformData(std::size_t id, std::string name, uint32_t data) {
-    this->check_prog_id_(id, "setProgramUniformData");
-    this->check_prog_complete_(id, "setProgramUniformData");
-    this->check_prog_uniform_(id, name, "setProgramUniformData");
+void nre::gl3::api_t::set_program_uniform_data(std::size_t id, const std::string& name, uint32_t data) {
+    this->check_prog_id_(id, "set_program_uniform_data");
+    this->check_prog_complete_(id, "set_program_uniform_data");
+    this->check_prog_uniform_(id, name, "set_program_uniform_data");
     // TODO
 }
-void NRE_GL3_API::setProgramUniformData(std::size_t id, std::string name, std::vector<uint32_t> data) {
-    this->check_prog_id_(id, "setProgramUniformData");
-    this->check_prog_complete_(id, "setProgramUniformData");
-    this->check_prog_uniform_(id, name, "setProgramUniformData");
+void nre::gl3::api_t::set_program_uniform_data(std::size_t id, const std::string& name, std::vector<uint32_t> data) {
+    this->check_prog_id_(id, "set_program_uniform_data");
+    this->check_prog_complete_(id, "set_program_uniform_data");
+    this->check_prog_uniform_(id, name, "set_program_uniform_data");
     // TODO
 }
 
-int NRE_GL3_API::getProgramUniformSlot(std::size_t id, std::string name) {
-    this->check_prog_id_(id, "getProgramUniformSlot");
-    this->check_prog_complete_(id, "getProgramUniformSlot");
-    if (this->prog_db[this->progs[id]].hasUniform(name) != this->prog_db[this->progs[id]].uniforms.size()) {
-        return this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].slot;
+int nre::gl3::api_t::get_program_uniform_slot(std::size_t id, const std::string& name) {
+    this->check_prog_id_(id, "get_program_uniform_slot");
+    this->check_prog_complete_(id, "get_program_uniform_slot");
+    if (this->prog_db_[this->progs_[id]].has_uniform(name)) {
+        return this->prog_db_[this->progs_[id]].uniforms[name].slot;
     }
     return -2;
 }
 
-void NRE_GL3_API::setProgramUniformBlockSlot(std::size_t id, std::string name, int slot) {
+void nre::gl3::api_t::set_program_uniform_block_slot(std::size_t id, const std::string& name, int slot) {
 
-    this->check_prog_id_(id, "setProgramUniformBlockSlot");
-    this->check_prog_complete_(id, "setProgramUniformBlockSlot");
-    this->check_prog_uniform_block_(id, name, "setProgramUniformBlockSlot");
+    this->check_prog_id_(id, "set_program_uniform_block_slot");
+    this->check_prog_complete_(id, "set_program_uniform_block_slot");
+    this->check_prog_uniform_block_(id, name, "set_program_uniform_block_slot");
 
-    this->prog_db[this->progs[id]].uniform_blocks[this->prog_db[this->progs[id]].hasUniformBlock(name)].slot = slot;
+    this->prog_db_[this->progs_[id]].uniform_blocks[name].slot = slot;
 
-    glUniformBlockBinding(this->progs[id].handle, this->prog_db[this->progs[id]].hasUniformBlock(name), slot);
+    glUniformBlockBinding(this->progs_[id].handle, this->prog_db_[this->progs_[id]].uniform_block_indices[name], slot);
 }
 
-void NRE_GL3_API::setUniformBlockState(std::size_t id, std::size_t program, int slot, std::size_t offset, std::size_t length) {
+void nre::gl3::api_t::set_uniform_block_state(std::size_t id, std::size_t program, int slot, std::size_t offset,
+                                              std::size_t length) {
 
-    this->check_ubo_id_(id, "setUniformBlockState");
-    this->check_ubo_offset_length_(id, offset + length, "setUniformBlockState");
-    this->check_prog_id_(program, "setUniformBlockState");
+    this->check_ubo_id_(id, "set_uniform_block_state");
+    this->check_ubo_offset_length_(id, offset + length, "set_uniform_block_state");
+    this->check_prog_id_(program, "set_uniform_block_state");
 
     if (length == 0)
-        glBindBufferBase(GL_UNIFORM_BUFFER, slot, this->ubos[id].handle);
+        glBindBufferBase(GL_UNIFORM_BUFFER, slot, this->ubos_[id].handle);
     else
-        glBindBufferRange(GL_UNIFORM_BUFFER, slot, this->ubos[id].handle, static_cast<GLuint>(offset),
+        glBindBufferRange(GL_UNIFORM_BUFFER, slot, this->ubos_[id].handle, static_cast<GLuint>(offset),
                           static_cast<GLuint>(length));
 }
 
-int NRE_GL3_API::getProgramUniformBlockSlot(std::size_t id, std::string name) {
-    this->check_prog_id_(id, "getProgramUniformBlockSlot");
-    this->check_prog_complete_(id, "getProgramUniformBlockSlot");
-    if (this->prog_db[this->progs[id]].hasUniformBlock(name) != this->prog_db[this->progs[id]].uniform_blocks.size()) {
-        return this->prog_db[this->progs[id]].uniform_blocks[this->prog_db[this->progs[id]].hasUniformBlock(name)].slot;
+int nre::gl3::api_t::get_program_uniform_block_slot(std::size_t id, const std::string& name) {
+    this->check_prog_id_(id, "get_program_uniform_block_slot");
+    this->check_prog_complete_(id, "get_program_uniform_block_slot");
+    if (this->prog_db_[this->progs_[id]].has_uniform_block(name)) {
+        return this->prog_db_[this->progs_[id]].uniform_blocks[name].slot;
     }
     return -2;
 }
 
-void NRE_GL3_API::deleteUniformBuffer(std::size_t id) {
+void nre::gl3::api_t::delete_uniform_buffer(std::size_t id) {
 
-    this->check_ubo_id_(id, "deleteUniformBuffer");
+    this->check_ubo_id_(id, "delete_uniform_buffer");
 
-    glDeleteBuffers(1, &this->ubos[id].handle);
+    glDeleteBuffers(1, &this->ubos_[id].handle);
     this->active_ubo_ = 0;
-    this->ubos.erase(id);
+    this->ubos_.erase(id);
 }
 
 //---------------------Vertex Layout-----------------------------//
 
-void NRE_GL3_API::setVertexLayoutFormat(std::size_t id, std::vector<nre::gpu::vertex_layout_input> inputs) {
+void nre::gl3::api_t::set_vertex_layout_format(std::size_t id, std::vector<nre::gpu::vertex_layout_input> inputs) {
 
-    this->check_vao_id_(id, "setVertexlayoutFormat");
+    this->check_vao_id_(id, "setVertexlayout_format");
 
-    this->vaos[id].layout = inputs;
-    if (this->active_vao_ != this->vaos[id].handle) {
-        glBindVertexArray(this->vaos[id].handle);
-        this->active_vao_ = this->vaos[id].handle;
+    this->vaos_[id].layout = inputs;
+    if (this->active_vao_ != this->vaos_[id].handle) {
+        glBindVertexArray(this->vaos_[id].handle);
+        this->active_vao_ = this->vaos_[id].handle;
     }
     for (size_t x = 0; x < inputs.size(); x++) {
 
-        this->check_vao_vbo_(id, inputs[x].vertex_buffer, "setVertexLayoutFormat");
+        this->check_vao_vbo_(id, inputs[x].vertex_buffer, "set_vertex_layout_format");
 
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbos[inputs[x].vertex_buffer].handle);
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbos_[inputs[x].vertex_buffer].handle);
         glVertexAttribPointer(x, inputs[x].amount, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * inputs[x].stride,
                               NRE_GL3_VERTEXL_LAYOUT_OFFSET(sizeof(GLfloat) * static_cast<GLuint>(inputs[x].offset)));
         glEnableVertexAttribArray(x);
@@ -778,29 +763,29 @@ void NRE_GL3_API::setVertexLayoutFormat(std::size_t id, std::vector<nre::gpu::ve
     this->active_vbo_ = 0;
 }
 
-void NRE_GL3_API::deleteVertexLayout(std::size_t id) {
-    this->check_vao_id_(id, "deleteVertexLayout");
-    glDeleteVertexArrays(1, &this->vaos[id].handle);
+void nre::gl3::api_t::delete_vertex_layout(std::size_t id) {
+    this->check_vao_id_(id, "delete_vertex_layout");
+    glDeleteVertexArrays(1, &this->vaos_[id].handle);
     this->active_vao_ = 0;
-    this->vaos.erase(id);
+    this->vaos_.erase(id);
 }
 
 //-----------------------Textures and Framebuffers -------------//
 
-void NRE_GL3_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type, nre::gpu::TEXTURE_FILTER filter, uint32_t x_in,
-                                   uint32_t y_in, int mipmap_count) {
-    this->check_texture_id_(id, "setTextureFormat");
+void nre::gl3::api_t::set_texture_format(std::size_t id, nre::gpu::TEXTURE_TYPE type, nre::gpu::TEXTURE_FILTER filter,
+                                         uint32_t x_in, uint32_t y_in, int mipmap_count) {
+    this->check_texture_id_(id, "set_texture_format");
 
-    if (this->textures[id].hasNotChanged(type, filter, x_in, y_in, mipmap_count)) return;
+    if (this->textures_[id].has_not_changed(type, filter, x_in, y_in, mipmap_count)) return;
 
-    this->textures[id].type    = type;
-    this->textures[id].filter  = filter;
-    this->textures[id].x       = x_in;
-    this->textures[id].y       = y_in;
-    this->textures[id].mipmaps = mipmap_count;
+    this->textures_[id].type    = type;
+    this->textures_[id].filter  = filter;
+    this->textures_[id].x       = x_in;
+    this->textures_[id].y       = y_in;
+    this->textures_[id].mipmaps = mipmap_count;
 
 
-    glBindTexture(GL_TEXTURE_2D, this->textures[id].handle);
+    glBindTexture(GL_TEXTURE_2D, this->textures_[id].handle);
     glTexImage2D(GL_TEXTURE_2D, 0, teximage_internalformat_(type), x_in, y_in, 0, teximage_format_(type), teximage_type_(type),
                  0);
     if (mipmap_count == 0 and filter == nre::gpu::LINEAR) {
@@ -817,52 +802,52 @@ void NRE_GL3_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type, 
     if (glGetError() > 0) cout << glGetError() << endl;
 }
 
-void NRE_GL3_API::setFrameBufferTexture(std::size_t fbo_id, std::size_t texture_id, int slot) {
-    this->check_fbo_id_(fbo_id, "setFrameBufferTexture");
-    this->check_texture_id_(texture_id, "setFrameBufferTexture");
+void nre::gl3::api_t::set_framebuffer_texture(std::size_t fbo_id, std::size_t texture_id, int slot) {
+    this->check_fbo_id_(fbo_id, "set_framebuffer_texture");
+    this->check_texture_id_(texture_id, "set_framebuffer_texture");
     assert((slot >= 0) and (slot < 3));
 
-    this->fbos[fbo_id].texture = texture_id;
+    this->fbos_[fbo_id].texture = texture_id;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[fbo_id].handle);
-    glBindTexture(GL_TEXTURE_2D, this->textures[texture_id].handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[fbo_id].handle);
+    glBindTexture(GL_TEXTURE_2D, this->textures_[texture_id].handle);
 
-    if (this->textures[texture_id].type != nre::gpu::DEPTHSTENCIL) {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_TEXTURE_2D, this->textures[texture_id].handle,
+    if (this->textures_[texture_id].type != nre::gpu::DEPTHSTENCIL) {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_TEXTURE_2D, this->textures_[texture_id].handle,
                                0);
     }
     else {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, this->textures[texture_id].handle,
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, this->textures_[texture_id].handle,
                                0);
     }
 
     if (glGetError() > 0) cout << glGetError() << endl;
 }
 
-void NRE_GL3_API::setTextureSlot(std::size_t id, int slot) {
-    this->check_texture_id_(id, "setTextureSlot");
+void nre::gl3::api_t::set_texture_slot(std::size_t id, int slot) {
+    this->check_texture_id_(id, "set_texture_slot");
     glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D, this->textures[id].handle);
+    glBindTexture(GL_TEXTURE_2D, this->textures_[id].handle);
 }
 
-void NRE_GL3_API::deleteTexture(std::size_t id) {
-    this->check_texture_id_(id, "deleteTexture");
-    glDeleteTextures(1, &this->textures[id].handle);
-    this->textures.erase(id);
+void nre::gl3::api_t::delete_texture(std::size_t id) {
+    this->check_texture_id_(id, "delete_texture");
+    glDeleteTextures(1, &this->textures_[id].handle);
+    this->textures_.erase(id);
 }
 
-void NRE_GL3_API::copyFrameBuffer(std::size_t src, std::size_t target, nre::gpu::FRAMEBUFFER_COPY method) {
-    this->check_fbo_id_(src, "copyFrameBuffer");
-    this->check_texture_id_(this->fbos[src].texture, "copyFrameBuffer");
+void nre::gl3::api_t::copy_framebuffer(std::size_t src, std::size_t target, nre::gpu::FRAMEBUFFER_COPY method) {
+    this->check_fbo_id_(src, "copy_framebuffer");
+    this->check_texture_id_(this->fbos_[src].texture, "copy_framebuffer");
 
-    auto x_tmp = this->textures[this->fbos[src].texture].x;
-    auto y_tmp = this->textures[this->fbos[src].texture].y;
+    auto x_tmp = this->textures_[this->fbos_[src].texture].x;
+    auto y_tmp = this->textures_[this->fbos_[src].texture].y;
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, this->fbos[src].handle);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, this->fbos_[src].handle);
     if (target != 0) {
-        this->check_fbo_id_(target, "copyFrameBuffer");
-        this->check_texture_id_(this->fbos[target].texture, "copyFrameBuffer");
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, this->fbos[target].handle);
+        this->check_fbo_id_(target, "copy_framebuffer");
+        this->check_texture_id_(this->fbos_[target].texture, "copy_framebuffer");
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, this->fbos_[target].handle);
     }
     else {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -881,10 +866,10 @@ void NRE_GL3_API::copyFrameBuffer(std::size_t src, std::size_t target, nre::gpu:
     //     cout << glGetError() << endl;
 }
 
-void NRE_GL3_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY clear, float alpha_value) {
-    this->check_fbo_id_(id, "clearFrameBuffer");
+void nre::gl3::api_t::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY clear, float alpha_value) {
+    this->check_fbo_id_(id, "clear_framebuffer");
 
-    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[id].handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[id].handle);
     glDepthMask(GL_TRUE);
     glColorMask(1, 1, 1, 1);
     glClearColor(0.0f, 0.0f, 0.0f, alpha_value);
@@ -906,51 +891,51 @@ void NRE_GL3_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY cl
     }
 }
 
-void NRE_GL3_API::useFrameBuffer(std::size_t id) {
+void nre::gl3::api_t::use_framebuffer(std::size_t id) {
     if (id != 0) {
-        this->check_fbo_id_(id, "useFrameBuffer");
-        glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[id].handle);
+        this->check_fbo_id_(id, "use_framebuffer");
+        glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[id].handle);
     }
     else {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
 
-void NRE_GL3_API::deleteFrameBuffer(std::size_t id) {
-    this->check_fbo_id_(id, "deleteFrameBuffer");
-    glDeleteFramebuffers(1, &this->fbos[id].handle);
-    this->fbos.erase(id);
+void nre::gl3::api_t::delete_framebuffer(std::size_t id) {
+    this->check_fbo_id_(id, "delete_framebuffer");
+    glDeleteFramebuffers(1, &this->fbos_[id].handle);
+    this->fbos_.erase(id);
 }
 
 //---------------------Shader Programs-----------------------------//
 
-void NRE_GL3_API::setProgramVS(std::size_t id, nre::gpu::vertex_shader vs) {
-    this->check_prog_id_(id, "setProgramVS");
+void nre::gl3::api_t::set_program_vs(std::size_t id, nre::gpu::vertex_shader_t vs) {
+    this->check_prog_id_(id, "set_program_vs");
 
-    this->progs[id].vs_setup = false;
-    this->progs[id].setup    = false;
-    this->progs[id].vs       = vs;
+    this->progs_[id].vs_setup = false;
+    this->progs_[id].setup    = false;
+    this->progs_[id].vs       = vs;
 }
-void NRE_GL3_API::setProgramFS(std::size_t id, nre::gpu::pixel_shader fs) {
-    this->check_prog_id_(id, "setProgramFS");
+void nre::gl3::api_t::set_program_fs(std::size_t id, nre::gpu::pixel_shader_t fs) {
+    this->check_prog_id_(id, "set_program_fs");
 
-    this->progs[id].fs_setup = false;
-    this->progs[id].setup    = false;
-    this->progs[id].fs       = fs;
+    this->progs_[id].fs_setup = false;
+    this->progs_[id].setup    = false;
+    this->progs_[id].fs       = fs;
 }
 
-void NRE_GL3_API::setProgramVS(std::size_t id, std::string data) {
+void nre::gl3::api_t::set_program_vs(std::size_t id, std::string data) {
 
     data = data + "";
-    this->check_prog_id_(id, "setProgramVS - internal");
+    this->check_prog_id_(id, "set_program_vs - internal");
     GLuint shader_id;
-    if (!this->progs[id].vs_setup)
+    if (!this->progs_[id].vs_setup)
         shader_id = glCreateShader(GL_VERTEX_SHADER);
     else
-        shader_id = this->progs[id].vs_handle;
+        shader_id = this->progs_[id].vs_handle;
 
-    this->progs[id].vs_setup  = true;
-    this->progs[id].vs_handle = shader_id;
+    this->progs_[id].vs_setup  = true;
+    this->progs_[id].vs_handle = shader_id;
 
     /// compile and attach shader
     const char* c_str = data.c_str();
@@ -970,25 +955,25 @@ void NRE_GL3_API::setProgramVS(std::size_t id, std::string data) {
         glGetShaderInfoLog(shader_id, max_length, &actual_length, log);
 
         stringstream ss;
-        ss << "[NRE GL Shader Warning] in vertex shader: " << this->progs[id].vs.info() << endl << log << endl;
+        ss << "[NRE GL Shader Warning] in vertex shader: " << this->progs_[id].vs.info() << endl << log << endl;
         cout << ss.str();
         OE_WriteToLog(ss.str());
     }
 }
 
-// void setProgramGS(std::size_t, FE_GPU_Shader){}
-void NRE_GL3_API::setProgramFS(std::size_t id, std::string data) {
+// void set_programGS(std::size_t, FE_GPU_Shader){}
+void nre::gl3::api_t::set_program_fs(std::size_t id, std::string data) {
 
     data = data + "";
-    this->check_prog_id_(id, "setProgramFS - internal");
+    this->check_prog_id_(id, "set_program_fs - internal");
     GLuint shader_id;
-    if (!this->progs[id].fs_setup)
+    if (!this->progs_[id].fs_setup)
         shader_id = glCreateShader(GL_FRAGMENT_SHADER);
     else
-        shader_id = this->progs[id].fs_handle;
+        shader_id = this->progs_[id].fs_handle;
 
-    this->progs[id].fs_setup  = true;
-    this->progs[id].fs_handle = shader_id;
+    this->progs_[id].fs_setup  = true;
+    this->progs_[id].fs_handle = shader_id;
 
     /// compile and attach shader
     const char* c_str     = data.c_str();
@@ -1007,264 +992,264 @@ void NRE_GL3_API::setProgramFS(std::size_t id, std::string data) {
         glGetShaderInfoLog(shader_id, max_length, &actual_length, log);
 
         stringstream ss;
-        ss << "[NRE GL Shader Warning] in pixel shader: " << this->progs[id].fs.info() << endl << log << endl;
+        ss << "[NRE GL Shader Warning] in pixel shader: " << this->progs_[id].fs.info() << endl << log << endl;
         cout << ss.str();
         OE_WriteToLog(ss.str());
     }
 }
 
-// void setProgramTCS(std::size_t, FE_GPU_Shader){}
-// void setProgramTES(std::size_t, FE_GPU_Shader){}
+// void set_programTCS(std::size_t, FE_GPU_Shader){}
+// void set_programTES(std::size_t, FE_GPU_Shader){}
 
-void NRE_GL3_API::setupProgram(std::size_t id) {
+void nre::gl3::api_t::setup_program(std::size_t id) {
 
-    this->check_prog_id_(id, "setupProgram");
+    this->check_prog_id_(id, "setup_program");
 
     // ignore if the program is already setup
-    if (this->progs[id].setup) return;
+    if (this->progs_[id].setup) return;
 
     // setup vertex shader
-    if (!this->progs[id].vs_setup) {
-        if (this->vs_db.count(this->progs[id].vs) == 0) {
+    if (!this->progs_[id].vs_setup) {
+        if (this->vs_db_.count(this->progs_[id].vs) == 0) {
 
             // vertex shader does not exist, make a new entry
-            this->setProgramVS(id, this->progs[id].vs.gen_shader());
-            this->vs_db[this->progs[id].vs] = this->progs[id].vs_handle;
+            this->set_program_vs(id, this->progs_[id].vs.gen_shader());
+            this->vs_db_[this->progs_[id].vs] = this->progs_[id].vs_handle;
         }
         else {
 
             // vertex shader already exists, reuse that
-            this->progs[id].vs_handle = this->vs_db[this->progs[id].vs];
-            this->progs[id].vs_setup  = true;
+            this->progs_[id].vs_handle = this->vs_db_[this->progs_[id].vs];
+            this->progs_[id].vs_setup  = true;
         }
     }
 
     // setup pixel (fragment) shader
-    if (!this->progs[id].fs_setup) {
-        if (this->fs_db.count(this->progs[id].fs) == 0) {
+    if (!this->progs_[id].fs_setup) {
+        if (this->fs_db_.count(this->progs_[id].fs) == 0) {
 
             // pixel (fragment) shader does not exist, make a new entry
-            this->setProgramFS(id, this->progs[id].fs.gen_shader());
+            this->set_program_fs(id, this->progs_[id].fs.gen_shader());
 
-            this->fs_db[this->progs[id].fs] = this->progs[id].fs_handle;
-            this->progs[id].fs_setup        = true;
+            this->fs_db_[this->progs_[id].fs] = this->progs_[id].fs_handle;
+            this->progs_[id].fs_setup         = true;
         }
         else {
 
             // pixel (fragment) shader already exists, reuse that
-            this->progs[id].fs_handle = this->fs_db[this->progs[id].fs];
-            this->progs[id].fs_setup  = true;
+            this->progs_[id].fs_handle = this->fs_db_[this->progs_[id].fs];
+            this->progs_[id].fs_setup  = true;
         }
     }
 
     // check if program already exists
-    if (this->prog_db.count(this->progs[id]) > 0) {
+    if (this->prog_db_.count(this->progs_[id]) > 0) {
 
-        this->progs[id].handle = this->prog_db[this->progs[id]].handle;
-        this->progs[id].setup  = true;
+        this->progs_[id].handle = this->prog_db_[this->progs_[id]].handle;
+        this->progs_[id].setup  = true;
         return;
     }
     else {
-        this->progs[id].handle = glCreateProgram();
-        // this->prog_db[this->progs[id]] = this->progs[id].handle;
-        this->prog_db[this->progs[id]]        = NRE_GL3_ProgramData();
-        this->prog_db[this->progs[id]].handle = this->progs[id].handle;
+        this->progs_[id].handle = glCreateProgram();
+        // this->prog_db_[this->progs_[id]] = this->progs_[id].handle;
+        this->prog_db_[this->progs_[id]]        = nre::gl3::program_data_t();
+        this->prog_db_[this->progs_[id]].handle = this->progs_[id].handle;
     }
 
     // make sure that the vertex and fragment shaders actually compile
     // in case the program does not already exist
-    assert(this->progs[id].vs_setup && this->progs[id].fs_setup);
+    assert(this->progs_[id].vs_setup && this->progs_[id].fs_setup);
 
-    glAttachShader(this->progs[id].handle, this->progs[id].vs_handle);
+    glAttachShader(this->progs_[id].handle, this->progs_[id].vs_handle);
 
     // Technically a fragment/pixel shader is optional, but it is a must in OpenGL ES
     // This should be the case sometimes (for example in the Z_PREPASS program)
     bool isES          = nre::gpu::get_api() == nre::gpu::GLES;
-    bool isUndefinedFS = this->progs[id].fs.type == nre::gpu::FS_UNDEFINED;
+    bool isUndefinedFS = this->progs_[id].fs.type == nre::gpu::FS_UNDEFINED;
 
-    if ((isES) || (!isES && !isUndefinedFS)) glAttachShader(this->progs[id].handle, this->progs[id].fs_handle);
+    if ((isES) || (!isES && !isUndefinedFS)) glAttachShader(this->progs_[id].handle, this->progs_[id].fs_handle);
 
-    glLinkProgram(this->progs[id].handle);
+    glLinkProgram(this->progs_[id].handle);
 
 
     /// IMPORTANT: check if program is linked correctly
     int parameters = -1;
-    glGetProgramiv(this->progs[id].handle, GL_LINK_STATUS, &parameters);
+    glGetProgramiv(this->progs_[id].handle, GL_LINK_STATUS, &parameters);
     if (GL_TRUE != parameters) {
 
         int  max_length    = 2048;
         int  actual_length = 0;
         char log[2048];
-        glGetProgramInfoLog(this->progs[id].handle, max_length, &actual_length, log);
+        glGetProgramInfoLog(this->progs_[id].handle, max_length, &actual_length, log);
         cout << log << endl;
         OE_WriteToLog(log);
     }
 
     /// IMPORTANT: make sure program is runnable
-    glValidateProgram(this->progs[id].handle);
+    glValidateProgram(this->progs_[id].handle);
     parameters = -1;
-    glGetProgramiv(this->progs[id].handle, GL_VALIDATE_STATUS, &parameters);
+    glGetProgramiv(this->progs_[id].handle, GL_VALIDATE_STATUS, &parameters);
     if (GL_TRUE != parameters) {
 
         int  max_length    = 2048;
         int  actual_length = 0;
         char log[2048];
-        glGetProgramInfoLog(this->progs[id].handle, max_length, &actual_length, log);
+        glGetProgramInfoLog(this->progs_[id].handle, max_length, &actual_length, log);
 
         stringstream ss;
-        ss << "[NRE GL Shader Linking Warning] with shaders: " << this->progs[id].vs.info() << " " << this->progs[id].fs.info()
-           << endl
+        ss << "[NRE GL Shader Linking Warning] with shaders: " << this->progs_[id].vs.info() << " "
+           << this->progs_[id].fs.info() << endl
            << log << endl;
         cout << ss.str();
         OE_WriteToLog(ss.str());
     }
-    glUseProgram(this->progs[id].handle);
-    this->active_prog_ = this->progs[id].handle;
+    glUseProgram(this->progs_[id].handle);
+    this->active_prog_ = this->progs_[id].handle;
 
     /// get all active uniform blocks
     this->get_program_all_uniforms_(id);
 
-    this->progs[id].setup = true;
+    this->progs_[id].setup = true;
 }
 
-void NRE_GL3_API::deleteProgram(std::size_t id) {
+void nre::gl3::api_t::delete_program(std::size_t id) {
 
-    this->check_prog_id_(id, "deleteProgram");
+    this->check_prog_id_(id, "delete_program");
 
     this->active_prog_ = 0;
-    this->progs.erase(id);
+    this->progs_.erase(id);
 }
 
 //---------------------Draw calls-----------------------------//
 
-void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, int offset, int count) {
+void nre::gl3::api_t::draw(std::size_t prog_id, std::size_t vao_id, int offset, int count) {
 
     this->check_prog_id_(prog_id, "draw (non-indexed)");
     this->check_vao_id_(vao_id, "draw (non-indexed)");
-    this->check_draw_range_(vao_id, this->getVAOSize(vao_id), offset, count, "draw (non-indexed)");
-    this->setupProgram(prog_id);
+    this->check_draw_range_(vao_id, this->get_vao_size(vao_id), offset, count, "draw (non-indexed)");
+    this->setup_program(prog_id);
 
-    if (this->active_prog_ != this->progs[prog_id].handle) {
-        glUseProgram(this->progs[prog_id].handle);
-        this->active_prog_ = this->progs[prog_id].handle;
+    if (this->active_prog_ != this->progs_[prog_id].handle) {
+        glUseProgram(this->progs_[prog_id].handle);
+        this->active_prog_ = this->progs_[prog_id].handle;
     }
-    if (this->active_vao_ != this->vaos[vao_id].handle) {
-        glBindVertexArray(this->vaos[vao_id].handle);
-        this->active_vao_ = this->vaos[vao_id].handle;
+    if (this->active_vao_ != this->vaos_[vao_id].handle) {
+        glBindVertexArray(this->vaos_[vao_id].handle);
+        this->active_vao_ = this->vaos_[vao_id].handle;
         this->active_vbo_ = 0;
     }
     glDrawArrays(GL_TRIANGLES, offset, count);
 }
 
-void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id) {
+void nre::gl3::api_t::draw(std::size_t prog_id, std::size_t vao_id) {
 
     this->check_prog_id_(prog_id, "draw (non-indexed)");
     this->check_vao_id_(vao_id, "draw (non-indexed)");
-    this->setupProgram(prog_id);
+    this->setup_program(prog_id);
 
-    if (this->active_prog_ != this->progs[prog_id].handle) {
-        glUseProgram(this->progs[prog_id].handle);
-        this->active_prog_ = this->progs[prog_id].handle;
+    if (this->active_prog_ != this->progs_[prog_id].handle) {
+        glUseProgram(this->progs_[prog_id].handle);
+        this->active_prog_ = this->progs_[prog_id].handle;
     }
-    if (this->active_vao_ != this->vaos[vao_id].handle) {
-        glBindVertexArray(this->vaos[vao_id].handle);
-        this->active_vao_ = this->vaos[vao_id].handle;
+    if (this->active_vao_ != this->vaos_[vao_id].handle) {
+        glBindVertexArray(this->vaos_[vao_id].handle);
+        this->active_vao_ = this->vaos_[vao_id].handle;
         this->active_vbo_ = 0;
     }
-    glDrawArrays(GL_TRIANGLES, 0, this->getVAOSize(vao_id));
+    glDrawArrays(GL_TRIANGLES, 0, this->get_vao_size(vao_id));
 }
 
-void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id, int offset, int count) {
+void nre::gl3::api_t::draw(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id, int offset, int count) {
 
     this->check_prog_id_(prog_id, "draw (indexed)");
     this->check_vao_id_(vao_id, "draw (indexed)");
     this->check_ibo_id_(ibo_id, "draw (indexed)");
-    this->check_draw_range_(vao_id, this->ibos[ibo_id].size, offset, count, "draw (indexed)");
-    this->setupProgram(prog_id);
+    this->check_draw_range_(vao_id, this->ibos_[ibo_id].size, offset, count, "draw (indexed)");
+    this->setup_program(prog_id);
 
-    if (this->active_prog_ != this->progs[prog_id].handle) {
-        glUseProgram(this->progs[prog_id].handle);
-        this->active_prog_ = this->progs[prog_id].handle;
+    if (this->active_prog_ != this->progs_[prog_id].handle) {
+        glUseProgram(this->progs_[prog_id].handle);
+        this->active_prog_ = this->progs_[prog_id].handle;
     }
-    if (this->active_vao_ != this->vaos[vao_id].handle) {
-        glBindVertexArray(this->vaos[vao_id].handle);
-        this->active_vao_ = this->vaos[vao_id].handle;
+    if (this->active_vao_ != this->vaos_[vao_id].handle) {
+        glBindVertexArray(this->vaos_[vao_id].handle);
+        this->active_vao_ = this->vaos_[vao_id].handle;
         this->active_vbo_ = 0;
     }
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[ibo_id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[ibo_id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[ibo_id].handle;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[ibo_id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[ibo_id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[ibo_id].handle;
     }
     glDrawRangeElements(GL_TRIANGLES, offset, count, 1, GL_UNSIGNED_INT, (GLvoid*)NULL);
 }
 
-void NRE_GL3_API::draw(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id) {
+void nre::gl3::api_t::draw(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id) {
 
     this->check_prog_id_(prog_id, "draw (indexed)");
     this->check_vao_id_(vao_id, "draw (indexed)");
     this->check_ibo_id_(ibo_id, "draw (indexed)");
-    this->setupProgram(prog_id);
+    this->setup_program(prog_id);
 
-    if (this->active_prog_ != this->progs[prog_id].handle) {
-        glUseProgram(this->progs[prog_id].handle);
-        this->active_prog_ = this->progs[prog_id].handle;
+    if (this->active_prog_ != this->progs_[prog_id].handle) {
+        glUseProgram(this->progs_[prog_id].handle);
+        this->active_prog_ = this->progs_[prog_id].handle;
     }
-    if (this->active_vao_ != this->vaos[vao_id].handle) {
-        glBindVertexArray(this->vaos[vao_id].handle);
-        this->active_vao_ = this->vaos[vao_id].handle;
+    if (this->active_vao_ != this->vaos_[vao_id].handle) {
+        glBindVertexArray(this->vaos_[vao_id].handle);
+        this->active_vao_ = this->vaos_[vao_id].handle;
         this->active_vbo_ = 0;
     }
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[ibo_id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[ibo_id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[ibo_id].handle;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[ibo_id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[ibo_id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[ibo_id].handle;
     }
 
-    glDrawElements(GL_TRIANGLES, this->ibos[ibo_id].size, GL_UNSIGNED_INT, (GLvoid*)NULL);
+    glDrawElements(GL_TRIANGLES, this->ibos_[ibo_id].size, GL_UNSIGNED_INT, (GLvoid*)NULL);
 }
 
-void NRE_GL3_API::draw_instanced(std::size_t prog_id, std::size_t vao_id, std::size_t instancecount) {
+void nre::gl3::api_t::draw_instanced(std::size_t prog_id, std::size_t vao_id, std::size_t instancecount) {
 
     this->check_prog_id_(prog_id, "draw (instanced-indexed)");
     this->check_vao_id_(vao_id, "draw (instanced-indexed)");
-    this->setupProgram(prog_id);
+    this->setup_program(prog_id);
 
-    if (this->active_prog_ != this->progs[prog_id].handle) {
-        glUseProgram(this->progs[prog_id].handle);
-        this->active_prog_ = this->progs[prog_id].handle;
+    if (this->active_prog_ != this->progs_[prog_id].handle) {
+        glUseProgram(this->progs_[prog_id].handle);
+        this->active_prog_ = this->progs_[prog_id].handle;
     }
-    if (this->active_vao_ != this->vaos[vao_id].handle) {
-        glBindVertexArray(this->vaos[vao_id].handle);
-        this->active_vao_ = this->vaos[vao_id].handle;
+    if (this->active_vao_ != this->vaos_[vao_id].handle) {
+        glBindVertexArray(this->vaos_[vao_id].handle);
+        this->active_vao_ = this->vaos_[vao_id].handle;
         this->active_vbo_ = 0;
     }
-    glDrawArraysInstanced(GL_TRIANGLES, 0, this->getVAOSize(vao_id), instancecount);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, this->get_vao_size(vao_id), instancecount);
 }
 
-void NRE_GL3_API::draw_instanced(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id, std::size_t instancecount) {
+void nre::gl3::api_t::draw_instanced(std::size_t prog_id, std::size_t vao_id, std::size_t ibo_id, std::size_t instancecount) {
 
     this->check_prog_id_(prog_id, "draw (instanced-indexed)");
     this->check_vao_id_(vao_id, "draw (instanced-indexed)");
     this->check_ibo_id_(ibo_id, "draw (instanced-indexed)");
-    this->setupProgram(prog_id);
+    this->setup_program(prog_id);
 
-    if (this->active_prog_ != this->progs[prog_id].handle) {
-        glUseProgram(this->progs[prog_id].handle);
-        this->active_prog_ = this->progs[prog_id].handle;
+    if (this->active_prog_ != this->progs_[prog_id].handle) {
+        glUseProgram(this->progs_[prog_id].handle);
+        this->active_prog_ = this->progs_[prog_id].handle;
     }
-    if (this->active_vao_ != this->vaos[vao_id].handle) {
-        glBindVertexArray(this->vaos[vao_id].handle);
-        this->active_vao_ = this->vaos[vao_id].handle;
+    if (this->active_vao_ != this->vaos_[vao_id].handle) {
+        glBindVertexArray(this->vaos_[vao_id].handle);
+        this->active_vao_ = this->vaos_[vao_id].handle;
         this->active_vbo_ = 0;
     }
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[ibo_id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[ibo_id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[ibo_id].handle;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[ibo_id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[ibo_id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[ibo_id].handle;
     }
 
-    glDrawElementsInstanced(GL_TRIANGLES, this->ibos[ibo_id].size, GL_UNSIGNED_INT, (GLvoid*)NULL, instancecount);
+    glDrawElementsInstanced(GL_TRIANGLES, this->ibos_[ibo_id].size, GL_UNSIGNED_INT, (GLvoid*)NULL, instancecount);
 }
 
-void NRE_GL3_API::setRenderMode(nre::gpu::RENDERMODE rendermode) {
+void nre::gl3::api_t::set_render_mode(nre::gpu::RENDERMODE rendermode) {
 
     if (rendermode == nre::gpu::Z_PREPASS_BACKFACE) {
         glDisable(GL_BLEND);
@@ -1436,9 +1421,12 @@ void NRE_GL3_API::setRenderMode(nre::gpu::RENDERMODE rendermode) {
     else {
         // TODO
     }
+}
+
+void nre::gl3::api_t::use_wireframe(bool value_in) {
 #ifndef OE_PLATFORM_WEB
     if (nre::gpu::get_api() != nre::gpu::GLES) {
-        if (nre::gpu::use_wireframe) {
+        if (value_in) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
         else {

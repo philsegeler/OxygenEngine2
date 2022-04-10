@@ -10,18 +10,19 @@ NRE_RendererLegacy::NRE_RendererLegacy() {
 NRE_RendererLegacy::~NRE_RendererLegacy() {
 }
 
-bool NRE_RendererLegacy::init() {
+bool NRE_RendererLegacy::init(oe::renderer_init_info init_info, oe::renderer_update_info update_info,
+                              oe::winsys_output winsys_info) {
 
 
     // make sure there are no stored objects
-    /*cout << "NRE Cameras: " << data_.cameras.size() << endl;
-    cout << "NRE Materials: " << data_.materials.size() << endl;
-    cout << "NRE Meshes: " << data_.meshes.size() << endl;
-    cout << "NRE Vgroups: " << data_.vgroups.size() << endl;*/
+    /*cout << "NRE Cameras: " << data_.cameras_.size() << endl;
+    cout << "NRE Materials: " << data_.materials_.size() << endl;
+    cout << "NRE Meshes: " << data_.meshes_.size() << endl;
+    cout << "NRE Vgroups: " << data_.vgroups_.size() << endl;*/
 
     // make sure we use the right API
-    // it should have been initialized from the window manager
-    nre::gpu::init(nre::gpu::get_api(), nre::gpu::backend_info.major, nre::gpu::backend_info.minor);
+    this->init_info = init_info;
+    nre::gpu::init(winsys_info.backend, winsys_info.major, winsys_info.minor);
 
     this->initOffscreenFrameBuffer();
 
@@ -30,7 +31,6 @@ bool NRE_RendererLegacy::init() {
     this->initGammaCorrectionProg();
 
     this->initGPUSphere();
-
     return true;
 }
 
@@ -41,21 +41,17 @@ void NRE_RendererLegacy::initOffscreenFrameBuffer() {
     this->colortexture = nre::gpu::new_texture();
     this->depthrbo     = nre::gpu::new_renderbuffer();
 
-    if (this->use_HDR.load(std::memory_order_relaxed) == false) {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA, nre::gpu::NEAREST, this->screen->resolution_x,
-                                     this->screen->resolution_y, 0);
+    if (this->use_HDR == false) {
+        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_, res_y_, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
-        // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_mode(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                        this->screen->resolution_y);
+        // res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     else {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, this->screen->resolution_x,
-                                     this->screen->resolution_y, 0);
+        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, res_x_, res_y_, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
-        // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_mode(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                        this->screen->resolution_y);
+        // res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
 
     nre::gpu::set_framebuffer_texture(this->framebuffer, this->colortexture, 0);
@@ -81,8 +77,8 @@ void NRE_RendererLegacy::initGammaCorrectionProg() {
     // setup gamma correction program
     this->gamma_cor_prog = nre::gpu::new_program();
 
-    nre::gpu::vertex_shader vs_gamma;
-    nre::gpu::pixel_shader  fs_gamma;
+    nre::gpu::vertex_shader_t vs_gamma;
+    nre::gpu::pixel_shader_t  fs_gamma;
 
     vs_gamma.type           = nre::gpu::VS_UNDEFINED;
     vs_gamma.fullscreenQuad = true;
@@ -120,47 +116,62 @@ void NRE_RendererLegacy::initGPUSphere() {
 
 //------------------------updateData---------------------------//
 
-bool NRE_RendererLegacy::updateData() {
+bool NRE_RendererLegacy::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                                     bool has_renderer_restarted) {
     assert(this->world != nullptr);
-    bool temp_restart_renderer     = this->screen->restart_renderer;
-    this->screen->restart_renderer = false;
+    res_x_ = winsys_info.res_x;
+    res_y_ = winsys_info.res_y;
+
+    this->use_wireframe           = update_info.use_wireframe;
+    this->render_bounding_boxes   = update_info.render_bounding_boxes;
+    this->render_bounding_spheres = update_info.render_bounding_spheres;
+    this->use_HDR                 = update_info.use_hdr;
+    this->use_z_prepass           = update_info.use_z_prepass;
+    bool temp_restart_renderer    = (this->shading_mode != update_info.shading_mode);
 
     if (temp_restart_renderer) {
         this->destroy();
-        this->init();
+        this->init(this->init_info, update_info, winsys_info);
     }
-
-    data_.update(temp_restart_renderer, this->render_bounding_boxes.load(std::memory_order_relaxed) or
-                                            this->render_bounding_spheres.load(std::memory_order_relaxed));
+    else if (has_renderer_restarted) {
+        this->init(this->init_info, update_info, winsys_info);
+    }
+    this->shading_mode = update_info.shading_mode;
+    data_.update(temp_restart_renderer or has_renderer_restarted, this->render_bounding_boxes or this->render_bounding_spheres);
 
     return true;
 }
 
 //------------------------updateSIngleThread-------------------//
 
-bool NRE_RendererLegacy::updateSingleThread() {
+bool NRE_RendererLegacy::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
 
-    nre::gpu::update(this->screen->resolution_x, this->screen->resolution_y);
+    res_x_ = winsys_info.res_x;
+    res_y_ = winsys_info.res_y;
 
-    if (this->use_HDR.load(std::memory_order_relaxed) == false) {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA, nre::gpu::NEAREST, this->screen->resolution_x,
-                                     this->screen->resolution_y, 0);
+    this->use_wireframe           = update_info.use_wireframe;
+    this->render_bounding_boxes   = update_info.render_bounding_boxes;
+    this->render_bounding_spheres = update_info.render_bounding_spheres;
+    this->use_HDR                 = update_info.use_hdr;
+    this->use_z_prepass           = update_info.use_z_prepass;
+
+    nre::gpu::update(res_x_, res_y_, update_info.sanity_checks);
+
+    if (not this->use_HDR) {
+        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_, res_y_, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
-        // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_mode(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                        this->screen->resolution_y);
+        // res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     else {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, this->screen->resolution_x,
-                                     this->screen->resolution_y, 0);
+        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, res_x_, res_y_, 0);
         // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
-        // this->screen->resolution_x, this->screen->resolution_y, 0);
-        nre::gpu::set_renderbuffer_mode(this->depthrbo, nre::gpu::DEPTHSTENCIL, this->screen->resolution_x,
-                                        this->screen->resolution_y);
+        // res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     // update light texture
-    // nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, this->screen->resolution_x,
-    // this->screen->resolution_y, 0);
+    // nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_,
+    // res_y_, 0);
 
     // generate draw calls
     this->generateDrawCalls();
@@ -173,33 +184,33 @@ bool NRE_RendererLegacy::updateSingleThread() {
 
 
     // render viewport
-    nre::gpu::use_wireframe = this->use_wireframe.load(std::memory_order_relaxed);
+    nre::gpu::use_wireframe(this->use_wireframe);
 
-    /*cout << "NRE Cameras: " << data_.cameras.size() << endl;
-    cout << "NRE Materials: " << data_.materials.size() << endl;
-    cout << "NRE Meshes: " << data_.meshes.size() << endl;
-    cout << "NRE Vgroups: " << data_.vgroups.size() << endl;*/
+    /*cout << "NRE Cameras: " << data_.cameras_.size() << endl;
+    cout << "NRE Materials: " << data_.materials_.size() << endl;
+    cout << "NRE Meshes: " << data_.meshes_.size() << endl;
+    cout << "NRE Vgroups: " << data_.vgroups_.size() << endl;*/
 
     nre::gpu::use_framebuffer(this->framebuffer);
     nre::gpu::clear_framebuffer(this->framebuffer, nre::gpu::FBO_ALL, 1.0f);
 
-    if (data_.loaded_viewport != 0) {
+    if (data_.loaded_viewport_ != 0) {
 
-        auto lv = data_.loaded_viewport;
+        auto lv = data_.loaded_viewport_;
 
-        if (data_.viewports[lv].cameras.size() == 0) {
+        if (data_.viewports_[lv].cameras.size() == 0) {
             throw nre::incomplete_viewport(lv);
         }
         // TEMPORARY until multiple layers and cameras support is implemented
-        else if (data_.viewports[lv].cameras.size() > 1) {
-            throw nre::unsupported_viewport(lv, "Too many (" + to_string(data_.viewports[lv].cameras.size()) + ") cameras");
+        else if (data_.viewports_[lv].cameras.size() > 1) {
+            throw nre::unsupported_viewport(lv, "Too many (" + to_string(data_.viewports_[lv].cameras.size()) + ") cameras");
         }
         else {
         }
 
         // only one fullscreen camera is supported for now
-        auto camera_id = data_.viewports[lv].cameras[0];
-        auto scene_id  = data_.cameras[camera_id].scene_id;
+        auto camera_id = data_.viewports_[lv].cameras[0];
+        auto scene_id  = data_.cameras_[camera_id].scene_id;
 
         // draw everything required for the z prepass, which also populates the depth buffer
         nre::gpu::set_render_mode(nre::gpu::Z_PREPASS_BACKFACE);
@@ -226,10 +237,9 @@ bool NRE_RendererLegacy::updateSingleThread() {
         this->sce_ren_groups[scene_id].update();
 
         // optionally draw a bounding box/sphere for each object (in wireframe mode)
-        bool temp               = nre::gpu::use_wireframe;
-        bool render_bboxes      = this->render_bounding_boxes.load(std::memory_order_relaxed);
-        bool render_spheres     = this->render_bounding_spheres.load(std::memory_order_relaxed);
-        nre::gpu::use_wireframe = true;
+        bool render_bboxes  = this->render_bounding_boxes;
+        bool render_spheres = this->render_bounding_spheres;
+        nre::gpu::use_wireframe(true);
 
         if (render_bboxes) {
             nre::gpu::set_render_mode(nre::gpu::REGULAR_BOTH);
@@ -261,14 +271,12 @@ bool NRE_RendererLegacy::updateSingleThread() {
             }
             this->sce_ren_groups[scene_id].update();
         }
-
-        nre::gpu::use_wireframe = temp;
     }
 
     // nre::gpu::copyFrameBuffer(this->framebuffer, 0, nre::gpu::FBO_DEPTHSTENCIL);
 
     nre::gpu::use_framebuffer(0);
-    nre::gpu::use_wireframe = false;
+    nre::gpu::use_wireframe(false);
     nre::gpu::set_render_mode(nre::gpu::FULLSCREEN_QUAD);
 
     nre::gpu::set_texture_slot(this->colortexture, 0);
@@ -284,33 +292,33 @@ void NRE_RendererLegacy::drawRenderGroup(NRE_RenderGroup& ren_group) {
 
         ren_group.isSetup = true;
 
-        ren_group.vs            = nre::gpu::vertex_shader();
+        ren_group.vs            = nre::gpu::vertex_shader_t();
         ren_group.vs.type       = nre::gpu::VS_REGULAR;
-        ren_group.vs.num_of_uvs = data_.meshes[ren_group.mesh].uvmaps;
+        ren_group.vs.num_of_uvs = data_.meshes_[ren_group.mesh].uvmaps;
 
 
         // choose shading mode
-        ren_group.fs = nre::gpu::pixel_shader();
+        ren_group.fs = nre::gpu::pixel_shader_t();
         lockMutex();
         switch (this->shading_mode) {
-        case OE_RENDERER_NORMALS_SHADING:
+        case oe::RENDERER_NORMALS_SHADING:
             ren_group.fs.type = nre::gpu::FS_NORMALS;
             break;
-        case OE_RENDERER_NO_LIGHTS_SHADING:
+        case oe::RENDERER_NO_LIGHTS_SHADING:
             ren_group.fs.type = nre::gpu::FS_MATERIAL;
             break;
-        case OE_RENDERER_DIR_LIGHTS_SHADING:
+        case oe::RENDERER_DIR_LIGHTS_SHADING:
 
             break;
-        case OE_RENDERER_INDEXED_LIGHTS_SHADING:
+        case oe::RENDERER_INDEXED_LIGHTS_SHADING:
 
             break;
-        case OE_RENDERER_REGULAR_SHADING:
+        case oe::RENDERER_REGULAR_SHADING:
             ren_group.fs.type = nre::gpu::FS_MATERIAL;
             break;
         }
         unlockMutex();
-        ren_group.fs.num_of_uvs = data_.meshes[ren_group.mesh].uvmaps;
+        ren_group.fs.num_of_uvs = data_.meshes_[ren_group.mesh].uvmaps;
 
         ren_group.program = nre::gpu::new_program();
         nre::gpu::set_program_vertex_shader(ren_group.program, ren_group.vs);
@@ -319,24 +327,24 @@ void NRE_RendererLegacy::drawRenderGroup(NRE_RenderGroup& ren_group) {
         nre::gpu::setup_program(ren_group.program);
     }
 
-    nre::gpu::set_program_uniform_data(ren_group.program, "Model_Matrix", data_.meshes[ren_group.mesh].data);
+    nre::gpu::set_program_uniform_data(ren_group.program, "Model_Matrix", data_.meshes_[ren_group.mesh].data);
     nre::gpu::set_program_uniform_data(
         ren_group.program, "MVP_Matrix",
-        OE_Mat4x4ToSTDVector(data_.cameras[ren_group.camera].perspective_view_mat * data_.meshes[ren_group.mesh].model_mat));
+        OE_Mat4x4ToSTDVector(data_.cameras_[ren_group.camera].perspective_view_mat * data_.meshes_[ren_group.mesh].model_mat));
     if (nre::gpu::get_program_uniform_slot(ren_group.program, "mat_diffuse") != -2) {
         nre::gpu::set_program_uniform_data(ren_group.program, "mat_diffuse",
-                                           OE_Vec4ToSTDVector(data_.materials[ren_group.material].get_mat_diffuse()));
+                                           OE_Vec4ToSTDVector(data_.materials_[ren_group.material].get_mat_diffuse()));
     }
     if (nre::gpu::get_program_uniform_slot(ren_group.program, "camera_pos") != -2) {
         nre::gpu::set_program_uniform_data(ren_group.program, "camera_pos",
-                                           OE_Vec4ToSTDVector(data_.cameras[ren_group.camera].get_position()));
+                                           OE_Vec4ToSTDVector(data_.cameras_[ren_group.camera].get_position()));
     }
     if (nre::gpu::get_program_uniform_slot(ren_group.program, "mat_specular_hardness") != -2) {
         nre::gpu::set_program_uniform_data(ren_group.program, "mat_specular_hardness",
-                                           data_.materials[ren_group.material].get_mat_specular_hardness());
+                                           data_.materials_[ren_group.material].get_mat_specular_hardness());
     }
-    nre::gpu::set_program_uniform_data(ren_group.program, "Model_Matrix", data_.meshes[ren_group.mesh].data);
-    nre::gpu::draw(ren_group.program, data_.meshes[ren_group.mesh].vao, data_.vgroups[ren_group.vgroup].ibo);
+    nre::gpu::set_program_uniform_data(ren_group.program, "Model_Matrix", data_.meshes_[ren_group.mesh].data);
+    nre::gpu::draw(ren_group.program, data_.meshes_[ren_group.mesh].vao, data_.vgroups_[ren_group.vgroup].ibo);
 }
 
 void NRE_RendererLegacy::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
@@ -345,9 +353,9 @@ void NRE_RendererLegacy::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
 
         ren_group.isZPrePassSetup = true;
 
-        ren_group.vs_z_prepass            = nre::gpu::vertex_shader();
+        ren_group.vs_z_prepass            = nre::gpu::vertex_shader_t();
         ren_group.vs_z_prepass.type       = nre::gpu::VS_Z_PREPASS;
-        ren_group.vs_z_prepass.num_of_uvs = data_.meshes[ren_group.mesh].uvmaps;
+        ren_group.vs_z_prepass.num_of_uvs = data_.meshes_[ren_group.mesh].uvmaps;
 
         ren_group.z_prepass_program = nre::gpu::new_program();
 
@@ -357,31 +365,31 @@ void NRE_RendererLegacy::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
     }
     nre::gpu::set_program_uniform_data(
         ren_group.z_prepass_program, "MVP_Matrix",
-        OE_Mat4x4ToSTDVector(data_.cameras[ren_group.camera].perspective_view_mat * data_.meshes[ren_group.mesh].model_mat));
-    nre::gpu::draw(ren_group.z_prepass_program, data_.meshes[ren_group.mesh].vao, data_.vgroups[ren_group.vgroup].ibo);
+        OE_Mat4x4ToSTDVector(data_.cameras_[ren_group.camera].perspective_view_mat * data_.meshes_[ren_group.mesh].model_mat));
+    nre::gpu::draw(ren_group.z_prepass_program, data_.meshes_[ren_group.mesh].vao, data_.vgroups_[ren_group.vgroup].ibo);
 }
 
 void NRE_RendererLegacy::drawRenderGroupBoundingBox(NRE_RenderGroup& ren_group) {
 
-    nre::gpu::set_program_uniform_data(this->prog_bbox, "Model_Matrix", data_.meshes[ren_group.mesh].data);
+    nre::gpu::set_program_uniform_data(this->prog_bbox, "Model_Matrix", data_.meshes_[ren_group.mesh].data);
     nre::gpu::set_program_uniform_data(this->prog_bbox, "PV_Matrix",
-                                       OE_Mat4x4ToSTDVector(data_.cameras[ren_group.camera].perspective_view_mat));
+                                       OE_Mat4x4ToSTDVector(data_.cameras_[ren_group.camera].perspective_view_mat));
     nre::gpu::set_program_uniform_data(this->prog_bbox, "scaling_min_data",
-                                       data_.meshes[ren_group.mesh].get_scaling_min_data());
+                                       data_.meshes_[ren_group.mesh].get_scaling_min_data());
     nre::gpu::set_program_uniform_data(this->prog_bbox, "scaling_max_data",
-                                       data_.meshes[ren_group.mesh].get_scaling_max_data());
+                                       data_.meshes_[ren_group.mesh].get_scaling_max_data());
     nre::gpu::draw(this->prog_bbox, this->vao_bbox);
 }
 
 void NRE_RendererLegacy::drawRenderGroupBoundingSphere(NRE_RenderGroup& ren_group) {
 
-    nre::gpu::set_program_uniform_data(this->prog_sphere, "Model_Matrix", data_.meshes[ren_group.mesh].data);
+    nre::gpu::set_program_uniform_data(this->prog_sphere, "Model_Matrix", data_.meshes_[ren_group.mesh].data);
     nre::gpu::set_program_uniform_data(this->prog_sphere, "PV_Matrix",
-                                       OE_Mat4x4ToSTDVector(data_.cameras[ren_group.camera].perspective_view_mat));
+                                       OE_Mat4x4ToSTDVector(data_.cameras_[ren_group.camera].perspective_view_mat));
     nre::gpu::set_program_uniform_data(this->prog_sphere, "scaling_min_data",
-                                       data_.meshes[ren_group.mesh].get_scaling_min_data());
+                                       data_.meshes_[ren_group.mesh].get_scaling_min_data());
     nre::gpu::set_program_uniform_data(this->prog_sphere, "scaling_max_data",
-                                       data_.meshes[ren_group.mesh].get_scaling_max_data());
+                                       data_.meshes_[ren_group.mesh].get_scaling_max_data());
     nre::gpu::draw(this->prog_sphere, this->vao_sphere, this->ibo_sphere);
 }
 
@@ -407,8 +415,8 @@ void NRE_RendererLegacy::setupBoundingBoxProgram() {
 
     this->prog_bbox = nre::gpu::new_program();
 
-    nre::gpu::vertex_shader vs_bbox;
-    nre::gpu::pixel_shader  fs_bbox;
+    nre::gpu::vertex_shader_t vs_bbox;
+    nre::gpu::pixel_shader_t  fs_bbox;
 
     vs_bbox.type       = nre::gpu::VS_BOUNDING_BOX;
     vs_bbox.num_of_uvs = 0;
@@ -426,8 +434,8 @@ void NRE_RendererLegacy::setupBoundingSphereProgram() {
 
     this->prog_sphere = nre::gpu::new_program();
 
-    nre::gpu::vertex_shader vs_sphere;
-    nre::gpu::pixel_shader  fs_sphere;
+    nre::gpu::vertex_shader_t vs_sphere;
+    nre::gpu::pixel_shader_t  fs_sphere;
 
     vs_sphere.type       = nre::gpu::VS_BOUNDING_SPHERE;
     vs_sphere.num_of_uvs = 0;
@@ -444,141 +452,141 @@ void NRE_RendererLegacy::setupBoundingSphereProgram() {
 //---------------------------------Update actual GPU data------------------------------//
 
 void NRE_RendererLegacy::updateMeshGPUData() {
-    for (auto mesh : data_.meshes) {
+    for (auto mesh : data_.meshes_) {
 
         // first time buffer initialization
-        if (!data_.meshes[mesh.first].has_init) {
-            data_.meshes[mesh.first].vbo      = nre::gpu::new_vertex_buf();
-            data_.meshes[mesh.first].vao      = nre::gpu::new_vertex_layout();
-            data_.meshes[mesh.first].has_init = true;
+        if (!data_.meshes_[mesh.first].has_init) {
+            data_.meshes_[mesh.first].vbo      = nre::gpu::new_vertex_buf();
+            data_.meshes_[mesh.first].vao      = nre::gpu::new_vertex_layout();
+            data_.meshes_[mesh.first].has_init = true;
         }
 
 
         // initialize data itself
-        if (!data_.meshes[mesh.first].vao_initialized) {
+        if (!data_.meshes_[mesh.first].vao_initialized) {
 
             /// vertex buffer
-            data_.meshes[mesh.first].mesh->data->vbo_mutex.lockMutex();
-            nre::gpu::set_vertex_buf_memory_and_data(data_.meshes[mesh.first].vbo, data_.meshes[mesh.first].mesh->data->vbo,
+            data_.meshes_[mesh.first].mesh->data->vbo_mutex.lockMutex();
+            nre::gpu::set_vertex_buf_memory_and_data(data_.meshes_[mesh.first].vbo, data_.meshes_[mesh.first].mesh->data->vbo,
                                                      nre::gpu::STATIC);
-            data_.meshes[mesh.first].mesh->data->vbo.clear();
-            data_.meshes[mesh.first].mesh->data->vbo_mutex.unlockMutex();
+            data_.meshes_[mesh.first].mesh->data->vbo.clear();
+            data_.meshes_[mesh.first].mesh->data->vbo_mutex.unlockMutex();
 
 
             /// index buffers
-            data_.meshes[mesh.first].mesh->data->ibos_mutex.lockMutex();
+            data_.meshes_[mesh.first].mesh->data->ibos_mutex.lockMutex();
             for (auto vg : mesh.second.vgroups) {
-                data_.vgroups[vg].ibo = nre::gpu::new_index_buf();
-                nre::gpu::set_index_buf_memory_and_data(data_.vgroups[vg].ibo,
-                                                        data_.meshes[mesh.first].mesh->data->ibos[vg].data, nre::gpu::STATIC);
-                data_.meshes[mesh.first].mesh->data->ibos[vg].data.clear();
+                data_.vgroups_[vg].ibo = nre::gpu::new_index_buf();
+                nre::gpu::set_index_buf_memory_and_data(data_.vgroups_[vg].ibo,
+                                                        data_.meshes_[mesh.first].mesh->data->ibos[vg].data, nre::gpu::STATIC);
+                data_.meshes_[mesh.first].mesh->data->ibos[vg].data.clear();
             }
 
-            data_.meshes[mesh.first].mesh->data->ibos_mutex.unlockMutex();
+            data_.meshes_[mesh.first].mesh->data->ibos_mutex.unlockMutex();
 
             /// vertex layout
             typedef nre::gpu::vertex_layout_input VLI; // for clarity
 
-            data_.meshes[mesh.first].mesh->data->ibos.clear();
-            // delete data_.meshes[mesh.first].mesh->data->index_buffer;
-            // data_.meshes[mesh.first].mesh->data->index_buffer = nullptr;
+            data_.meshes_[mesh.first].mesh->data->ibos.clear();
+            // delete data_.meshes_[mesh.first].mesh->data->index_buffer;
+            // data_.meshes_[mesh.first].mesh->data->index_buffer = nullptr;
 
-            data_.meshes[mesh.first].vao_input.clear();
+            data_.meshes_[mesh.first].vao_input.clear();
 
-            data_.meshes[mesh.first].vao_input.push_back(
-                VLI(data_.meshes[mesh.first].vbo, 0, 3, 6 + data_.meshes[mesh.first].uvmaps * 2));
-            data_.meshes[mesh.first].vao_input.push_back(
-                VLI(data_.meshes[mesh.first].vbo, 3, 3, 6 + data_.meshes[mesh.first].uvmaps * 2));
+            data_.meshes_[mesh.first].vao_input.push_back(
+                VLI(data_.meshes_[mesh.first].vbo, 0, 3, 6 + data_.meshes_[mesh.first].uvmaps * 2));
+            data_.meshes_[mesh.first].vao_input.push_back(
+                VLI(data_.meshes_[mesh.first].vbo, 3, 3, 6 + data_.meshes_[mesh.first].uvmaps * 2));
 
-            for (size_t i = 0; i < data_.meshes[mesh.first].uvmaps; i++) {
-                data_.meshes[mesh.first].vao_input.push_back(
-                    VLI(data_.meshes[mesh.first].vbo, 6 + 2 * i, 2, 6 + data_.meshes[mesh.first].uvmaps * 2));
+            for (size_t i = 0; i < data_.meshes_[mesh.first].uvmaps; i++) {
+                data_.meshes_[mesh.first].vao_input.push_back(
+                    VLI(data_.meshes_[mesh.first].vbo, 6 + 2 * i, 2, 6 + data_.meshes_[mesh.first].uvmaps * 2));
             }
 
-            nre::gpu::set_vertex_layout_format(data_.meshes[mesh.first].vao, data_.meshes[mesh.first].vao_input);
-            data_.meshes[mesh.first].vao_initialized = true;
+            nre::gpu::set_vertex_layout_format(data_.meshes_[mesh.first].vao, data_.meshes_[mesh.first].vao_input);
+            data_.meshes_[mesh.first].vao_initialized = true;
         }
 
         // update per frame data
-        if (data_.meshes[mesh.first].changed) {
+        if (data_.meshes_[mesh.first].changed) {
 
 
-            data_.meshes[mesh.first].data = OE_Mat4x4ToSTDVector(data_.meshes[mesh.first].model_mat);
+            data_.meshes_[mesh.first].data = OE_Mat4x4ToSTDVector(data_.meshes_[mesh.first].model_mat);
 
             // populate scaling_max_data
-            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].max_x);
-            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].max_y);
-            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].max_z);
+            data_.meshes_[mesh.first].data.push_back(data_.meshes_[mesh.first].max_x);
+            data_.meshes_[mesh.first].data.push_back(data_.meshes_[mesh.first].max_y);
+            data_.meshes_[mesh.first].data.push_back(data_.meshes_[mesh.first].max_z);
 
             // final element is sphere radius candidate
-            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].max_radius);
+            data_.meshes_[mesh.first].data.push_back(data_.meshes_[mesh.first].max_radius);
 
             // populate scaling_min_data
-            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].min_x);
-            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].min_y);
-            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].min_z);
+            data_.meshes_[mesh.first].data.push_back(data_.meshes_[mesh.first].min_x);
+            data_.meshes_[mesh.first].data.push_back(data_.meshes_[mesh.first].min_y);
+            data_.meshes_[mesh.first].data.push_back(data_.meshes_[mesh.first].min_z);
 
             // final element is sphere radius candidate
-            data_.meshes[mesh.first].data.push_back(data_.meshes[mesh.first].min_radius);
+            data_.meshes_[mesh.first].data.push_back(data_.meshes_[mesh.first].min_radius);
 
-            if (data_.meshes[mesh.first].size != data_.meshes[mesh.first].data.size()) {
-                data_.meshes[mesh.first].size = data_.meshes[mesh.first].data.size();
+            if (data_.meshes_[mesh.first].size != data_.meshes_[mesh.first].data.size()) {
+                data_.meshes_[mesh.first].size = data_.meshes_[mesh.first].data.size();
             }
 
-            data_.meshes[mesh.first].changed = false;
+            data_.meshes_[mesh.first].changed = false;
         }
     }
 
-    for (auto cam : data_.deleted_meshes) {
-        this->sce_ren_groups[data_.meshes[cam].scene_id].removeMesh(cam);
-        data_.deleteMesh(cam);
+    for (auto cam : data_.deleted_meshes_) {
+        this->sce_ren_groups[data_.meshes_[cam].scene_id].removeMesh(cam);
+        data_.delete_mesh(cam);
     }
-    data_.deleted_meshes.clear();
+    data_.deleted_meshes_.clear();
 }
 
 void NRE_RendererLegacy::updateMaterialGPUData() {
-    for (auto mat : data_.materials) {
+    for (auto mat : data_.materials_) {
 
-        if (!data_.materials[mat.first].has_init) {
-            data_.materials[mat.first].has_init = true;
+        if (!data_.materials_[mat.first].has_init) {
+            data_.materials_[mat.first].has_init = true;
         }
 
-        if (data_.materials[mat.first].changed) {
+        if (data_.materials_[mat.first].changed) {
 
-            if (data_.materials[mat.first].size != data_.materials[mat.first].data.size()) {
-                data_.materials[mat.first].size = data_.materials[mat.first].data.size();
+            if (data_.materials_[mat.first].size != data_.materials_[mat.first].data.size()) {
+                data_.materials_[mat.first].size = data_.materials_[mat.first].data.size();
             }
-            data_.materials[mat.first].changed = false;
+            data_.materials_[mat.first].changed = false;
         }
     }
 
-    for (auto cam : data_.deleted_materials) {
-        this->sce_ren_groups[data_.materials[cam].scene_id].removeMaterial(cam);
-        data_.deleteMaterial(cam);
+    for (auto cam : data_.deleted_materials_) {
+        this->sce_ren_groups[data_.materials_[cam].scene_id].removeMaterial(cam);
+        data_.delete_material(cam);
     }
-    data_.deleted_materials.clear();
+    data_.deleted_materials_.clear();
 }
 
 void NRE_RendererLegacy::updateCameraGPUData() {
-    for (auto cam : data_.cameras) {
+    for (auto cam : data_.cameras_) {
 
-        if (!data_.cameras[cam.first].has_init) {
-            data_.cameras[cam.first].has_init = true;
+        if (!data_.cameras_[cam.first].has_init) {
+            data_.cameras_[cam.first].has_init = true;
         }
-        if (data_.cameras[cam.first].changed) {
+        if (data_.cameras_[cam.first].changed) {
 
-            if (data_.cameras[cam.first].size != data_.cameras[cam.first].data.size()) {
-                data_.cameras[cam.first].size = data_.cameras[cam.first].data.size();
+            if (data_.cameras_[cam.first].size != data_.cameras_[cam.first].data.size()) {
+                data_.cameras_[cam.first].size = data_.cameras_[cam.first].data.size();
             }
-            data_.cameras[cam.first].changed = false;
+            data_.cameras_[cam.first].changed = false;
         }
     }
 
-    for (auto cam : data_.deleted_cameras) {
-        this->sce_ren_groups[data_.cameras[cam].scene_id].removeCamera(cam);
-        data_.deleteCamera(cam);
+    for (auto cam : data_.deleted_cameras_) {
+        this->sce_ren_groups[data_.cameras_[cam].scene_id].removeCamera(cam);
+        data_.delete_camera(cam);
     }
-    data_.deleted_cameras.clear();
+    data_.deleted_cameras_.clear();
 }
 void NRE_RendererLegacy::updateLightGPUData() {
     /*for (auto l: data_.pt_lights){
@@ -603,7 +611,7 @@ void NRE_RendererLegacy::updateLightGPUData() {
     pt_light_data.reserve(16 * 255);
     int count = 0;
     for (auto l : this->pt_visible_lights) {
-        pt_light_data.insert(pt_light_data.end(), data_.pt_lights[l.id].data.begin(), data_.pt_lights[l.id].data.end());
+        pt_light_data.insert(pt_light_data.end(), data_.pt_lights_[l.id].data.begin(), data_.pt_lights_[l.id].data.end());
 
         count++;
         if (count > 255) break;
@@ -615,7 +623,7 @@ void NRE_RendererLegacy::updateLightGPUData() {
     }
 }
 
-bool NRE_RendererLegacy::updateMultiThread(OE_Task*, int) {
+bool NRE_RendererLegacy::update_multi_thread(OE_Task*, int) {
     return false;
 }
 

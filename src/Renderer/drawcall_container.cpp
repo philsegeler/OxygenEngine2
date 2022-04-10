@@ -9,7 +9,7 @@ NRE_DrawCallContainer::NRE_DrawCallContainer() {
 NRE_DrawCallContainer::~NRE_DrawCallContainer() {
 }
 
-NRE_DrawCallContainer::Iterator::Iterator(NRE_DrawCallContainer& db, set_iter_t beginning) : iter(beginning), db_(db) {
+NRE_DrawCallContainer::Iterator::Iterator(set_iter_t beginning) : iter(beginning) {
 }
 
 NRE_DrawCallContainer::Iterator& NRE_DrawCallContainer::Iterator::operator++() {
@@ -33,11 +33,11 @@ bool operator!=(const NRE_DrawCallContainer::Iterator& a, const NRE_DrawCallCont
 };
 
 NRE_DrawCallContainer::Iterator NRE_DrawCallContainer::begin() {
-    return Iterator(*this, this->data_.begin());
+    return Iterator(this->data_.begin());
 }
 
 NRE_DrawCallContainer::Iterator NRE_DrawCallContainer::end() {
-    return Iterator(*this, this->data_.end());
+    return Iterator(this->data_.end());
 }
 
 bool NRE_DrawCallContainer::contains(const NRE_RenderGroup& ren_group) {

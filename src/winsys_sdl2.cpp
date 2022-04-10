@@ -6,15 +6,18 @@
 using namespace std;
 
 OE_SDL_WindowSystem::OE_SDL_WindowSystem() {
-    this->winsys = OE_SDL;
+    this->winsys_ = oe::WINSYS_SDL;
 #ifdef OE_PLATFORM_LINUX
-    this->os = OE_LINUX;
+    this->os_ = oe::OS_LINUX;
 #endif
 #ifdef OE_PLATFORM_WINDOWS
-    this->os = OE_WINDOWS;
+    this->os_ = oe::OS_WINDOWS;
 #endif
 #ifdef OE_PLATFORM_ANDROID
-    this->os = OE_ANDROID;
+    this->os_ = oe::OS_ANDROID;
+#endif
+#ifdef OE_PLATFORM_WEB
+    this->os_ = oe::OS_WEB;
 #endif
 }
 
@@ -37,16 +40,22 @@ void OE_SDL_WindowSystem::createWindow(int x, int y) {
                                         SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL);
 }
 
-bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, bool use_legacy_renderer, void* data) {
+oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::winsys_update_info update_info) {
 
-    this->title      = titlea;
-    this->fullscreen = isFullscreen;
+    int x = update_info.res_x;
+    int y = update_info.res_y;
+
+    bool use_legacy_renderer = init_info.requested_backend == nre::gpu::GLES2;
+
+    this->title      = update_info.title;
+    this->fullscreen = update_info.use_fullscreen;
 
 #ifndef OE_PLATFORM_WEB
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-        cout << "OE ERROR: Could not initialize SDL2, " << SDL_GetError() << endl;
+        std::stringstream ss;
+        ss << "Could not initialize SDL2, " << SDL_GetError();
+        throw oe::winsys_init_failed(ss.str());
     }
-
 
     SDL_GL_LoadLibrary(NULL);
 
@@ -79,17 +88,17 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
     if (not use_legacy_renderer) {
 
 #ifndef OE_PLATFORM_WEB
-        this->context = SDL_GL_CreateContext(this->window);
-        if (context == NULL) {
-            cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
-            SDL_DestroyWindow(window);
-            this->createWindow(x, y);
+        if (init_info.requested_backend == nre::gpu::GL) {
+            this->context = SDL_GL_CreateContext(this->window);
+            if (context == NULL) {
+                cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
+                SDL_DestroyWindow(window);
+                this->createWindow(x, y);
+            }
+            else {
+                return this->finishInit();
+            }
         }
-        else {
-            this->finishInit();
-            return true;
-        }
-
 #endif
         // Request an OpenGL ES 3.0 context
 
@@ -116,8 +125,7 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
             this->createWindow(x, y);
         }
         else {
-            this->finishInit();
-            return true;
+            return this->finishInit();
         }
     }
 
@@ -149,14 +157,13 @@ bool OE_SDL_WindowSystem::init(int x, int y, string titlea, bool isFullscreen, b
         this->createWindow(x, y);
     }
     else {
-        this->finishInit();
-        return true;
+        return this->finishInit();
     }
 
-    return false;
+    return oe::winsys_output();
 }
 
-void OE_SDL_WindowSystem::finishInit() {
+oe::winsys_output OE_SDL_WindowSystem::finishInit() {
 
 #ifndef OE_PLATFORM_WEB
     if (!this->isES)
@@ -187,102 +194,140 @@ void OE_SDL_WindowSystem::finishInit() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     SDL_GL_SwapWindow(this->window);
 
+    oe::winsys_output output;
+
     if (!this->isES) {
-        nre::gpu::init(nre::gpu::GL, this->major, this->minor);
+        output.backend = nre::gpu::GL;
     }
     else {
-        if (this->major != 2)
-            nre::gpu::init(nre::gpu::GLES, this->major, this->minor);
+        if ((this->major != 2) or (this->major == 3 and this->minor == 0)) {
+            output.backend = nre::gpu::GLES;
+        }
         else {
-            nre::gpu::init(nre::gpu::GLES2, this->major, this->minor);
+            output.backend = nre::gpu::GLES2;
         }
     }
 
-    this->event_handler.init();
+    this->event_handler_.init();
+    output.res_x = this->resolution_x;
+    output.res_y = this->resolution_y;
+    output.major = this->major;
+    output.minor = this->minor;
+
+    return output;
 }
 
-bool OE_SDL_WindowSystem::getMouseLockedState() {
+bool OE_SDL_WindowSystem::is_mouse_locked() {
     lockMutex();
     bool output = mouse_locked;
     unlockMutex();
     return output;
 }
 
-void OE_SDL_WindowSystem::lockMouse() {
+void OE_SDL_WindowSystem::lock_mouse() {
     SDL_SetRelativeMouseMode(SDL_TRUE);
     lockMutex();
     this->mouse_locked = true;
     unlockMutex();
 }
 
-void OE_SDL_WindowSystem::unlockMouse() {
+void OE_SDL_WindowSystem::unlock_mouse() {
     SDL_SetRelativeMouseMode(SDL_FALSE);
     lockMutex();
     this->mouse_locked = false;
     unlockMutex();
 }
 
-bool OE_SDL_WindowSystem::update() {
+oe::winsys_output OE_SDL_WindowSystem::update(oe::winsys_update_info update_info) {
 
     this->counter++;
     this->counter = this->counter % 100;
 
     SDL_GL_SwapWindow(this->window);
-    // Change viewport resolution if desired
+
+    // change title
+    if (this->title != update_info.title) {
+        this->title = update_info.title;
+        SDL_SetWindowTitle(this->window, this->title.c_str());
+    }
+
+    // Change viewport resolution
     int x;
     int y;
     SDL_GetWindowSize(window, &x, &y);
 
-    lockMutex();
     this->resolution_x = x;
     this->resolution_y = y;
-    unlockMutex();
 
-    this->event_handler.updateInput();
+
+    this->event_handler_.update_input();
     this->mouse_moved = false;
 
     while (SDL_PollEvent(&this->event)) {
 
         // exit before handling SDL events
         if (event.type == SDL_QUIT) {
-            this->event_handler.done = true;
-            return this->event_handler.done;
+            oe::winsys_output output;
+            this->event_handler_.done_ = true;
+            output.done                = this->event_handler_.done_;
+            return output;
         }
-        this->updateEvents();
+        this->update_events();
         this->updateWindowEvents();
     }
 
     if (this->mouse_moved) {
         // fetch mouse position, since this IS needed
-        this->event_handler.lockMutex();
-        SDL_GetMouseState(&OE_MouseEvent::x, &OE_MouseEvent::y);
-        SDL_GetRelativeMouseState(&OE_MouseEvent::delta_x, &OE_MouseEvent::delta_y);
-        this->event_handler.unlockMutex();
-        this->event_handler.broadcastIEvent("mouse-motion");
+        this->event_handler_.lockMutex();
+
+        int mouse_x, mouse_y, mouse_delta_x, mouse_delta_y;
+        SDL_GetMouseState(&mouse_x, &mouse_y);
+        SDL_GetRelativeMouseState(&mouse_delta_x, &mouse_delta_y);
+        this->event_handler_.internal_update_mouse_status(mouse_x, mouse_y, mouse_delta_x, mouse_delta_y);
+
+        this->event_handler_.unlockMutex();
+
+        this->event_handler_.broadcast_ievent("mouse-motion");
     }
 
     // This is needed to support things like OE_Finish()
-    return this->event_handler.done;
+    oe::winsys_output output;
+    if (!this->isES) {
+        output.backend = nre::gpu::GL;
+    }
+    else {
+        if ((this->major != 2) or (this->major == 3 and this->minor == 0)) {
+            output.backend = nre::gpu::GLES;
+        }
+        else {
+            output.backend = nre::gpu::GLES2;
+        }
+    }
+    output.done        = this->event_handler_.done_;
+    output.res_x       = this->resolution_x;
+    output.res_y       = this->resolution_y;
+    output.major       = this->major;
+    output.minor       = this->minor;
+    output.mouse_moved = this->mouse_moved;
+    return output;
 }
 
-bool OE_SDL_WindowSystem::updateEvents() {
+bool OE_SDL_WindowSystem::update_events() {
 
     switch (this->event.type) {
     // check for key presses
     case SDL_KEYDOWN:
-        for (auto key : this->event_handler.input_handler.keyList) {
-            if (this->event.key.keysym.sym == key.first) {
-                this->event_handler.internalBroadcastKeyDownEvent("keyboard-" + key.second);
-            }
+        if (this->event_handler_.input_handler_.keyList_.count(this->event.key.keysym.sym) != 0) {
+            auto key_string = this->event_handler_.input_handler_.keyList_[this->event.key.keysym.sym];
+            this->event_handler_.internal_register_keydown_event("keyboard-" + key_string);
         }
         break;
 
     // check for releases
     case SDL_KEYUP:
-        for (auto key : this->event_handler.input_handler.keyList) {
-            if (this->event.key.keysym.sym == key.first) {
-                this->event_handler.internalBroadcastKeyUpEvent("keyboard-" + key.second);
-            }
+        if (this->event_handler_.input_handler_.keyList_.count(this->event.key.keysym.sym) != 0) {
+            auto key_string = this->event_handler_.input_handler_.keyList_[this->event.key.keysym.sym];
+            this->event_handler_.internal_register_keyup_event("keyboard-" + key_string);
         }
         break;
 
@@ -294,45 +339,29 @@ bool OE_SDL_WindowSystem::updateEvents() {
 
         // update mouse down events
     case SDL_MOUSEBUTTONDOWN:
-        for (auto key : this->event_handler.input_handler.mouseList) {
-            if (this->event.button.button == key.first) {
-                // fetch mouse position, since this may be needed
-                this->event_handler.lockMutex();
-                SDL_GetMouseState(&OE_MouseEvent::x, &OE_MouseEvent::y);
-                SDL_GetRelativeMouseState(&OE_MouseEvent::delta_x, &OE_MouseEvent::delta_y);
-                this->event_handler.unlockMutex();
-
-                this->event_handler.internalBroadcastKeyDownEvent("mouse-" + key.second);
-            }
+        if (this->event_handler_.input_handler_.mouseList_.count(this->event.button.button) != 0) {
+            auto key_string = this->event_handler_.input_handler_.mouseList_[this->event.button.button];
+            this->event_handler_.internal_register_keydown_event("mouse-" + key_string);
         }
         break;
 
     // update mouse up events
     case SDL_MOUSEBUTTONUP:
-        for (auto key : this->event_handler.input_handler.mouseList) {
-            if (this->event.button.button == key.first) {
-                // fetch mouse position, since this may be needed
-                this->event_handler.lockMutex();
-                SDL_GetMouseState(&OE_MouseEvent::x, &OE_MouseEvent::y);
-                SDL_GetRelativeMouseState(&OE_MouseEvent::delta_x, &OE_MouseEvent::delta_y);
-                this->event_handler.unlockMutex();
-
-                this->event_handler.internalBroadcastKeyUpEvent("mouse-" + key.second);
-            }
+        if (this->event_handler_.input_handler_.mouseList_.count(this->event.button.button) != 0) {
+            auto key_string = this->event_handler_.input_handler_.mouseList_[this->event.button.button];
+            this->event_handler_.internal_register_keyup_event("mouse-" + key_string);
         }
         break;
 
     // update mouse wheel events
     case SDL_MOUSEWHEEL:
 
-        this->event_handler.lockMutex();
-        OE_MouseEvent::mouse_wheel = event.wheel.y;
-        // fetch mouse position, since this may be needed
-        SDL_GetMouseState(&OE_MouseEvent::x, &OE_MouseEvent::y);
-        SDL_GetRelativeMouseState(&OE_MouseEvent::delta_x, &OE_MouseEvent::delta_y);
-        this->event_handler.unlockMutex();
+        this->event_handler_.lockMutex();
+        // mouse_mouse_wheel = event.wheel.y;
+        //  fetch mouse position, since this may be needed
+        this->event_handler_.unlockMutex();
 
-        this->event_handler.broadcastIEvent("mouse-wheel");
+        this->event_handler_.broadcast_ievent("mouse-wheel");
         break;
     }
 

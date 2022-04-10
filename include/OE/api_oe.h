@@ -46,39 +46,20 @@ namespace oe {
 
     // enum typedefs
 
-    typedef OE_METHOD    method_type;
-    typedef OE_EVENTFUNC event_func_type;
+    typedef OE_METHOD method_type;
 
-    namespace os {
-        typedef OE_OS type;
-        const type    undefined = (type)0;
-        const type    linux     = (type)1;
-        const type    windows   = (type)2;
-    }; // namespace os
-
-    namespace winsys {
-        typedef OE_WINSYS type;
-        const type        none           = (type)0;
-        const type        sdl            = (type)1;
-        const type        something_else = (type)2;
-    }; // namespace winsys
-
-    namespace renderer { namespace shading_mode {
-
-        typedef OE_RENDERER_SHADING_MODE type;
-        const type                       normals        = (type)0;
-        const type                       no_light       = (type)1;
-        const type                       dir_lights     = (type)2;
-        const type                       indexed_lights = (type)3;
-        const type                       regular        = (type)4;
-    }; }; // namespace renderer::shading_mode
     //------------------------BLOCK-------------------------//
     // API functions to be executed before the engine runs
     namespace preinit {
 
-        extern bool use_legacy_renderer; // default: false
+        extern oe::renderer_init_info   renderer_parameters;
+        extern oe::winsys_init_info     winsys_parameters;
+        extern oe::physics_init_info    physics_parameters;
+        extern oe::networking_init_info networking_parameters;
 
-    };
+        void request_gles2();
+        void request_gles31();
+    }; // namespace preinit
 
     /** Basic API functions for starting the Oxygen Engine
      *  and assigning tasks
@@ -241,7 +222,7 @@ namespace oe {
         assert(OE_Main != nullptr);
         oe::event_func_type func_copy =
             std::bind(func, std::placeholders::_1, std::placeholders::_2, std::forward<Args...>(arguments...));
-        OE_Main->window->event_handler.setIEventFunc(name, func_copy);
+        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
     }
 
     template <typename T>
@@ -249,7 +230,7 @@ namespace oe {
 
         assert(OE_Main != nullptr);
         oe::event_func_type func_copy = std::bind(func, std::placeholders::_1, std::placeholders::_2);
-        OE_Main->window->event_handler.setIEventFunc(name, func_copy);
+        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
     }
 
     template <typename T, typename A, typename... Args>
@@ -258,7 +239,7 @@ namespace oe {
         assert(OE_Main != nullptr);
         oe::event_func_type func_copy =
             std::bind(func, instance, std::placeholders::_1, std::placeholders::_2, std::forward<Args...>(arguments...));
-        OE_Main->window->event_handler.setIEventFunc(name, func_copy);
+        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
     }
 
     template <typename T, typename A>
@@ -266,7 +247,7 @@ namespace oe {
 
         assert(OE_Main != nullptr);
         oe::event_func_type func_copy = std::bind(func, instance, std::placeholders::_1, std::placeholders::_2);
-        OE_Main->window->event_handler.setIEventFunc(name, func_copy);
+        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
     }
 
     void destroy_event(std::string);
@@ -414,12 +395,11 @@ namespace oe {
 
     /** API functions to control the renderer
      *  These should work for ANY renderer
-     * All those parameters require a call to OE_RestartRenderer to take effect
      */
 
-    void                             restart_renderer();
-    void                             set_shading_mode(oe::renderer::shading_mode::type);
-    oe::renderer::shading_mode::type get_shading_mode();
+    void                      restart_renderer();
+    void                      set_shading_mode(oe::RENDERER_SHADING_MODE);
+    oe::RENDERER_SHADING_MODE get_shading_mode();
 
     void render_wireframe(bool);
     void toggle_wireframe_rendering();
@@ -430,9 +410,23 @@ namespace oe {
     void render_bounding_spheres(bool);
     void toggle_bounding_spheres_rendering();
 
-    // These two do not require a call to OE_RestartRenderer
     void render_HDR(bool);
     void toggle_render_HDR();
+
+
+    // Debug options
+    void set_renderer_sanity_checks(bool);
+    void toggle_renderer_sanity_checks();
+
+    /** API functions to control the window system
+     *  These should work for ANY window system
+     */
+    void        set_window_title(std::string title);
+    std::string get_window_title();
+
+    // not functional yet
+    void toggle_window_fullscreen();
+    void set_window_fullscreen(bool);
 }; // namespace oe
 
 

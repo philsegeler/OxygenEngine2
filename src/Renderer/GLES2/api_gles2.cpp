@@ -9,7 +9,7 @@ using namespace std;
 
 // small utility function to translate the buffer usages to something opengl understands
 // This should be different on other APIs
-GLenum NRE2GLES2_BufferUse(nre::gpu::BUFFER_USAGE usage) {
+GLenum nre::gles2::buffer_use(nre::gpu::BUFFER_USAGE usage) {
     GLenum buf_usage;
     switch (usage) {
     case nre::gpu::STATIC:
@@ -28,50 +28,39 @@ GLenum NRE2GLES2_BufferUse(nre::gpu::BUFFER_USAGE usage) {
 }
 
 // get index of a uniform variable in a shader program
-std::size_t NRE_GLES2_ProgramData::hasUniform(std::string name) {
-    size_t index = 0;
-    for (auto x : this->uniforms) {
-        if (x.name == name) {
-            return index;
-        }
-        index++;
-    }
-    return this->uniforms.size();
+bool nre::gles2::program_data_t::has_uniform(const std::string& name) {
+    return this->uniforms.contains(name);
 }
 
-bool NRE_GLES2_Program::operator<(const NRE_GLES2_Program& other) const {
-    if (this->vs < other.vs) {
-        return true;
-    }
-    else if (this->vs == other.vs) {
-        return this->fs < other.fs;
-    }
-    else {
-        return false;
-    }
-    return false;
+bool nre::gles2::program_t::operator==(const nre::gles2::program_t& other) const {
+    return std::tie(this->vs, this->fs) == std::tie(other.vs, other.fs);
+}
+size_t nre::gles2::program_t::gen_hash() const {
+    return this->vs.gen_hash() + this->fs.gen_hash();
 }
 
-bool NRE_GLES2_Texture::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, nre::gpu::TEXTURE_FILTER filter_in, int x_in, int y_in,
-                                      int mipmaps_in) {
-    return (this->type == type_in) and (this->filter == filter_in) and (this->x == x_in) and (this->y == y_in) and
-           (this->mipmaps == mipmaps_in);
+bool nre::gles2::texture_t::has_not_changed(nre::gpu::TEXTURE_TYPE type_in, nre::gpu::TEXTURE_FILTER filter_in, int x_in,
+                                            int y_in, int mipmaps_in) {
+    return std::tie(this->type, this->filter, this->x, this->y, this->mipmaps) ==
+           std::tie(type_in, filter_in, x_in, y_in, mipmaps_in);
 }
 
-bool NRE_GLES2_RenderBuffer::hasNotChanged(nre::gpu::TEXTURE_TYPE type_in, int x_in, int y_in) {
-    return (this->type == type_in) and (this->x == x_in) and (this->y == y_in);
+bool nre::gles2::renderbuffer_t::has_not_changed(nre::gpu::TEXTURE_TYPE type_in, int x_in, int y_in) {
+    return std::tie(this->type, this->x, this->y) == std::tie(type_in, x_in, y_in);
 }
 
 // ------------------------ API ---------------------- //
 
-std::size_t NRE_GLES2_API::getVAOSize(std::size_t id) {
-    this->check_vao_id_(id, "getVAOSize");
-    return this->vbos[this->vaos[id].layout[0].vertex_buffer].size / this->vaos[id].layout[0].stride;
+std::size_t nre::gles2::api_t::get_vao_size(std::size_t id) {
+    this->check_vao_id(id, "get_vao_size");
+    return this->vbos_[this->vaos_[id].layout[0].vertex_buffer].size / this->vaos_[id].layout[0].stride;
 }
 
 
-NRE_GLES2_API::NRE_GLES2_API(nre::gpu::info_struct& backend_info) {
+nre::gles2::api_t::api_t(nre::gpu::info_struct& backend_info) {
     this->vao_ibos_[0] = 0;
+    major_             = backend_info.major;
+    minor_             = backend_info.minor;
 
     // TODO: assume no extensions by default
     backend_info.has_indexed_ranged_draws = true;
@@ -94,41 +83,39 @@ NRE_GLES2_API::NRE_GLES2_API(nre::gpu::info_struct& backend_info) {
     for (auto extension_es : extensions_split) {
 
         if (extension_es == "GL_OES_packed_depth_stencil")
-            has_oes_packed_depth_stencil = true;
+            has_oes_packed_depth_stencil_ = true;
         else if (extension_es == "GL_OES_depth24")
-            has_oes_depth24 = true;
+            has_oes_depth24_ = true;
         else if (extension_es == "GL_OES_depth_texture")
-            has_oes_depth_texture = true;
+            has_oes_depth_texture_ = true;
         else if (extension_es == "GL_EXT_color_buffer_float")
-            has_ext_color_buffer_float = true;
+            has_ext_color_buffer_float_ = true;
         else if (extension_es == "GL_EXT_color_buffer_half_float")
-            has_ext_color_buffer_half_float = true;
+            has_ext_color_buffer_half_float_ = true;
         else if (extension_es == "GL_OES_element_index_uint")
-            has_oes_element_index_uint = true;
+            has_oes_element_index_uint_ = true;
         else if (extension_es == "GL_OES_texture_float")
-            has_oes_texture_float = true;
-        else if (extension_es == "GL_OES_element_index_uint")
-            has_oes_element_index_uint = true;
+            has_oes_texture_float_ = true;
         else
             continue;
     }
 #ifdef OE_PLATFORM_WEB
-    has_oes_element_index_uint = true; // always available on webgl
+    has_oes_element_index_uint_ = true; // always available on webgl
 #endif
 }
-NRE_GLES2_API::~NRE_GLES2_API() {
+nre::gles2::api_t::~api_t() {
 }
 
-void NRE_GLES2_API::update(uint32_t x_in, uint32_t y_in) {
+void nre::gles2::api_t::update(uint32_t x_in, uint32_t y_in, bool sanity_checks) {
 
-
-
+    sanity_checks_ = sanity_checks;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (x_in != nre::gpu::x or y_in != nre::gpu::y) {
+    if (x_in != x_ or y_in != y_) {
         glViewport(0, 0, x_in, y_in);
-        nre::gpu::x = x_in;
-        nre::gpu::y = y_in;
+        x_ = x_in;
+        y_ = y_in;
     }
+    // cout << this->prog_db_.size() << " " << this->vs_db_.size() << " " << this->fs_db_.size() << endl;
     glDepthMask(GL_TRUE);
     glStencilMask(0xFF);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -141,93 +128,109 @@ void NRE_GLES2_API::update(uint32_t x_in, uint32_t y_in) {
     for (auto x : this->vao_ibos_) {
         this->vao_ibos_[x.first] = 0;
     }
+    for (auto a_prog : this->prog_db_) {
+        this->prog_db_[a_prog.first].checked = false;
+        for (auto uniform : a_prog.second.uniforms) {
+            this->prog_db_[a_prog.first].uniforms[uniform.first].checked = false;
+        }
+    }
 }
 
-void NRE_GLES2_API::destroy() {
-    for (auto x : std::exchange(rbos, {}))
+void nre::gles2::api_t::destroy() {
+    for (auto x : std::exchange(rbos_, {}))
         glDeleteRenderbuffers(1, &x.second.handle);
-    for (auto x : std::exchange(vbos, {}))
+    for (auto x : std::exchange(vbos_, {}))
         glDeleteBuffers(1, &x.second.handle);
-    for (auto x : std::exchange(ibos, {}))
+    for (auto x : std::exchange(ibos_, {}))
         glDeleteBuffers(1, &x.second.handle);
-    for (auto x : std::exchange(fbos, {}))
+    for (auto x : std::exchange(fbos_, {}))
         glDeleteFramebuffers(1, &x.second.handle);
-    for (auto x : std::exchange(textures, {}))
+    for (auto x : std::exchange(textures_, {}))
         glDeleteTextures(1, &x.second.handle);
-    for (auto x : std::exchange(prog_db, {})) {
+    for (auto x : std::exchange(prog_db_, {})) {
         glDeleteProgram(x.second.handle);
     }
-    for (auto x : std::exchange(vs_db, {})) {
+    for (auto x : std::exchange(vs_db_, {})) {
         glDeleteShader(x.second);
     }
-    for (auto x : std::exchange(fs_db, {})) {
+    for (auto x : std::exchange(fs_db_, {})) {
         glDeleteShader(x.second);
     }
 }
 
-std::string NRE_GLES2_API::getRenderingAPI() {
+std::string nre::gles2::api_t::get_rendering_api() {
 
-    return "OpenGL ES 2";
+    return "OpenGL ES 2/WebGL 1.0";
 }
 
 //-------------------Handle errors--------------------------------//
 
-void NRE_GLES2_API::check_rbo_id_(std::size_t id, const std::string& func) {
-    if (this->rbos.count(id) == 0) {
+void nre::gles2::api_t::check_rbo_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (this->rbos_.count(id) == 0) {
         throw nre::gpu::invalid_render_buffer(id, func);
     }
 }
 
-void NRE_GLES2_API::check_vbo_id_(std::size_t id, const std::string& func) {
-    if (this->vbos.count(id) == 0) {
+void nre::gles2::api_t::check_vbo_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (this->vbos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_buffer(id, func);
     }
 }
-void NRE_GLES2_API::check_ibo_id_(std::size_t id, const std::string& func) {
-    if (this->ibos.count(id) == 0) {
+void nre::gles2::api_t::check_ibo_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (this->ibos_.count(id) == 0) {
         throw nre::gpu::invalid_index_buffer(id, func);
     }
 }
 
-void NRE_GLES2_API::check_vbo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
-    if (off_len > this->vbos[id].size) {
+void nre::gles2::api_t::check_vbo_offset_length(std::size_t id, std::size_t off_len, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (off_len > this->vbos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "vertex", func);
     }
 }
 
-void NRE_GLES2_API::check_ibo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
-    if (off_len > this->ibos[id].size) {
+void nre::gles2::api_t::check_ibo_offset_length(std::size_t id, std::size_t off_len, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (off_len > this->ibos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "index", func);
     }
 }
 
-void NRE_GLES2_API::check_vao_id_(std::size_t id, const std::string& func) {
-    if (this->vaos.count(id) == 0) {
+void nre::gles2::api_t::check_vao_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (this->vaos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_layout(id, func);
     }
 }
 
-void NRE_GLES2_API::check_prog_id_(std::size_t id, const std::string& func) {
-    if (this->progs.count(id) == 0) {
+void nre::gles2::api_t::check_prog_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (this->progs_.count(id) == 0) {
         throw nre::gpu::invalid_program_id(id, func);
     }
 }
 
-void NRE_GLES2_API::check_prog_complete_(std::size_t id, const std::string& func) {
-    if (not this->progs[id].setup) {
+void nre::gles2::api_t::check_prog_complete(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (not this->progs_[id].setup) {
         throw nre::gpu::incomplete_program(id, func);
     }
 }
 
-void NRE_GLES2_API::check_prog_uniform_(std::size_t id, const std::string& name, const std::string& func) {
-    if (this->prog_db[this->progs[id]].hasUniform(name) == this->prog_db[this->progs[id]].uniforms.size()) {
+void nre::gles2::api_t::check_prog_uniform(std::size_t id, const std::string& name, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (not this->prog_db_[this->progs_[id]].has_uniform(name)) {
         throw nre::gpu::invalid_program_uniform(id, name, func);
     }
 }
 
-void NRE_GLES2_API::check_prog_uniform_property_(std::size_t id, const std::string& name, std::size_t length,
-                                                 const std::string& func, bool is_type_problem) {
-    auto uniform_typ = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+void nre::gles2::api_t::check_prog_uniform_property(std::size_t id, const std::string& name, std::size_t length,
+                                                    const std::string& func, bool is_type_problem) {
+    if (not sanity_checks_) return;
+    auto uniform_typ = this->prog_db_[this->progs_[id]].uniforms[name].type;
     bool is_vec2     = (uniform_typ == GL_FLOAT_VEC2) and (length >= 2);
     bool is_vec3     = (uniform_typ == GL_FLOAT_VEC3) and (length >= 3);
     bool is_vec4     = (uniform_typ == GL_FLOAT_VEC4) and (length >= 4);
@@ -239,60 +242,63 @@ void NRE_GLES2_API::check_prog_uniform_property_(std::size_t id, const std::stri
     }
 }
 
-void NRE_GLES2_API::check_vao_vbo_(std::size_t id, std::size_t vbo_id, const std::string& func) {
-    if (this->vbos.count(vbo_id) == 0) {
+void nre::gles2::api_t::check_vao_vbo(std::size_t id, std::size_t vbo_id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (this->vbos_.count(vbo_id) == 0) {
         throw nre::gpu::invalid_vertex_layout_buffer(id, vbo_id, func);
     }
 }
 
-void NRE_GLES2_API::check_fbo_id_(std::size_t id, const std::string& func) {
-    if (this->fbos.count(id) == 0) {
+void nre::gles2::api_t::check_fbo_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (this->fbos_.count(id) == 0) {
         throw nre::gpu::invalid_framebuffer(id, func);
     }
 }
 
-void NRE_GLES2_API::check_texture_id_(std::size_t id, const std::string& func) {
-    if (this->textures.count(id) == 0) {
+void nre::gles2::api_t::check_texture_id(std::size_t id, const std::string& func) {
+    if (not sanity_checks_) return;
+    if (this->textures_.count(id) == 0) {
         throw nre::gpu::invalid_texture(id, func);
     }
 }
 
-void NRE_GLES2_API::check_draw_range_(std::size_t id, std::size_t length, std::size_t offset, std::size_t count,
-                                      const std::string& func) {
+void nre::gles2::api_t::check_draw_range(std::size_t id, std::size_t length, std::size_t offset, std::size_t count,
+                                         const std::string& func) {
+    if (not sanity_checks_) return;
     if ((offset + count) > length) {
         throw nre::gpu::invalid_draw_range(id, length, offset, count, func);
     }
 }
 
-void NRE_GLES2_API::get_program_all_uniforms_(std::size_t id) {
+void nre::gles2::api_t::get_program_all_uniforms(std::size_t id) {
 
     GLint numUniforms = 0;
-    glGetProgramiv(this->prog_db[this->progs[id]].handle, GL_ACTIVE_UNIFORMS, &numUniforms);
+    glGetProgramiv(this->prog_db_[this->progs_[id]].handle, GL_ACTIVE_UNIFORMS, &numUniforms);
     for (GLint ida = 0; ida < numUniforms; ida++) {
 
         GLint name_length = 0;
 
-        glGetProgramiv(this->prog_db[this->progs[id]].handle, GL_ACTIVE_UNIFORM_MAX_LENGTH, &name_length);
+        glGetProgramiv(this->prog_db_[this->progs_[id]].handle, GL_ACTIVE_UNIFORM_MAX_LENGTH, &name_length);
         // cout << "uniforms:" << ida << " name length:" << name_length << endl;
 
         GLchar uniform_name[name_length];
         GLenum var_enum;
         GLint  uniform_size;
-        glGetActiveUniform(this->prog_db[this->progs[id]].handle, ida, name_length, &name_length, &uniform_size, &var_enum,
+        glGetActiveUniform(this->prog_db_[this->progs_[id]].handle, ida, name_length, &name_length, &uniform_size, &var_enum,
                            &uniform_name[0]);
 
         string actual_name   = string(uniform_name);
-        auto   uniform_state = NRE_GLES2_ProgramUniformState();
-        uniform_state.name   = actual_name;
-        uniform_state.slot   = -1;
+        auto   uniform_state = nre::gles2::program_uniform_state_t();
+        uniform_state.slot   = ida;
         uniform_state.type   = var_enum;
         uniform_state.size   = uniform_size;
         // cout << uniform_state.name << " " << uniform_state.type << " " << uniform_state.size << endl;
-        this->prog_db[this->progs[id]].uniforms.push_back(uniform_state);
+        this->prog_db_[this->progs_[id]].uniforms[actual_name] = uniform_state;
     }
 }
 
-int NRE_GLES2_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type) {
+int nre::gles2::api_t::teximage_internalformat(nre::gpu::TEXTURE_TYPE type) {
     switch (type) {
 
     case nre::gpu::FLOAT:
@@ -324,7 +330,7 @@ int NRE_GLES2_API::teximage_internalformat_(nre::gpu::TEXTURE_TYPE type) {
     return GL_RGB;
 }
 
-int NRE_GLES2_API::teximage_format_(nre::gpu::TEXTURE_TYPE type) {
+int nre::gles2::api_t::teximage_format(nre::gpu::TEXTURE_TYPE type) {
     switch (type) {
     case nre::gpu::FLOAT:
         return GL_RGB32F;
@@ -350,7 +356,7 @@ int NRE_GLES2_API::teximage_format_(nre::gpu::TEXTURE_TYPE type) {
     return GL_RGB;
 }
 
-int NRE_GLES2_API::teximage_type_(nre::gpu::TEXTURE_TYPE type) {
+int nre::gles2::api_t::teximage_textype(nre::gpu::TEXTURE_TYPE type) {
     switch (type) {
     case nre::gpu::FLOAT:
         return GL_FLOAT;
@@ -380,85 +386,85 @@ int NRE_GLES2_API::teximage_type_(nre::gpu::TEXTURE_TYPE type) {
 
 //---------------------Create Objects-----------------------------//
 
-std::size_t NRE_GLES2_API::newVertexBuffer() {
-    cur_vbo++;
-    this->vbos[cur_vbo] = NRE_GLES2_VertexBuffer();
-    glGenBuffers(1, &vbos[cur_vbo].handle);
-    return cur_vbo;
+std::size_t nre::gles2::api_t::new_vertex_buffer() {
+    cur_vbo_++;
+    this->vbos_[cur_vbo_] = nre::gles2::vertex_buffer_t();
+    glGenBuffers(1, &vbos_[cur_vbo_].handle);
+    return cur_vbo_;
 }
-std::size_t NRE_GLES2_API::newVertexLayout() {
-    cur_vao++;
-    this->vaos[cur_vao]                   = NRE_GLES2_VertexArray();
-    this->vao_ibos_[vaos[cur_vao].handle] = 0;
-    return cur_vao;
+std::size_t nre::gles2::api_t::new_vertex_layout() {
+    cur_vao_++;
+    this->vaos_[cur_vao_]                   = nre::gles2::vertex_array_t();
+    this->vao_ibos_[vaos_[cur_vao_].handle] = 0;
+    return cur_vao_;
 }
-std::size_t NRE_GLES2_API::newIndexBuffer() {
-    cur_ibo++;
-    this->ibos[cur_ibo] = NRE_GLES2_IndexBuffer();
-    glGenBuffers(1, &ibos[cur_ibo].handle);
-    return cur_ibo;
+std::size_t nre::gles2::api_t::new_index_buffer() {
+    cur_ibo_++;
+    this->ibos_[cur_ibo_] = nre::gles2::index_buffer_t();
+    glGenBuffers(1, &ibos_[cur_ibo_].handle);
+    return cur_ibo_;
 }
-std::size_t NRE_GLES2_API::newProgram() {
-    cur_prog++;
-    this->progs[cur_prog] = NRE_GLES2_Program();
-    return cur_prog;
-}
-
-std::size_t NRE_GLES2_API::newFrameBuffer() {
-    cur_fbo++;
-    this->fbos[cur_fbo] = NRE_GLES2_FrameBuffer();
-    glGenFramebuffers(1, &fbos[cur_fbo].handle);
-    return cur_fbo;
+std::size_t nre::gles2::api_t::new_program() {
+    cur_prog_++;
+    this->progs_[cur_prog_] = nre::gles2::program_t();
+    return cur_prog_;
 }
 
-std::size_t NRE_GLES2_API::newTexture() {
-    cur_texture++;
-    this->textures[cur_texture] = NRE_GLES2_Texture();
-    glGenTextures(1, &textures[cur_texture].handle);
-    return cur_texture;
+std::size_t nre::gles2::api_t::new_framebuffer() {
+    cur_fbo_++;
+    this->fbos_[cur_fbo_] = nre::gles2::framebuffer_t();
+    glGenFramebuffers(1, &fbos_[cur_fbo_].handle);
+    return cur_fbo_;
 }
 
-std::size_t NRE_GLES2_API::newRenderBuffer() {
-    cur_rbo++;
-    this->rbos[cur_rbo] = NRE_GLES2_RenderBuffer();
-    glGenRenderbuffers(1, &rbos[cur_rbo].handle);
-    return cur_rbo;
+std::size_t nre::gles2::api_t::new_texture() {
+    cur_texture_++;
+    this->textures_[cur_texture_] = nre::gles2::texture_t();
+    glGenTextures(1, &textures_[cur_texture_].handle);
+    return cur_texture_;
+}
+
+std::size_t nre::gles2::api_t::new_renderbuffer() {
+    cur_rbo_++;
+    this->rbos_[cur_rbo_] = nre::gles2::renderbuffer_t();
+    glGenRenderbuffers(1, &rbos_[cur_rbo_].handle);
+    return cur_rbo_;
 }
 
 //--------------------Render Buffer -------------------------------//
 
-void NRE_GLES2_API::setRenderBufferType(std::size_t id, nre::gpu::TEXTURE_TYPE a_type, int x, int y) {
-    this->check_rbo_id_(id, "setRenderBufferType");
+void nre::gles2::api_t::set_renderbuffer_textype(std::size_t id, nre::gpu::TEXTURE_TYPE a_type, int x, int y) {
+    this->check_rbo_id(id, "set_renderbuffer_textype");
 
-    if (this->rbos[id].hasNotChanged(a_type, x, y)) {
+    if (this->rbos_[id].has_not_changed(a_type, x, y)) {
         return;
     }
 
-    this->rbos[id].type = a_type;
-    this->rbos[id].x    = a_type;
-    this->rbos[id].y    = a_type;
+    this->rbos_[id].type = a_type;
+    this->rbos_[id].x    = a_type;
+    this->rbos_[id].y    = a_type;
 
-    glBindRenderbuffer(GL_RENDERBUFFER, this->rbos[id].handle);
-    glRenderbufferStorage(GL_RENDERBUFFER, this->teximage_internalformat_(a_type), x, y);
+    glBindRenderbuffer(GL_RENDERBUFFER, this->rbos_[id].handle);
+    glRenderbufferStorage(GL_RENDERBUFFER, this->teximage_internalformat(a_type), x, y);
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t rbo_id, int slot) {
-    this->check_rbo_id_(rbo_id, "setFrameBufferRenderBuffer");
-    this->check_fbo_id_(fbo_id, "setFrameBufferRenderBuffer");
+void nre::gles2::api_t::set_framebuffer_renderbuffer(std::size_t fbo_id, std::size_t rbo_id, int slot) {
+    this->check_rbo_id(rbo_id, "set_framebuffer_renderbuffer");
+    this->check_fbo_id(fbo_id, "set_framebuffer_renderbuffer");
 
-    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[fbo_id].handle);
-    glBindRenderbuffer(GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[fbo_id].handle);
+    glBindRenderbuffer(GL_RENDERBUFFER, this->rbos_[rbo_id].handle);
 
-    if (this->rbos[rbo_id].type != nre::gpu::DEPTHSTENCIL) {
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+    if (this->rbos_[rbo_id].type != nre::gpu::DEPTHSTENCIL) {
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_RENDERBUFFER, this->rbos_[rbo_id].handle);
     }
     else {
 #ifdef OE_PLATFORM_WEB
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos_[rbo_id].handle);
 #else
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos[rbo_id].handle);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->rbos_[rbo_id].handle);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->rbos_[rbo_id].handle);
 #endif
     }
 
@@ -467,106 +473,108 @@ void NRE_GLES2_API::setFrameBufferRenderBuffer(std::size_t fbo_id, std::size_t r
 
 //---------------------Vertex Buffer-----------------------------//
 
-void NRE_GLES2_API::setVertexBufferMemory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gles2::api_t::set_vertex_buffer_memory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_vbo_id_(id, "setVertexBufferMemory");
+    this->check_vbo_id(id, "set_vertex_buffer_memory");
 
-    this->vbos[id].size  = memory_size;
-    this->vbos[id].usage = buf_usage;
-    if (this->active_vbo_ != this->vbos[id].handle) {
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbos[id].handle);
-        this->active_vbo_ = this->vbos[id].handle;
+    this->vbos_[id].size  = memory_size;
+    this->vbos_[id].usage = buf_usage;
+    if (this->active_vbo_ != this->vbos_[id].handle) {
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbos_[id].handle);
+        this->active_vbo_ = this->vbos_[id].handle;
     }
-    glBufferData(GL_ARRAY_BUFFER, memory_size * sizeof(float), NULL, NRE2GLES2_BufferUse(buf_usage));
+    glBufferData(GL_ARRAY_BUFFER, memory_size * sizeof(float), NULL, nre::gles2::buffer_use(buf_usage));
 }
-void NRE_GLES2_API::setVertexBufferData(std::size_t id, const std::vector<float>& v, std::size_t offset) {
+void nre::gles2::api_t::set_vertex_buffer_data(std::size_t id, const std::vector<float>& v, std::size_t offset) {
 
-    this->check_vbo_id_(id, "setVertexBufferData");
-    this->check_vbo_offset_length_(id, offset + v.size(), "setVertexBufferData");
+    this->check_vbo_id(id, "set_vertex_buffer_data");
+    this->check_vbo_offset_length(id, offset + v.size(), "set_vertex_buffer_data");
 
-    if (this->active_vbo_ != this->vbos[id].handle) {
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbos[id].handle);
-        this->active_vbo_ = this->vbos[id].handle;
+    if (this->active_vbo_ != this->vbos_[id].handle) {
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbos_[id].handle);
+        this->active_vbo_ = this->vbos_[id].handle;
     }
     glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLuint>(offset) * sizeof(float), v.size() * sizeof(float), &v[0]);
 }
 
-void NRE_GLES2_API::setVertexBufferMemoryData(std::size_t id, const std::vector<float>& v, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gles2::api_t::set_vertex_buffer_memory_data(std::size_t id, const std::vector<float>& v,
+                                                      nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_vbo_id_(id, "setVertexBufferMemoryData");
+    this->check_vbo_id(id, "set_vertex_buffer_memory_data");
 
-    this->vbos[id].size  = v.size();
-    this->vbos[id].usage = buf_usage;
-    if (this->active_vbo_ != this->vbos[id].handle) {
-        glBindBuffer(GL_ARRAY_BUFFER, this->vbos[id].handle);
-        this->active_vbo_ = this->vbos[id].handle;
+    this->vbos_[id].size  = v.size();
+    this->vbos_[id].usage = buf_usage;
+    if (this->active_vbo_ != this->vbos_[id].handle) {
+        glBindBuffer(GL_ARRAY_BUFFER, this->vbos_[id].handle);
+        this->active_vbo_ = this->vbos_[id].handle;
     }
-    glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(float), &v[0], NRE2GLES2_BufferUse(buf_usage));
+    glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(float), &v[0], nre::gles2::buffer_use(buf_usage));
 }
 
-void NRE_GLES2_API::deleteVertexBuffer(std::size_t id) {
-    this->check_vbo_id_(id, "deleteVertexBuffer");
+void nre::gles2::api_t::delete_vertex_buffer(std::size_t id) {
+    this->check_vbo_id(id, "delete_vertex_buffer");
 
-    glDeleteBuffers(1, &this->vbos[id].handle);
+    glDeleteBuffers(1, &this->vbos_[id].handle);
     this->active_vbo_ = 0;
-    this->vbos.erase(id);
+    this->vbos_.erase(id);
 }
 
 //--------------------Index Buffer-------------------------------//
 
-void NRE_GLES2_API::setIndexBufferMemory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gles2::api_t::set_index_buffer_memory(std::size_t id, std::size_t memory_size, nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_ibo_id_(id, "setIndexBufferMemory");
+    this->check_ibo_id(id, "set_index_buffer_memory");
 
-    this->ibos[id].size  = memory_size;
-    this->ibos[id].usage = buf_usage;
-    this->ibos[id].type_ = GL_UNSIGNED_INT;
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
+    this->ibos_[id].size  = memory_size;
+    this->ibos_[id].usage = buf_usage;
+    this->ibos_[id].type_ = GL_UNSIGNED_INT;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[id].handle;
     }
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, memory_size * sizeof(uint32_t), NULL, NRE2GLES2_BufferUse(buf_usage));
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, memory_size * sizeof(uint32_t), NULL, nre::gles2::buffer_use(buf_usage));
 }
 
-void NRE_GLES2_API::setIndexBufferData(std::size_t id, const std::vector<uint32_t>& v, std::size_t offset) {
+void nre::gles2::api_t::set_index_buffer_data(std::size_t id, const std::vector<uint32_t>& v, std::size_t offset) {
 
-    this->check_ibo_id_(id, "setIndexBufferData");
-    this->check_ibo_offset_length_(id, offset + v.size(), "setIndexBufferData");
+    this->check_ibo_id(id, "set_index_buffer_data");
+    this->check_ibo_offset_length(id, offset + v.size(), "set_index_buffer_data");
 
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[id].handle;
     }
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(offset) * sizeof(uint32_t), v.size() * sizeof(uint32_t),
                     &v[0]);
 }
 
-void NRE_GLES2_API::setIndexBufferMemoryData(std::size_t id, const std::vector<uint32_t>& v, nre::gpu::BUFFER_USAGE buf_usage) {
+void nre::gles2::api_t::set_index_buffer_memory_data(std::size_t id, const std::vector<uint32_t>& v,
+                                                     nre::gpu::BUFFER_USAGE buf_usage) {
 
-    this->check_ibo_id_(id, "setIndexBufferMemoryData");
+    this->check_ibo_id(id, "set_index_buffer_memory_data");
 
-    this->ibos[id].size  = v.size();
-    this->ibos[id].usage = buf_usage;
+    this->ibos_[id].size  = v.size();
+    this->ibos_[id].usage = buf_usage;
     if (v.size() == 0) {
         return;
     }
 
-    if (this->vao_ibos_[this->active_vao_] != this->ibos[id].handle) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[id].handle);
-        this->vao_ibos_[this->active_vao_] = this->ibos[id].handle;
+    if (this->vao_ibos_[this->active_vao_] != this->ibos_[id].handle) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[id].handle);
+        this->vao_ibos_[this->active_vao_] = this->ibos_[id].handle;
     }
-    if ((*std::max_element(v.begin(), v.end()) >= 65536) and has_oes_element_index_uint) {
+    if ((*std::max_element(v.begin(), v.end()) >= 65536) and has_oes_element_index_uint_) {
         // 32-bit index buffer needed
-        this->ibos[id].type_ = GL_UNSIGNED_INT;
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size() * sizeof(uint32_t), &v[0], NRE2GLES2_BufferUse(buf_usage));
+        this->ibos_[id].type_ = GL_UNSIGNED_INT;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size() * sizeof(uint32_t), &v[0], nre::gles2::buffer_use(buf_usage));
     }
-    else if (not has_oes_element_index_uint) {
+    else if (not has_oes_element_index_uint_) {
         cout << "NRE WARNING: 32-bit index buffers are not supported on this GPU. Please split your mesh into smaller ones."
              << endl;
     }
     else {
         // optimization to 16-bit buffer can happen
-        this->ibos[id].type_ = GL_UNSIGNED_SHORT;
+        this->ibos_[id].type_ = GL_UNSIGNED_SHORT;
 
         // copy to 16-bit buffer
         std::vector<uint16_t> v_16bit;
@@ -575,39 +583,39 @@ void NRE_GLES2_API::setIndexBufferMemoryData(std::size_t id, const std::vector<u
             v_16bit.push_back(x);
         }
 
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size() * sizeof(uint16_t), &v_16bit[0], NRE2GLES2_BufferUse(buf_usage));
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, v.size() * sizeof(uint16_t), &v_16bit[0], nre::gles2::buffer_use(buf_usage));
     }
 }
 
-void NRE_GLES2_API::deleteIndexBuffer(std::size_t id) {
+void nre::gles2::api_t::delete_index_buffer(std::size_t id) {
 
-    this->check_ibo_id_(id, "deleteIndexBuffer");
+    this->check_ibo_id(id, "delete_index_buffer");
 
-    glDeleteBuffers(1, &this->ibos[id].handle);
+    glDeleteBuffers(1, &this->ibos_[id].handle);
     this->vao_ibos_[this->active_vao_] = 0;
-    this->ibos.erase(id);
+    this->ibos_.erase(id);
 }
 
 //----------------------Uniform State ----------------//
 
-void NRE_GLES2_API::setProgramTextureSlot(std::size_t id, std::string name, int slot) {
-    this->check_prog_id_(id, "setProgramTextureSlot");
-    this->check_prog_complete_(id, "setProgramUniformData");
-    this->check_prog_uniform_(id, name, "setProgramTextureSlot");
+void nre::gles2::api_t::set_program_texture_slot(std::size_t id, const std::string& name, int slot) {
+    this->check_prog_id(id, "set_program_texture_slot");
+    this->check_prog_complete(id, "set_program_texture_slot");
+    this->check_prog_uniform(id, name, "set_program_texture_slot");
 
-    if (this->active_prog_ != this->progs[id].handle) {
-        glUseProgram(this->progs[id].handle);
-        this->active_prog_ = this->progs[id].handle;
+    if (this->active_prog_ != this->progs_[id].handle) {
+        glUseProgram(this->progs_[id].handle);
+        this->active_prog_ = this->progs_[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
     if ((uniform_type_enum == GL_SAMPLER_2D) or (uniform_type_enum == GL_SAMPLER_2D_SHADOW)) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1i(this->prog_db[this->progs[id]].hasUniform(name), slot);
+        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[name].slot, slot);
 #else
-        glUniform1i(glGetUniformLocation(this->progs[id].handle, name.c_str()), slot);
+        glUniform1i(glGetUniformLocation(this->progs_[id].handle, name.c_str()), slot);
 #endif
     }
     else {
@@ -616,24 +624,24 @@ void NRE_GLES2_API::setProgramTextureSlot(std::size_t id, std::string name, int 
     }
 }
 
-void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, uint32_t data) {
-    this->check_prog_id_(id, "setProgramUniformData");
-    this->check_prog_complete_(id, "setProgramUniformData");
-    this->check_prog_uniform_(id, name, "setProgramUniformData");
+void nre::gles2::api_t::set_program_uniform_data(std::size_t id, const std::string& name, uint32_t data) {
+    this->check_prog_id(id, "set_program_uniform_data");
+    this->check_prog_complete(id, "set_program_uniform_data");
+    this->check_prog_uniform(id, name, "set_program_uniform_data");
 
-    if (this->active_prog_ != this->progs[id].handle) {
-        glUseProgram(this->progs[id].handle);
-        this->active_prog_ = this->progs[id].handle;
+    if (this->active_prog_ != this->progs_[id].handle) {
+        glUseProgram(this->progs_[id].handle);
+        this->active_prog_ = this->progs_[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
     if (uniform_type_enum == GL_INT) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1i(this->prog_db[this->progs[id]].hasUniform(name), data);
+        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[name].slot, data);
 #else
-        glUniform1i(glGetUniformLocation(this->progs[id].handle, name.c_str()), data);
+        glUniform1i(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data);
 #endif
     }
     else {
@@ -642,24 +650,24 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, uint
     }
 }
 
-void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, float data) {
-    this->check_prog_id_(id, "setProgramUniformData");
-    this->check_prog_complete_(id, "setProgramUniformData");
-    this->check_prog_uniform_(id, name, "setProgramUniformData");
+void nre::gles2::api_t::set_program_uniform_data(std::size_t id, const std::string& name, float data) {
+    this->check_prog_id(id, "set_program_uniform_data");
+    this->check_prog_complete(id, "set_program_uniform_data");
+    this->check_prog_uniform(id, name, "set_program_uniform_data");
 
-    if (this->active_prog_ != this->progs[id].handle) {
-        glUseProgram(this->progs[id].handle);
-        this->active_prog_ = this->progs[id].handle;
+    if (this->active_prog_ != this->progs_[id].handle) {
+        glUseProgram(this->progs_[id].handle);
+        this->active_prog_ = this->progs_[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
     if (uniform_type_enum == GL_FLOAT) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1f(this->prog_db[this->progs[id]].hasUniform(name), data);
+        glUniform1f(this->prog_db_[this->progs_[id]].uniforms[name].slot, data);
 #else
-        glUniform1f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data);
+        glUniform1f(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data);
 #endif
     }
     else {
@@ -668,23 +676,23 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, floa
     }
 }
 
-void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, const std::vector<float>& data) {
-    this->check_prog_id_(id, "setProgramUniformData");
-    this->check_prog_complete_(id, "setProgramUniformData");
-    this->check_prog_uniform_(id, name, "setProgramUniformData");
-    this->check_prog_uniform_property_(id, name, data.size(), "setProgramUniformData", false);
+void nre::gles2::api_t::set_program_uniform_data(std::size_t id, const std::string& name, const std::vector<float>& data) {
+    this->check_prog_id(id, "set_program_uniform_data");
+    this->check_prog_complete(id, "set_program_uniform_data");
+    this->check_prog_uniform(id, name, "set_program_uniform_data");
+    this->check_prog_uniform_property(id, name, data.size(), "set_program_uniform_data", false);
 
 
-    if (this->active_prog_ != this->progs[id].handle) {
-        glUseProgram(this->progs[id].handle);
-        this->active_prog_ = this->progs[id].handle;
+    if (this->active_prog_ != this->progs_[id].handle) {
+        glUseProgram(this->progs_[id].handle);
+        this->active_prog_ = this->progs_[id].handle;
     }
-    auto uniform_type_enum = this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].type;
+    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
     // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
     // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
     // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-    auto uniform_id = this->prog_db[this->progs[id]].hasUniform(name);
+    auto uniform_id = this->prog_db_[this->progs_[id]].uniforms[name].slot;
     if (uniform_type_enum == GL_FLOAT_VEC2) {
         glUniform2f(uniform_id, data[0], data[1]);
     }
@@ -704,73 +712,73 @@ void NRE_GLES2_API::setProgramUniformData(std::size_t id, std::string name, cons
     }
 #else
     if (uniform_type_enum == GL_FLOAT_VEC2) {
-        glUniform2f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data[0], data[1]);
+        glUniform2f(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data[0], data[1]);
     }
     else if (uniform_type_enum == GL_FLOAT_VEC3) {
-        glUniform3f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data[0], data[1], data[2]);
+        glUniform3f(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data[0], data[1], data[2]);
     }
     else if ((uniform_type_enum == GL_FLOAT_VEC4) or (uniform_type_enum == GL_FLOAT_MAT2)) {
-        glUniform4f(glGetUniformLocation(this->progs[id].handle, name.c_str()), data[0], data[1], data[2], data[3]);
+        glUniform4f(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data[0], data[1], data[2], data[3]);
     }
     else if (uniform_type_enum == GL_FLOAT_MAT3) {
-        glUniformMatrix3fv(glGetUniformLocation(this->progs[id].handle, name.c_str()), 1, false, &data[0]);
+        glUniformMatrix3fv(glGetUniformLocation(this->progs_[id].handle, name.c_str()), 1, false, &data[0]);
     }
     else if (uniform_type_enum == GL_FLOAT_MAT4) {
         // cout << "SUCCESS" << id << " " << name <<  endl;
 
-        glUniformMatrix4fv(glGetUniformLocation(this->progs[id].handle, name.c_str()), 1, false, &data[0]);
+        glUniformMatrix4fv(glGetUniformLocation(this->progs_[id].handle, name.c_str()), 1, false, &data[0]);
     }
 #endif
     else {
-        throw nre::gpu::invalid_uniform_property(id, name, data.size(), "setProgramUniformData", true);
+        throw nre::gpu::invalid_uniform_property(id, name, data.size(), "set_program_uniform_data", true);
     }
 }
 
-int NRE_GLES2_API::getProgramUniformSlot(std::size_t id, std::string name) {
-    this->check_prog_id_(id, "getProgramUniformSlot");
-    this->check_prog_complete_(id, "getProgramUniformSlot");
-    if (this->prog_db[this->progs[id]].hasUniform(name) != this->prog_db[this->progs[id]].uniforms.size()) {
-        return this->prog_db[this->progs[id]].uniforms[this->prog_db[this->progs[id]].hasUniform(name)].slot;
+int nre::gles2::api_t::get_program_uniform_slot(std::size_t id, const std::string& name) {
+    this->check_prog_id(id, "get_program_uniform_slot");
+    this->check_prog_complete(id, "get_program_uniform_slot");
+    if (this->prog_db_[this->progs_[id]].has_uniform(name)) {
+        return this->prog_db_[this->progs_[id]].uniforms[name].slot;
     }
     return -2;
 }
 
 //---------------------Vertex Layout-----------------------------//
 
-void NRE_GLES2_API::setVertexLayoutFormat(std::size_t id, std::vector<nre::gpu::vertex_layout_input> inputs) {
+void nre::gles2::api_t::set_vertex_layout_format(std::size_t id, std::vector<nre::gpu::vertex_layout_input> inputs) {
 
-    this->check_vao_id_(id, "setVertexlayoutFormat");
+    this->check_vao_id(id, "setVertexlayout_format");
 
-    this->vaos[id].layout = inputs;
+    this->vaos_[id].layout = inputs;
     for (size_t x = 0; x < inputs.size(); x++) {
-        this->check_vao_vbo_(id, inputs[x].vertex_buffer, "setVertexLayoutFormat");
+        this->check_vao_vbo(id, inputs[x].vertex_buffer, "set_vertex_layout_format");
     }
 }
 
-void NRE_GLES2_API::deleteVertexLayout(std::size_t id) {
-    this->check_vao_id_(id, "deleteVertexLayout");
-    // glDeleteVertexArrays(1, &this->vaos[id].handle);
+void nre::gles2::api_t::delete_vertex_layout(std::size_t id) {
+    this->check_vao_id(id, "delete_vertex_layout");
+    // glDeleteVertexArrays(1, &this->vaos_[id].handle);
     this->active_vao_ = 0;
-    this->vaos.erase(id);
+    this->vaos_.erase(id);
 }
 
 //-----------------------Textures and Framebuffers -------------//
 
-void NRE_GLES2_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type, nre::gpu::TEXTURE_FILTER filter,
-                                     uint32_t x_in, uint32_t y_in, int mipmap_count) {
-    this->check_texture_id_(id, "setTextureFormat");
+void nre::gles2::api_t::set_texture_format(std::size_t id, nre::gpu::TEXTURE_TYPE type, nre::gpu::TEXTURE_FILTER filter,
+                                           uint32_t x_in, uint32_t y_in, int mipmap_count) {
+    this->check_texture_id(id, "set_texture_format");
 
-    if (this->textures[id].hasNotChanged(type, filter, x_in, y_in, mipmap_count)) return;
+    if (this->textures_[id].has_not_changed(type, filter, x_in, y_in, mipmap_count)) return;
 
-    this->textures[id].type    = type;
-    this->textures[id].filter  = filter;
-    this->textures[id].x       = x_in;
-    this->textures[id].y       = y_in;
-    this->textures[id].mipmaps = mipmap_count;
+    this->textures_[id].type    = type;
+    this->textures_[id].filter  = filter;
+    this->textures_[id].x       = x_in;
+    this->textures_[id].y       = y_in;
+    this->textures_[id].mipmaps = mipmap_count;
 
 
-    glBindTexture(GL_TEXTURE_2D, this->textures[id].handle);
-    glTexImage2D(GL_TEXTURE_2D, 0, teximage_internalformat_(type), x_in, y_in, 0, teximage_format_(type), teximage_type_(type),
+    glBindTexture(GL_TEXTURE_2D, this->textures_[id].handle);
+    glTexImage2D(GL_TEXTURE_2D, 0, teximage_internalformat(type), x_in, y_in, 0, teximage_format(type), teximage_textype(type),
                  0);
     if (mipmap_count == 0 and filter == nre::gpu::LINEAR) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -794,53 +802,53 @@ void NRE_GLES2_API::setTextureFormat(std::size_t id, nre::gpu::TEXTURE_TYPE type
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::setFrameBufferTexture(std::size_t fbo_id, std::size_t texture_id, int slot) {
-    this->check_fbo_id_(fbo_id, "setFrameBufferTexture");
-    this->check_texture_id_(texture_id, "setFrameBufferTexture");
+void nre::gles2::api_t::set_framebuffer_texture(std::size_t fbo_id, std::size_t texture_id, int slot) {
+    this->check_fbo_id(fbo_id, "set_framebufferTexture");
+    this->check_texture_id(texture_id, "set_framebufferTexture");
     assert((slot >= 0) and (slot < 3));
 
-    this->fbos[fbo_id].texture = texture_id;
+    this->fbos_[fbo_id].texture = texture_id;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[fbo_id].handle);
-    glBindTexture(GL_TEXTURE_2D, this->textures[texture_id].handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[fbo_id].handle);
+    glBindTexture(GL_TEXTURE_2D, this->textures_[texture_id].handle);
 
-    if (this->textures[texture_id].type != nre::gpu::DEPTHSTENCIL) {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_TEXTURE_2D, this->textures[texture_id].handle,
+    if (this->textures_[texture_id].type != nre::gpu::DEPTHSTENCIL) {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, GL_TEXTURE_2D, this->textures_[texture_id].handle,
                                0);
     }
     else {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, this->textures[texture_id].handle,
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, this->textures_[texture_id].handle,
                                0);
     }
 
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::setTextureSlot(std::size_t id, int slot) {
-    this->check_texture_id_(id, "setTextureSlot");
+void nre::gles2::api_t::set_texture_slot(std::size_t id, int slot) {
+    this->check_texture_id(id, "set_texture_slot");
     glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D, this->textures[id].handle);
+    glBindTexture(GL_TEXTURE_2D, this->textures_[id].handle);
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::deleteTexture(std::size_t id) {
-    this->check_texture_id_(id, "deleteTexture");
-    glDeleteTextures(1, &this->textures[id].handle);
-    this->textures.erase(id);
+void nre::gles2::api_t::delete_texture(std::size_t id) {
+    this->check_texture_id(id, "delete_texture");
+    glDeleteTextures(1, &this->textures_[id].handle);
+    this->textures_.erase(id);
 }
 
-void NRE_GLES2_API::copyFrameBuffer(std::size_t src, std::size_t target, nre::gpu::FRAMEBUFFER_COPY method) {
-    this->check_fbo_id_(src, "copyFrameBuffer");
-    this->check_texture_id_(this->fbos[src].texture, "copyFrameBuffer");
+void nre::gles2::api_t::copy_framebuffer(std::size_t src, std::size_t target, nre::gpu::FRAMEBUFFER_COPY method) {
+    this->check_fbo_id(src, "copy_framebuffer");
+    this->check_texture_id(this->fbos_[src].texture, "copy_framebuffer");
 
-    auto x_tmp = this->textures[this->fbos[src].texture].x;
-    auto y_tmp = this->textures[this->fbos[src].texture].y;
+    auto x_tmp = this->textures_[this->fbos_[src].texture].x;
+    auto y_tmp = this->textures_[this->fbos_[src].texture].y;
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, this->fbos[src].handle);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, this->fbos_[src].handle);
     if (target != 0) {
-        this->check_fbo_id_(target, "copyFrameBuffer");
-        this->check_texture_id_(this->fbos[target].texture, "copyFrameBuffer");
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, this->fbos[target].handle);
+        this->check_fbo_id(target, "copy_framebuffer");
+        this->check_texture_id(this->fbos_[target].texture, "copy_framebuffer");
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, this->fbos_[target].handle);
     }
     else {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -858,10 +866,10 @@ void NRE_GLES2_API::copyFrameBuffer(std::size_t src, std::size_t target, nre::gp
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY clear, float alpha_value) {
-    this->check_fbo_id_(id, "clearFrameBuffer");
+void nre::gles2::api_t::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY clear, float alpha_value) {
+    this->check_fbo_id(id, "clear_framebuffer");
 
-    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[id].handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[id].handle);
     glDepthMask(GL_TRUE);
     glColorMask(1, 1, 1, 1);
     glClearColor(0.0f, 0.0f, 0.0f, alpha_value);
@@ -884,10 +892,10 @@ void NRE_GLES2_API::clearFrameBuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY 
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::useFrameBuffer(std::size_t id) {
+void nre::gles2::api_t::use_framebuffer(std::size_t id) {
     if (id != 0) {
-        this->check_fbo_id_(id, "useFrameBuffer");
-        glBindFramebuffer(GL_FRAMEBUFFER, this->fbos[id].handle);
+        this->check_fbo_id(id, "use_framebuffer");
+        glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[id].handle);
     }
     else {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -896,42 +904,42 @@ void NRE_GLES2_API::useFrameBuffer(std::size_t id) {
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::deleteFrameBuffer(std::size_t id) {
-    this->check_fbo_id_(id, "deleteFrameBuffer");
-    glDeleteFramebuffers(1, &this->fbos[id].handle);
-    this->fbos.erase(id);
+void nre::gles2::api_t::delete_framebuffer(std::size_t id) {
+    this->check_fbo_id(id, "delete_framebuffer");
+    glDeleteFramebuffers(1, &this->fbos_[id].handle);
+    this->fbos_.erase(id);
 }
 
 //---------------------Shader Programs-----------------------------//
 
-void NRE_GLES2_API::setProgramVS(std::size_t id, nre::gpu::vertex_shader vs) {
-    this->check_prog_id_(id, "setProgramVS");
+void nre::gles2::api_t::set_program_vs(std::size_t id, nre::gpu::vertex_shader_t vs) {
+    this->check_prog_id(id, "set_program_vs");
 
-    this->progs[id].vs_setup = false;
-    this->progs[id].setup    = false;
-    this->progs[id].vs       = vs;
+    this->progs_[id].vs_setup = false;
+    this->progs_[id].setup    = false;
+    this->progs_[id].vs       = vs;
 }
-void NRE_GLES2_API::setProgramFS(std::size_t id, nre::gpu::pixel_shader fs) {
-    this->check_prog_id_(id, "setProgramFS");
+void nre::gles2::api_t::set_program_fs(std::size_t id, nre::gpu::pixel_shader_t fs) {
+    this->check_prog_id(id, "set_program_fs");
 
-    this->progs[id].fs_setup = false;
-    this->progs[id].setup    = false;
-    this->progs[id].fs       = fs;
+    this->progs_[id].fs_setup = false;
+    this->progs_[id].setup    = false;
+    this->progs_[id].fs       = fs;
 }
 
-void NRE_GLES2_API::setProgramVS(std::size_t id, std::string data) {
+void nre::gles2::api_t::set_program_vs(std::size_t id, std::string data) {
 
     data = data + "";
-    this->check_prog_id_(id, "setProgramVS - internal");
+    this->check_prog_id(id, "set_program_vs - internal");
     GLuint shader_id;
-    if (!this->progs[id].vs_setup)
+    if (!this->progs_[id].vs_setup)
         shader_id = glCreateShader(GL_VERTEX_SHADER);
     else
-        shader_id = this->progs[id].vs_handle;
+        shader_id = this->progs_[id].vs_handle;
 
-    this->progs[id].vs_setup  = true;
-    this->progs[id].vs_handle = shader_id;
-    this->progs[id].setup     = false;
+    this->progs_[id].vs_setup  = true;
+    this->progs_[id].vs_handle = shader_id;
+    this->progs_[id].setup     = false;
 
     /// compile and attach shader
     const char* c_str = data.c_str();
@@ -951,26 +959,26 @@ void NRE_GLES2_API::setProgramVS(std::size_t id, std::string data) {
         glGetShaderInfoLog(shader_id, max_length, &actual_length, log);
 
         stringstream ss;
-        ss << "[NRE GL Shader Warning] in vertex shader: " << this->progs[id].vs.info() << endl << log << endl;
+        ss << "[NRE GL Shader Warning] in vertex shader: " << this->progs_[id].vs.info() << endl << log << endl;
         cout << ss.str();
         OE_WriteToLog(ss.str());
     }
 }
 
-// void setProgramGS(std::size_t, FE_GPU_Shader){}
-void NRE_GLES2_API::setProgramFS(std::size_t id, std::string data) {
+// void set_programGS(std::size_t, FE_GPU_Shader){}
+void nre::gles2::api_t::set_program_fs(std::size_t id, std::string data) {
 
     data = data + "";
-    this->check_prog_id_(id, "setProgramFS - internal");
+    this->check_prog_id(id, "set_program_fs - internal");
     GLuint shader_id;
-    if (!this->progs[id].fs_setup)
+    if (!this->progs_[id].fs_setup)
         shader_id = glCreateShader(GL_FRAGMENT_SHADER);
     else
-        shader_id = this->progs[id].fs_handle;
+        shader_id = this->progs_[id].fs_handle;
 
-    this->progs[id].fs_setup  = true;
-    this->progs[id].fs_handle = shader_id;
-    this->progs[id].setup     = false;
+    this->progs_[id].fs_setup  = true;
+    this->progs_[id].fs_handle = shader_id;
+    this->progs_[id].setup     = false;
 
     /// compile and attach shader
     const char* c_str     = data.c_str();
@@ -989,156 +997,156 @@ void NRE_GLES2_API::setProgramFS(std::size_t id, std::string data) {
         glGetShaderInfoLog(shader_id, max_length, &actual_length, log);
 
         stringstream ss;
-        ss << "[NRE GL Shader Warning] in pixel shader: " << this->progs[id].fs.info() << endl << log << endl;
+        ss << "[NRE GL Shader Warning] in pixel shader: " << this->progs_[id].fs.info() << endl << log << endl;
         cout << ss.str();
         OE_WriteToLog(ss.str());
     }
 }
 
-// void setProgramTCS(std::size_t, FE_GPU_Shader){}
-// void setProgramTES(std::size_t, FE_GPU_Shader){}
+// void set_programTCS(std::size_t, FE_GPU_Shader){}
+// void set_programTES(std::size_t, FE_GPU_Shader){}
 
-void NRE_GLES2_API::setupProgram(std::size_t id) {
+void nre::gles2::api_t::setup_program(std::size_t id) {
 
-    this->check_prog_id_(id, "setupProgram");
+    this->check_prog_id(id, "setup_program");
 
     // ignore if the program is already setup
-    if (this->progs[id].setup) return;
+    if (this->progs_[id].setup) return;
 
     // setup vertex shader
-    if (!this->progs[id].vs_setup) {
-        if (this->vs_db.count(this->progs[id].vs) == 0) {
+    if (!this->progs_[id].vs_setup) {
+        if (this->vs_db_.count(this->progs_[id].vs) == 0) {
 
             // vertex shader does not exist, make a new entry
-            this->setProgramVS(id, this->progs[id].vs.gen_shader());
-            this->vs_db[this->progs[id].vs] = this->progs[id].vs_handle;
+            this->set_program_vs(id, this->progs_[id].vs.gen_shader());
+            this->vs_db_[this->progs_[id].vs] = this->progs_[id].vs_handle;
         }
         else {
 
             // vertex shader already exists, reuse that
-            this->progs[id].vs_handle = this->vs_db[this->progs[id].vs];
-            this->progs[id].vs_setup  = true;
+            this->progs_[id].vs_handle = this->vs_db_[this->progs_[id].vs];
+            this->progs_[id].vs_setup  = true;
         }
     }
 
     // setup pixel (fragment) shader
-    if (!this->progs[id].fs_setup) {
-        if (this->fs_db.count(this->progs[id].fs) == 0) {
+    if (!this->progs_[id].fs_setup) {
+        if (this->fs_db_.count(this->progs_[id].fs) == 0) {
 
             // pixel (fragment) shader does not exist, make a new entry
-            this->setProgramFS(id, this->progs[id].fs.gen_shader());
+            this->set_program_fs(id, this->progs_[id].fs.gen_shader());
 
-            this->fs_db[this->progs[id].fs] = this->progs[id].fs_handle;
-            this->progs[id].fs_setup        = true;
+            this->fs_db_[this->progs_[id].fs] = this->progs_[id].fs_handle;
+            this->progs_[id].fs_setup         = true;
         }
         else {
 
             // pixel (fragment) shader already exists, reuse that
-            this->progs[id].fs_handle = this->fs_db[this->progs[id].fs];
-            this->progs[id].fs_setup  = true;
+            this->progs_[id].fs_handle = this->fs_db_[this->progs_[id].fs];
+            this->progs_[id].fs_setup  = true;
         }
     }
 
     // check if program already exists
-    if (this->prog_db.count(this->progs[id]) > 0) {
+    if (this->prog_db_.count(this->progs_[id]) > 0) {
 
-        this->progs[id].handle = this->prog_db[this->progs[id]].handle;
-        this->progs[id].setup  = true;
+        this->progs_[id].handle = this->prog_db_[this->progs_[id]].handle;
+        this->progs_[id].setup  = true;
 
         return;
     }
     else {
-        this->progs[id].handle = glCreateProgram();
-        // this->prog_db[this->progs[id]] = this->progs[id].handle;
-        this->prog_db[this->progs[id]]        = NRE_GLES2_ProgramData();
-        this->prog_db[this->progs[id]].handle = this->progs[id].handle;
+        this->progs_[id].handle = glCreateProgram();
+        // this->prog_db_[this->progs_[id]] = this->progs_[id].handle;
+        this->prog_db_[this->progs_[id]]        = nre::gles2::program_data_t();
+        this->prog_db_[this->progs_[id]].handle = this->progs_[id].handle;
     }
 
     // make sure that the vertex and fragment shaders actually compile
     // in case the program does not already exist
-    assert(this->progs[id].vs_setup && this->progs[id].fs_setup);
+    assert(this->progs_[id].vs_setup && this->progs_[id].fs_setup);
 
-    glAttachShader(this->progs[id].handle, this->progs[id].vs_handle);
-    glAttachShader(this->progs[id].handle, this->progs[id].fs_handle);
+    glAttachShader(this->progs_[id].handle, this->progs_[id].vs_handle);
+    glAttachShader(this->progs_[id].handle, this->progs_[id].fs_handle);
 
-    glBindAttribLocation(this->progs[id].handle, 0, "oe_position");
+    glBindAttribLocation(this->progs_[id].handle, 0, "oe_position");
 
-    if (not(this->progs[id].vs.fullscreenQuad or (this->progs[id].vs.type == nre::gpu::VS_Z_PREPASS))) {
-        glBindAttribLocation(this->progs[id].handle, 1, "oe_normals");
-        for (size_t i = 0; i < this->progs[id].vs.num_of_uvs; i++) {
+    if (not(this->progs_[id].vs.fullscreenQuad or (this->progs_[id].vs.type == nre::gpu::VS_Z_PREPASS))) {
+        glBindAttribLocation(this->progs_[id].handle, 1, "oe_normals");
+        for (size_t i = 0; i < this->progs_[id].vs.num_of_uvs; i++) {
             std::string attrib_name = "oe_uvs" + to_string(i);
-            glBindAttribLocation(this->progs[id].handle, i + 2, attrib_name.c_str());
+            glBindAttribLocation(this->progs_[id].handle, i + 2, attrib_name.c_str());
         }
     }
 
 
-    glLinkProgram(this->progs[id].handle);
+    glLinkProgram(this->progs_[id].handle);
 
 
     /// IMPORTANT: check if program is linked correctly
     int parameters = -1;
-    glGetProgramiv(this->progs[id].handle, GL_LINK_STATUS, &parameters);
+    glGetProgramiv(this->progs_[id].handle, GL_LINK_STATUS, &parameters);
     if (GL_TRUE != parameters) {
 
         int  max_length    = 2048;
         int  actual_length = 0;
         char log[2048];
-        glGetProgramInfoLog(this->progs[id].handle, max_length, &actual_length, log);
+        glGetProgramInfoLog(this->progs_[id].handle, max_length, &actual_length, log);
         cout << log << endl;
         OE_WriteToLog(log);
     }
 
     /// IMPORTANT: make sure program is runnable
-    glValidateProgram(this->progs[id].handle);
+    glValidateProgram(this->progs_[id].handle);
     parameters = -1;
-    glGetProgramiv(this->progs[id].handle, GL_VALIDATE_STATUS, &parameters);
+    glGetProgramiv(this->progs_[id].handle, GL_VALIDATE_STATUS, &parameters);
     if (GL_TRUE != parameters) {
 
         int  max_length    = 2048;
         int  actual_length = 0;
         char log[2048];
-        glGetProgramInfoLog(this->progs[id].handle, max_length, &actual_length, log);
+        glGetProgramInfoLog(this->progs_[id].handle, max_length, &actual_length, log);
 
         stringstream ss;
-        ss << "[NRE GL Shader Linking Warning] with shaders: " << this->progs[id].vs.info() << " " << this->progs[id].fs.info()
-           << endl
+        ss << "[NRE GL Shader Linking Warning] with shaders: " << this->progs_[id].vs.info() << " "
+           << this->progs_[id].fs.info() << endl
            << log << endl;
         cout << ss.str();
         OE_WriteToLog(ss.str());
     }
-    glUseProgram(this->progs[id].handle);
-    this->active_prog_ = this->progs[id].handle;
+    glUseProgram(this->progs_[id].handle);
+    this->active_prog_ = this->progs_[id].handle;
 
     /// get all active uniform blocks
-    this->get_program_all_uniforms_(id);
+    this->get_program_all_uniforms(id);
 
-    this->progs[id].setup = true;
+    this->progs_[id].setup = true;
 
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::deleteProgram(std::size_t id) {
+void nre::gles2::api_t::delete_program(std::size_t id) {
 
-    this->check_prog_id_(id, "deleteProgram");
+    this->check_prog_id(id, "delete_program");
 
     this->active_prog_ = 0;
-    this->progs.erase(id);
+    this->progs_.erase(id);
 }
 
 //---------------------Draw calls-----------------------------//
 
-void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info) {
+void nre::gles2::api_t::draw(nre::gpu::draw_call dc_info) {
 
-    this->check_prog_id_(dc_info.program, "draw");
-    this->check_vao_id_(dc_info.vertex_layout, "draw");
+    this->check_prog_id(dc_info.program, "draw");
+    this->check_vao_id(dc_info.vertex_layout, "draw");
 
     bool is_ranged_rendering = (dc_info.offset != 0) or (dc_info.amount != 0);
 
     // program
-    this->setupProgram(dc_info.program);
-    if (this->active_prog_ != this->progs[dc_info.program].handle) {
-        glUseProgram(this->progs[dc_info.program].handle);
-        this->active_prog_ = this->progs[dc_info.program].handle;
+    this->setup_program(dc_info.program);
+    if (this->active_prog_ != this->progs_[dc_info.program].handle) {
+        glUseProgram(this->progs_[dc_info.program].handle);
+        this->active_prog_ = this->progs_[dc_info.program].handle;
     }
 
     // vao
@@ -1146,25 +1154,25 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info) {
     if (this->active_vao_ != vao_id) {
 
         // disable unused vertex attributes if enabled before
-        if (this->enabled_vao_attribs > this->vaos[vao_id].layout.size()) {
-            for (std::size_t i = this->enabled_vao_attribs; i > this->vaos[vao_id].layout.size(); i--) {
+        if (this->enabled_vao_attribs_ > this->vaos_[vao_id].layout.size()) {
+            for (std::size_t i = this->enabled_vao_attribs_; i > this->vaos_[vao_id].layout.size(); i--) {
                 glDisableVertexAttribArray(i);
             }
         }
 
-        for (size_t x = 0; x < this->vaos[vao_id].layout.size(); x++) {
+        for (size_t x = 0; x < this->vaos_[vao_id].layout.size(); x++) {
 
-            this->check_vao_vbo_(vao_id, this->vaos[vao_id].layout[x].vertex_buffer, "draw");
+            this->check_vao_vbo(vao_id, this->vaos_[vao_id].layout[x].vertex_buffer, "draw");
 
-            glBindBuffer(GL_ARRAY_BUFFER, this->vbos[this->vaos[vao_id].layout[x].vertex_buffer].handle);
+            glBindBuffer(GL_ARRAY_BUFFER, this->vbos_[this->vaos_[vao_id].layout[x].vertex_buffer].handle);
             glVertexAttribPointer(
-                x, this->vaos[vao_id].layout[x].amount, GL_FLOAT, GL_FALSE,
-                sizeof(GLfloat) * this->vaos[vao_id].layout[x].stride,
-                NRE_GLES2_VERTEXL_LAYOUT_OFFSET(sizeof(GLfloat) * static_cast<GLuint>(this->vaos[vao_id].layout[x].offset)));
+                x, this->vaos_[vao_id].layout[x].amount, GL_FLOAT, GL_FALSE,
+                sizeof(GLfloat) * this->vaos_[vao_id].layout[x].stride,
+                NRE_GLES2_VERTEXL_LAYOUT_OFFSET(sizeof(GLfloat) * static_cast<GLuint>(this->vaos_[vao_id].layout[x].offset)));
             glEnableVertexAttribArray(x);
         }
-        this->enabled_vao_attribs = this->vaos[vao_id].layout.size();
-        this->active_vbo_         = 0;
+        this->enabled_vao_attribs_ = this->vaos_[vao_id].layout.size();
+        this->active_vbo_          = 0;
 
         this->active_vao_ = vao_id;
     }
@@ -1172,23 +1180,23 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info) {
     // optional elements handling
     if (dc_info.index_buf != 0) {
 
-        this->check_ibo_id_(dc_info.index_buf, "draw (indexed)");
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos[dc_info.index_buf].handle);
+        this->check_ibo_id(dc_info.index_buf, "draw (indexed)");
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibos_[dc_info.index_buf].handle);
 
         if (is_ranged_rendering) {
-            this->check_ibo_offset_length_(dc_info.index_buf, dc_info.offset + dc_info.amount, "draw (indexed)");
-            if (this->ibos[dc_info.index_buf].type_ == GL_UNSIGNED_INT and has_oes_element_index_uint)
+            this->check_ibo_offset_length(dc_info.index_buf, dc_info.offset + dc_info.amount, "draw (indexed)");
+            if (this->ibos_[dc_info.index_buf].type_ == GL_UNSIGNED_INT and has_oes_element_index_uint_)
                 glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_INT,
                                (GLvoid*)((sizeof(uint32_t)) * 3 * dc_info.offset));
-            else if (not has_oes_element_index_uint)
+            else if (not has_oes_element_index_uint_)
                 cout << "NRE WARNING: Draw call hidden due to too many vertices (no 32-bit index support)" << endl;
             else
                 glDrawElements(GL_TRIANGLES, dc_info.amount, GL_UNSIGNED_SHORT,
                                (GLvoid*)((sizeof(uint16_t)) * 3 * dc_info.offset));
         }
         else {
-            if ((this->ibos[dc_info.index_buf].type_ == GL_UNSIGNED_SHORT) or has_oes_element_index_uint)
-                glDrawElements(GL_TRIANGLES, this->ibos[dc_info.index_buf].size, this->ibos[dc_info.index_buf].type_,
+            if ((this->ibos_[dc_info.index_buf].type_ == GL_UNSIGNED_SHORT) or has_oes_element_index_uint_)
+                glDrawElements(GL_TRIANGLES, this->ibos_[dc_info.index_buf].size, this->ibos_[dc_info.index_buf].type_,
                                (GLvoid*)NULL);
             else
                 cout << "NRE WARNING: Draw call hidden due to too many vertices (no 32-bit index support)" << endl;
@@ -1196,17 +1204,17 @@ void NRE_GLES2_API::draw(nre::gpu::draw_call dc_info) {
     }
     else {
         if (is_ranged_rendering) {
-            this->check_draw_range_(vao_id, this->getVAOSize(vao_id), dc_info.offset, dc_info.amount, "draw");
+            this->check_draw_range(vao_id, this->get_vao_size(vao_id), dc_info.offset, dc_info.amount, "draw");
             glDrawArrays(GL_TRIANGLES, dc_info.offset, dc_info.amount);
         }
         else {
-            glDrawArrays(GL_TRIANGLES, 0, this->getVAOSize(vao_id));
+            glDrawArrays(GL_TRIANGLES, 0, this->get_vao_size(vao_id));
         }
     }
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
 }
 
-void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode) {
+void nre::gles2::api_t::set_render_mode(nre::gpu::RENDERMODE rendermode) {
 
     if (rendermode == nre::gpu::Z_PREPASS_BACKFACE) {
         glDisable(GL_BLEND);
@@ -1378,4 +1386,8 @@ void NRE_GLES2_API::setRenderMode(nre::gpu::RENDERMODE rendermode) {
     else {
         // TODO
     }
+}
+
+void nre::gles2::api_t::use_wireframe(bool value_in) {
+    // TODO: Warning
 }

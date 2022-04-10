@@ -1,245 +1,269 @@
-#ifndef NRE_GL3_API_H_INCLUDED
-#define NRE_GL3_API_H_INCLUDED
+#ifndef api_t_H_INCLUDED
+#define api_t_H_INCLUDED
 
 
 #include <OE/Renderer/GL3/shaders_gl3.h>
 #include <OE/Renderer/api_gpu.h>
 #include <OE/types/libs_oe.h>
 
-struct NRE_GL3_RenderBuffer {
-    GLuint                 handle{0};
-    nre::gpu::TEXTURE_TYPE type;
-    int                    x{0};
-    int                    y{0};
+namespace nre { namespace gl3 {
+    struct renderbuffer_t {
+        GLuint                 handle{0};
+        nre::gpu::TEXTURE_TYPE type;
+        int                    x{0};
+        int                    y{0};
 
-    bool hasNotChanged(nre::gpu::TEXTURE_TYPE, int, int);
-};
+        bool has_not_changed(nre::gpu::TEXTURE_TYPE, int, int);
+    };
 
-struct NRE_GL3_VertexBuffer {
-    GLuint                 handle;
-    std::size_t            size;
-    nre::gpu::BUFFER_USAGE usage;
-};
+    struct vertex_buffer_t {
+        GLuint                 handle;
+        std::size_t            size;
+        nre::gpu::BUFFER_USAGE usage;
+    };
 
-struct NRE_GL3_IndexBuffer {
-    GLuint                 handle;
-    std::size_t            size;
-    nre::gpu::BUFFER_USAGE usage;
-};
+    struct index_buffer_t {
+        GLuint                 handle;
+        std::size_t            size;
+        nre::gpu::BUFFER_USAGE usage;
+    };
 
-struct NRE_GL3_FrameBuffer {
-    GLuint handle;
-    // int components{0};
-    // bool depth{false};
-    // bool stencil{false};
-    std::size_t texture{0};
-};
+    struct framebuffer_t {
+        GLuint handle;
+        // int components{0};
+        // bool depth{false};
+        // bool stencil{false};
+        std::size_t texture{0};
+    };
 
-struct NRE_GL3_Texture {
-    GLuint                   handle;
-    nre::gpu::TEXTURE_TYPE   type;
-    nre::gpu::TEXTURE_FILTER filter;
-    int                      x{0};
-    int                      y{0};
-    int                      mipmaps{0};
+    struct texture_t {
+        GLuint                   handle;
+        nre::gpu::TEXTURE_TYPE   type;
+        nre::gpu::TEXTURE_FILTER filter;
+        int                      x{0};
+        int                      y{0};
+        int                      mipmaps{0};
 
-    bool hasNotChanged(nre::gpu::TEXTURE_TYPE, nre::gpu::TEXTURE_FILTER, int, int, int);
-};
+        bool has_not_changed(nre::gpu::TEXTURE_TYPE, nre::gpu::TEXTURE_FILTER, int, int, int);
+    };
 
-struct NRE_GL3_VertexArray {
-    GLuint                                     handle;
-    std::vector<nre::gpu::vertex_layout_input> layout;
-};
+    struct vertex_layout_t {
+        GLuint                                     handle;
+        std::vector<nre::gpu::vertex_layout_input> layout;
+    };
 
-struct NRE_GL3_UniformBuffer {
-    GLuint                 handle;
-    std::size_t            size;
-    nre::gpu::BUFFER_USAGE usage;
-    GLint                  slot;
-};
+    struct uniform_buffer_t {
+        GLuint                 handle;
+        std::size_t            size;
+        nre::gpu::BUFFER_USAGE usage;
+        GLint                  slot;
+    };
 
-struct NRE_GL3_ProgramUniformState {
-    std::string name;
-    GLint       slot{0};
-    GLenum      type{GL_FLOAT}; // unused in Uniform blocks
-    size_t      size{0};        // unused in Uniform Blocks
-};
+    struct program_uniform_state_t {
+        GLint  slot{0};
+        GLenum type{GL_FLOAT}; // unused in Uniform blocks
+        size_t size{0};        // unused in Uniform Blocks
+    };
 
-struct NRE_GL3_Program {
+    struct program_data_t {
+        GLuint handle{0};
 
-    nre::gpu::vertex_shader vs;
-    GLuint                  vs_handle{0};
-    bool                    vs_setup{false};
+        std::unordered_map<std::string, program_uniform_state_t> uniform_blocks;
+        std::unordered_map<std::string, GLuint>                  uniform_block_indices;
+        bool                                                     has_uniform_block(const std::string&);
 
-    nre::gpu::pixel_shader fs;
-    GLuint                 fs_handle{0};
-    bool                   fs_setup{false};
+        std::unordered_map<std::string, program_uniform_state_t> uniforms;
+        bool                                                     has_uniform(const std::string&);
+    };
 
-    bool   setup{false};
-    bool   prog_created{false};
-    GLuint handle{0};
+    struct program_t {
 
-    // this is needed for it to be in an std::set
-    bool operator<(const NRE_GL3_Program&) const;
-};
+        nre::gpu::vertex_shader_t vs;
+        GLuint                    vs_handle{0};
+        bool                      vs_setup{false};
 
-struct NRE_GL3_ProgramData {
-    GLuint                                   handle{0};
-    std::vector<NRE_GL3_ProgramUniformState> uniform_blocks;
-    std::size_t                              hasUniformBlock(std::string);
+        nre::gpu::pixel_shader_t fs;
+        GLuint                   fs_handle{0};
+        bool                     fs_setup{false};
 
-    std::vector<NRE_GL3_ProgramUniformState> uniforms;
-    std::size_t                              hasUniform(std::string);
-};
+        bool   setup{false};
+        bool   prog_created{false};
+        GLuint handle{0};
 
-GLenum NRE2GL_BufferUse(nre::gpu::BUFFER_USAGE);
+        // this is needed for it to be in an std::unordered_set
+        bool   operator==(const program_t&) const;
+        size_t gen_hash() const;
+    };
+}; }; // namespace nre::gl3
 
-class NRE_GL3_API {
-public:
-    NRE_GL3_API(nre::gpu::info_struct&);
-    ~NRE_GL3_API();
+namespace std {
+    template <>
+    struct hash<nre::gl3::program_t> {
+        auto operator()(const nre::gl3::program_t& xyz) const -> size_t {
+            return hash<size_t>{}(xyz.gen_hash());
+        }
+    };
+} // namespace std
 
-    void update(uint32_t, uint32_t);
+namespace nre { namespace gl3 {
 
-    void destroy();
 
-    std::string getRenderingAPI();
+    GLenum buffer_use(nre::gpu::BUFFER_USAGE);
 
-    std::size_t newVertexBuffer();
-    std::size_t newVertexLayout();
-    std::size_t newIndexBuffer();
-    std::size_t newProgram();
-    std::size_t newUniformBuffer();
-    std::size_t newFrameBuffer();
-    std::size_t newTexture();
-    std::size_t newRenderBuffer();
+    class api_t {
+    public:
+        api_t(nre::gpu::info_struct&);
+        ~api_t();
 
-    void setRenderBufferType(std::size_t, nre::gpu::TEXTURE_TYPE, int, int);
-    void setFrameBufferRenderBuffer(std::size_t, std::size_t, int);
+        void update(uint32_t, uint32_t, bool);
 
-    void setVertexBufferMemory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
-    void setVertexBufferData(std::size_t, const std::vector<float>&, std::size_t);
-    void setVertexBufferMemoryData(std::size_t, const std::vector<float>&, nre::gpu::BUFFER_USAGE);
-    void deleteVertexBuffer(std::size_t);
+        void destroy();
 
-    void setIndexBufferMemory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
-    void setIndexBufferData(std::size_t, const std::vector<uint32_t>&, std::size_t);
-    void setIndexBufferMemoryData(std::size_t, const std::vector<uint32_t>&, nre::gpu::BUFFER_USAGE);
-    void deleteIndexBuffer(std::size_t);
+        std::string get_rendering_api();
 
-    void setUniformBufferMemory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
-    void setUniformBufferData(std::size_t, const std::vector<float>&, std::size_t);
-    void setUniformBufferData(std::size_t, const std::vector<uint32_t>&, std::size_t);
+        std::size_t new_vertex_buffer();
+        std::size_t new_vertex_layout();
+        std::size_t new_index_buffer();
+        std::size_t new_program();
+        std::size_t new_uniform_buffer();
+        std::size_t new_framebuffer();
+        std::size_t new_texture();
+        std::size_t new_renderbuffer();
 
-    void setProgramUniformBlockSlot(std::size_t, std::string, int);
-    int  getProgramUniformBlockSlot(std::size_t, std::string);
+        void set_renderbuffer_textype(std::size_t, nre::gpu::TEXTURE_TYPE, int, int);
+        void set_framebuffer_renderbuffer(std::size_t, std::size_t, int);
 
-    void setProgramTextureSlot(std::size_t, std::string, int);
-    void setProgramUniformData(std::size_t, std::string, uint32_t);
-    void setProgramUniformData(std::size_t, std::string, std::vector<uint32_t>);
-    int  getProgramUniformSlot(std::size_t, std::string);
+        void set_vertex_buffer_memory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
+        void set_vertex_buffer_data(std::size_t, const std::vector<float>&, std::size_t);
+        void set_vertex_buffer_memory_data(std::size_t, const std::vector<float>&, nre::gpu::BUFFER_USAGE);
+        void delete_vertex_buffer(std::size_t);
 
-    void setUniformBlockState(std::size_t, std::size_t, int, std::size_t, std::size_t);
-    void deleteUniformBuffer(std::size_t);
+        void set_index_buffer_memory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
+        void set_index_buffer_data(std::size_t, const std::vector<uint32_t>&, std::size_t);
+        void set_index_buffer_memory_data(std::size_t, const std::vector<uint32_t>&, nre::gpu::BUFFER_USAGE);
+        void delete_index_buffer(std::size_t);
 
-    void setVertexLayoutFormat(std::size_t, std::vector<nre::gpu::vertex_layout_input>);
-    void deleteVertexLayout(std::size_t);
+        void set_uniform_buffer_memory(std::size_t, std::size_t, nre::gpu::BUFFER_USAGE);
+        void set_uniform_buffer_data(std::size_t, const std::vector<float>&, std::size_t);
+        void set_uniform_buffer_data(std::size_t, const std::vector<uint32_t>&, std::size_t);
 
-    void setTextureFormat(std::size_t, nre::gpu::TEXTURE_TYPE, nre::gpu::TEXTURE_FILTER, uint32_t, uint32_t, int);
-    void setFrameBufferTexture(std::size_t, std::size_t, int);
-    void setTextureSlot(std::size_t, int);
-    void deleteTexture(std::size_t);
+        void set_program_uniform_block_slot(std::size_t, const std::string&, int);
+        int  get_program_uniform_block_slot(std::size_t, const std::string&);
 
-    void copyFrameBuffer(std::size_t, std::size_t, nre::gpu::FRAMEBUFFER_COPY);
-    void useFrameBuffer(std::size_t);
-    void clearFrameBuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
-    void deleteFrameBuffer(std::size_t);
+        void set_program_texture_slot(std::size_t, const std::string&, int);
+        void set_program_uniform_data(std::size_t, const std::string&, uint32_t);
+        void set_program_uniform_data(std::size_t, const std::string&, std::vector<uint32_t>);
+        int  get_program_uniform_slot(std::size_t, const std::string&);
 
-    void setProgramVS(std::size_t, nre::gpu::vertex_shader);
-    void setProgramFS(std::size_t, nre::gpu::pixel_shader);
+        void set_uniform_block_state(std::size_t, std::size_t, int, std::size_t, std::size_t);
+        void delete_uniform_buffer(std::size_t);
 
-    void setProgramVS(std::size_t, std::string);
-    // void setProgramGS(std::size_t, FE_GPU_Shader);
-    void setProgramFS(std::size_t, std::string);
-    // void setProgramTCS(std::size_t, FE_GPU_Shader);
-    // void setProgramTES(std::size_t, FE_GPU_Shader);
-    void setupProgram(std::size_t);
-    void deleteProgram(std::size_t);
+        void set_vertex_layout_format(std::size_t, std::vector<nre::gpu::vertex_layout_input>);
+        void delete_vertex_layout(std::size_t);
 
-    void draw(std::size_t, std::size_t, int, int);
-    void draw(std::size_t, std::size_t);
+        void set_texture_format(std::size_t, nre::gpu::TEXTURE_TYPE, nre::gpu::TEXTURE_FILTER, uint32_t, uint32_t, int);
+        void set_framebuffer_texture(std::size_t, std::size_t, int);
+        void set_texture_slot(std::size_t, int);
+        void delete_texture(std::size_t);
 
-    void draw(std::size_t, std::size_t, std::size_t, int, int);
-    void draw(std::size_t, std::size_t, std::size_t);
+        void copy_framebuffer(std::size_t, std::size_t, nre::gpu::FRAMEBUFFER_COPY);
+        void use_framebuffer(std::size_t);
+        void clear_framebuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
+        void delete_framebuffer(std::size_t);
 
-    void draw_instanced(std::size_t, std::size_t, std::size_t);
-    void draw_instanced(std::size_t, std::size_t, std::size_t, std::size_t);
+        void set_program_vs(std::size_t, nre::gpu::vertex_shader_t);
+        void set_program_fs(std::size_t, nre::gpu::pixel_shader_t);
 
-    void setRenderMode(nre::gpu::RENDERMODE);
+        void set_program_vs(std::size_t, std::string);
+        // void set_programGS(std::size_t, FE_GPU_Shader);
+        void set_program_fs(std::size_t, std::string);
+        // void set_programTCS(std::size_t, FE_GPU_Shader);
+        // void set_programTES(std::size_t, FE_GPU_Shader);
+        void setup_program(std::size_t);
+        void delete_program(std::size_t);
 
-protected:
-    std::size_t cur_rbo{0};
-    std::size_t cur_vbo{0};
-    std::size_t cur_ibo{0};
-    std::size_t cur_vao{0};
-    std::size_t cur_ubo{0};
-    std::size_t cur_fbo{0};
-    std::size_t cur_texture{0};
-    std::size_t cur_prog{0};
+        void draw(std::size_t, std::size_t, int, int);
+        void draw(std::size_t, std::size_t);
 
-    std::unordered_map<std::size_t, NRE_GL3_RenderBuffer>  rbos;
-    std::unordered_map<std::size_t, NRE_GL3_VertexBuffer>  vbos;
-    std::unordered_map<std::size_t, NRE_GL3_IndexBuffer>   ibos;
-    std::unordered_map<std::size_t, NRE_GL3_VertexArray>   vaos;
-    std::unordered_map<std::size_t, NRE_GL3_UniformBuffer> ubos;
-    std::unordered_map<std::size_t, NRE_GL3_FrameBuffer>   fbos;
-    std::unordered_map<std::size_t, NRE_GL3_Texture>       textures;
-    std::unordered_map<std::size_t, NRE_GL3_Program>       progs;
+        void draw(std::size_t, std::size_t, std::size_t, int, int);
+        void draw(std::size_t, std::size_t, std::size_t);
 
-    std::size_t getVAOSize(std::size_t);
+        void draw_instanced(std::size_t, std::size_t, std::size_t);
+        void draw_instanced(std::size_t, std::size_t, std::size_t, std::size_t);
 
-    std::map<nre::gpu::vertex_shader, GLuint>      vs_db;
-    std::map<nre::gpu::pixel_shader, GLuint>       fs_db;
-    std::map<NRE_GL3_Program, NRE_GL3_ProgramData> prog_db;
+        void set_render_mode(nre::gpu::RENDERMODE);
+        void use_wireframe(bool);
 
-private:
-    void check_rbo_id_(std::size_t, const std::string&);
-    void check_vbo_id_(std::size_t, const std::string&);
-    void check_ubo_id_(std::size_t, const std::string&);
-    void check_ibo_id_(std::size_t, const std::string&);
+    protected:
+        std::size_t cur_rbo_{0};
+        std::size_t cur_vbo_{0};
+        std::size_t cur_ibo_{0};
+        std::size_t cur_vao_{0};
+        std::size_t cur_ubo_{0};
+        std::size_t cur_fbo_{0};
+        std::size_t cur_texture_{0};
+        std::size_t cur_prog_{0};
 
-    void check_vbo_offset_length_(std::size_t, std::size_t, const std::string&);
-    void check_ubo_offset_length_(std::size_t, std::size_t, const std::string&);
-    void check_ibo_offset_length_(std::size_t, std::size_t, const std::string&);
+        std::unordered_map<std::size_t, renderbuffer_t>   rbos_;
+        std::unordered_map<std::size_t, vertex_buffer_t>  vbos_;
+        std::unordered_map<std::size_t, index_buffer_t>   ibos_;
+        std::unordered_map<std::size_t, vertex_layout_t>  vaos_;
+        std::unordered_map<std::size_t, uniform_buffer_t> ubos_;
+        std::unordered_map<std::size_t, framebuffer_t>    fbos_;
+        std::unordered_map<std::size_t, texture_t>        textures_;
+        std::unordered_map<std::size_t, program_t>        progs_;
 
-    void check_vao_id_(std::size_t, const std::string&);
-    void check_prog_id_(std::size_t, const std::string&);
-    void check_prog_complete_(std::size_t, const std::string&);
+        std::size_t get_vao_size(std::size_t);
 
-    void check_prog_uniform_block_(std::size_t, const std::string&, const std::string&);
-    void check_prog_uniform_(std::size_t, const std::string&, const std::string&);
-    void check_prog_uniform_property_(std::size_t, const std::string&, std::size_t, const std::string&, bool);
-    void check_vao_vbo_(std::size_t, std::size_t, const std::string&);
+        std::unordered_map<nre::gpu::vertex_shader_t, GLuint> vs_db_;
+        std::unordered_map<nre::gpu::pixel_shader_t, GLuint>  fs_db_;
+        std::unordered_map<program_t, program_data_t>         prog_db_;
 
-    void check_fbo_id_(std::size_t, const std::string&);
-    void check_texture_id_(std::size_t, const std::string&);
-    void check_draw_range_(std::size_t, std::size_t, std::size_t, std::size_t, const std::string&);
+    private:
+        void check_rbo_id_(std::size_t, const std::string&);
+        void check_vbo_id_(std::size_t, const std::string&);
+        void check_ubo_id_(std::size_t, const std::string&);
+        void check_ibo_id_(std::size_t, const std::string&);
 
-    void get_program_all_uniforms_(std::size_t);
+        void check_vbo_offset_length_(std::size_t, std::size_t, const std::string&);
+        void check_ubo_offset_length_(std::size_t, std::size_t, const std::string&);
+        void check_ibo_offset_length_(std::size_t, std::size_t, const std::string&);
 
-    int teximage_internalformat_(nre::gpu::TEXTURE_TYPE);
-    int teximage_format_(nre::gpu::TEXTURE_TYPE);
-    int teximage_type_(nre::gpu::TEXTURE_TYPE);
+        void check_vao_id_(std::size_t, const std::string&);
+        void check_prog_id_(std::size_t, const std::string&);
+        void check_prog_complete_(std::size_t, const std::string&);
 
-    // this is useful for preventing OpenGL glBind* command repetitions
-    GLuint active_vbo_{0};
-    GLuint active_vao_{0};
-    GLuint active_ubo_{0};
-    GLuint active_prog_{0};
-    // every VAO in OpenGL stores its Index Buffer
-    std::unordered_map<GLuint, GLuint> vao_ibos_;
-};
+        void check_prog_uniform_block_(std::size_t, const std::string&, const std::string&);
+        void check_prog_uniform_(std::size_t, const std::string&, const std::string&);
+        void check_prog_uniform_property_(std::size_t, const std::string&, std::size_t, const std::string&, bool);
+        void check_vao_vbo_(std::size_t, std::size_t, const std::string&);
 
+        void check_fbo_id_(std::size_t, const std::string&);
+        void check_texture_id_(std::size_t, const std::string&);
+        void check_draw_range_(std::size_t, std::size_t, std::size_t, std::size_t, const std::string&);
+
+        void get_program_all_uniforms_(std::size_t);
+
+        int teximage_internalformat_(nre::gpu::TEXTURE_TYPE);
+        int teximage_format_(nre::gpu::TEXTURE_TYPE);
+        int teximage_type_(nre::gpu::TEXTURE_TYPE);
+
+        // this is useful for preventing OpenGL glBind* command repetitions
+        GLuint active_vbo_{0};
+        GLuint active_vao_{0};
+        GLuint active_ubo_{0};
+        GLuint active_prog_{0};
+        // every VAO in OpenGL stores its Index Buffer
+        std::unordered_map<GLuint, GLuint> vao_ibos_;
+
+        uint32_t                 x_{0};
+        uint32_t                 y_{0};
+        nre::gpu::SHADER_BACKEND backend_;
+        int                      major_{3};
+        int                      minor_{3};
+        bool                     sanity_checks_{true};
+    };
+}; }; // namespace nre::gl3
 
 
 #endif
