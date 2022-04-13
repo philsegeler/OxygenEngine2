@@ -19,17 +19,24 @@ int main() {
 
 
 //	csl::Interpreter interpreter;
-	std::string filename = "assets/csl_very_large_object_test.csl";
-    
-    oe::init();
-    
-    auto t = clock();
-    
-	csl::interpret_file(filename);
-    
-    cout << "[Performance] The whole thing:  " << (float)(clock()-t)/CLOCKS_PER_SEC << endl;
-    
-    oe::destroy();
+
+    try {
+
+        std::string filename = "assets/csl_very_large_object_test.csl";
+
+        oe::init();
+
+        auto t = clock();
+
+        csl::interpret_file(filename);
+
+        cout << "[Performance] The whole thing:  " << (float) (clock() - t) / CLOCKS_PER_SEC << endl;
+
+        oe::destroy();
+
+    } catch(csl::unexpected_symbol_error_t& e) {
+        std::cout << e.what() << std::endl;
+    }
    
 
 	return 0;

@@ -151,11 +151,12 @@ namespace csl {
 
         generic_lexer_t(const std::string_view input) : input_(input){};
 
-        iterator_t& begin() {
+
+        iterator_t begin() const {
             return ++iterator_t{input_.begin(), input_.end()};
         }
 
-        iterator_t& end() {
+        iterator_t end() const {
             return ++iterator_t{input_.end(), input_.end()};
         }
 

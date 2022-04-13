@@ -1,4 +1,4 @@
-project('Oxygen Engine', ['cpp', 'c'], default_options : ['cpp_std=c++20', 'buildtype=debugoptimized'])
+project('Oxygen Engine', ['cpp', 'c'], default_options : ['cpp_std=c++20', 'buildtype=release'])
 
 src = ['src/Renderer/glad.c',
        'src/Renderer/api_gpu.cpp',
