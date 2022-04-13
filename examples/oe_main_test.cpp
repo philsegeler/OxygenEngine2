@@ -60,10 +60,10 @@ int renderer_toggle_bounding_spheres( oe::task, string event_name){
 
 int set_renderer_mode_normals( oe::task, string event_name){
     
-    if (oe::get_shading_mode() == oe::renderer::shading_mode::regular)
-        oe::set_shading_mode(oe::renderer::shading_mode::normals);
+    if (oe::get_shading_mode() == oe::RENDERER_REGULAR_SHADING)
+        oe::set_shading_mode(oe::RENDERER_NORMALS_SHADING);
     else
-        oe::set_shading_mode(oe::renderer::shading_mode::regular);
+        oe::set_shading_mode(oe::RENDERER_REGULAR_SHADING);
     return 0;
 }
 
@@ -136,10 +136,14 @@ int test_task3(oe::task task){
     else {
     
     }
-    
+
     return task.CONTINUE();
 }
 
+int toggle_debug_mode(oe::task task, string event_name){
+    oe::toggle_renderer_sanity_checks();
+    return 0;
+}
 
 int OnLoadObject(oe::task load_event_task, string event_name){
     cout << "SUCCESSFULLY loaded '" << event_name << "'" << endl;
@@ -159,12 +163,12 @@ int OnLoadObject(oe::task load_event_task, string event_name){
     oe::set_event_func("keyboard-d+", &update_monkey_rot_neg_z);
     
     oe::set_event_func("keyboard-space+", &toggle_mouse_locked_state);
-    
     // Useful for debugging
     oe::set_event_func("keyboard-f5+", &set_renderer_mode_normals);
     oe::set_event_func("keyboard-f6+", &renderer_toggle_bounding_spheres);
     oe::set_event_func("keyboard-f7+", &renderer_toggle_wireframe);
     oe::set_event_func("keyboard-f8+", &renderer_toggle_bounding_boxes);
+    oe::set_event_func("keyboard-f9+", &toggle_debug_mode);
     
     oe::add_task_func("test_task1", &test_task1, "\"Camera\"");
     oe::add_task_func("test_task0", 2, &test_task0);
@@ -172,13 +176,14 @@ int OnLoadObject(oe::task load_event_task, string event_name){
     oe::add_task_func("test_task3", 4, &test_task3);
     oe::mouse_lock();
 
+    oe::set_window_title("Oxygen Engine - " + event_name);
     return 0;
 }
 
 int main(){
     
     // everything in namespace oe::preinit needs to be run before oe::init() to take effect
-    oe::preinit::use_legacy_renderer = true;
+    oe::preinit::request_gles2();
 
     oe::init("Oxygen Engine Demo", 800, 480, false);
     //oe::pause(20);

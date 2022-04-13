@@ -1,64 +1,73 @@
 #ifndef OE_EVENT_HANDLER_H
 #define OE_EVENT_HANDLER_H
 
+#include <OE/Events/event_container.h>
 #include <OE/Events/input_event_handler.h>
 
-class OE_EventHandler : public OE_THREAD_SAFETY_OBJECT {
-public:
-    friend class OE_TaskManager;
+namespace oe {
+    class event_handler_t : public OE_THREAD_SAFETY_OBJECT {
+    public:
+        friend class OE_TaskManager;
 
-    OE_EventHandler();
-    ~OE_EventHandler();
+        event_handler_t();
+        ~event_handler_t();
 
-    // internal event functions
-    void                      init();
-    std::shared_ptr<OE_Event> getIEvent(std::string);
-    std::shared_ptr<OE_Event> getIEventUNSAFE(std::string);
+        // internal event functions
+        void                         init();
+        std::shared_ptr<oe::event_t> get_ievent(const std::string&);
 
-    void createUserEvent(std::string);
-    void setIEventFunc(std::string, const OE_EVENTFUNC);
-    void broadcastIEvent(std::string);
+        void create_user_event(const std::string&);
+        void set_ievent_func(std::size_t, const oe::event_func_type);
+        void set_ievent_func(const std::string&, const oe::event_func_type);
+        void broadcast_ievent(std::size_t);
+        void broadcast_ievent(const std::string&);
 
-    void broadcastIEventWait(std::string, int); // TODO
-    void mapIEvent(std::string, std::string);
-    void unmapIEvent(std::string, std::string);
-    int  callIEvent(std::string);
-    void destroyIEvent(std::string);
+        void broadcast_ievent_wait(std::size_t, int); // TODO
+        void map_ievent(std::size_t, std::size_t);
+        void unmap_ievent(std::size_t, std::size_t);
+        int  call_ievent(std::size_t);
+        void destroy_ievent(std::size_t);
 
-    std::size_t getEventActivations(std::string);
-    std::size_t getEventCounter(std::string);
+        std::size_t get_event_id(const std::string&);
+        std::size_t get_event_activations(std::size_t);
+        std::size_t get_event_counter(std::size_t);
 
-    void updateInput();
-    void cleanup();
-    int  handleAllEvents();
+        void update_input();
+        void cleanup();
+        int  handle_all_events();
 
+        // The methods starting with internal* are only supposed to be used
+        // in subclasses of OE_WindowSystemBase
+        // the key strings must exist
 
-    void updatePostInputLoop();
+        void internal_update_mouse_status(int x, int y, int delta_x, int delta_y);
+        void internal_register_keydown_event(const std::string&);
+        void internal_register_keyup_event(const std::string&);
 
-    // The methods starting with internal* are only supposed to be usede
-    // in subclasses of OE_WindowSystemBase
-    // the key strings must exist
+        std::atomic<bool> done_;
 
-    void internalBroadcastKeyDownEvent(const std::string&);
-    void internalBroadcastKeyUpEvent(const std::string&);
+        input_event_handler_t input_handler_;
 
-    std::atomic<bool> done;
+        int  get_mouse_x();
+        int  get_mouse_y();
+        int  get_mouse_delta_y();
+        int  get_mouse_delta_x();
+        bool has_mouse_moved();
 
-    OE_InputEventHandler input_handler;
+    protected:
+        bool has_pending_events();
 
-protected:
-    bool havePendingEvents();
+        oe::event_container_t<oe::event_t> events_list_;
 
+        std::vector<std::size_t>                     happened_events_;
+        std::unordered_map<std::size_t, std::size_t> happened_events_counter_;
 
-
-    std::map<std::string, std::shared_ptr<OE_Event>> internal_events;
-    std::vector<std::string>                         obsolete_events;
-    std::vector<std::string>                         pending_events;
-
-    std::vector<std::string>                     happened_events;
-    std::unordered_map<std::string, std::size_t> happened_events_counter;
-
-    uint8_t index = -1;
-};
-
+    private:
+        int  mouse_x_{0};
+        int  mouse_y_{0};
+        int  mouse_delta_y_{0};
+        int  mouse_delta_x_{0};
+        bool mouse_moved_{false};
+    };
+};     // namespace oe
 #endif // OE_EVENT_HANDLER_H

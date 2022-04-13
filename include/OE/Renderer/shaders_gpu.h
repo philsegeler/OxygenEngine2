@@ -10,7 +10,7 @@ namespace nre { namespace gpu {
     // possibility to extend with HLSL/Metal etc.
     enum SHADER_BACKEND : int { UNDEFINED, GL, GLES, GLES2 };
 
-    enum VS_TYPE {
+    enum VS_TYPE : uint8_t {
         VS_UNDEFINED,
         VS_Z_PREPASS,
         VS_REGULAR,
@@ -19,7 +19,7 @@ namespace nre { namespace gpu {
         VS_LIGHT,
     };
 
-    enum FS_TYPE {
+    enum FS_TYPE : uint8_t {
         FS_UNDEFINED,
         FS_SIMPLE,
         FS_GAMMA,
@@ -31,46 +31,67 @@ namespace nre { namespace gpu {
         FS_LIGHT_INDEX
     };
 
-    class shader_base {
+    std::string gen_shader_prefix();
+
+    class shader_base_t {
     public:
-        static std::string shader_prefix;
-
-        static void init(SHADER_BACKEND, int, int);
-
-        virtual ~shader_base();
-        virtual std::string gen_shader();
-        virtual std::string info();
+        virtual ~shader_base_t();
+        virtual std::string gen_shader() const;
+        virtual std::string info() const;
     };
 
-    class vertex_shader : public shader_base {
+    class vertex_shader_t : public shader_base_t {
     public:
-        vertex_shader();
-        ~vertex_shader();
+        vertex_shader_t();
+        ~vertex_shader_t();
 
-        bool operator<(const vertex_shader&) const;
-        bool operator==(const vertex_shader&) const;
+        bool operator==(const vertex_shader_t&) const;
 
-        std::string gen_shader();
-        std::string info();
+        std::string gen_shader() const;
+        std::string info() const;
+        size_t      gen_hash() const;
 
         bool        fullscreenQuad{false};
         std::size_t num_of_uvs{0};
         VS_TYPE     type{VS_UNDEFINED};
     };
 
-    class pixel_shader : public shader_base {
+    class pixel_shader_t : public shader_base_t {
     public:
-        pixel_shader();
-        ~pixel_shader();
+        pixel_shader_t();
+        ~pixel_shader_t();
 
-        bool operator<(const pixel_shader&) const;
+        bool operator==(const pixel_shader_t&) const;
 
-        std::string gen_shader();
-        std::string info();
+        std::string gen_shader() const;
+        std::string info() const;
+        size_t      gen_hash() const;
 
         std::size_t num_of_uvs{0};
         FS_TYPE     type{FS_UNDEFINED};
     };
 
 }; }; // namespace nre::gpu
+
+
+// specializations for hashing
+
+namespace std {
+    template <>
+    struct hash<nre::gpu::vertex_shader_t> {
+        auto operator()(const nre::gpu::vertex_shader_t& xyz) const -> size_t {
+            return hash<size_t>{}(xyz.gen_hash());
+        }
+    };
+} // namespace std
+
+namespace std {
+    template <>
+    struct hash<nre::gpu::pixel_shader_t> {
+        auto operator()(const nre::gpu::pixel_shader_t& xyz) const -> size_t {
+            return hash<size_t>{}(xyz.gen_hash());
+        }
+    };
+} // namespace std
+
 #endif

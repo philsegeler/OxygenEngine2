@@ -7,11 +7,11 @@
 #include <functional>
 #include <memory>
 #include <set>
-
+#include <unordered_set>
 
 /** Temporary documentation: (OUTDATED)
  *
- * OE_Event::call(OE_Task*):
+ * event_t::call(OE_Task*):
  * Return values:
  *  0: successfully run
  *  1: event is executed in another thread
@@ -26,157 +26,134 @@
  * Philsegeler's TODO:
  * -Anything else his subsystems need
  */
-enum OE_EVENT_TYPE {
-    OE_CUSTOM_EVENT    = 0,
-    OE_KEYBOARD_EVENT  = 1,
-    OE_MOUSE_EVENT     = 2,
-    OE_GAMEPAD_EVENT   = 3,
-    OE_NETWORK_EVENT   = 4,
-    OE_COLLISION_EVENT = 5,
-    OE_ERROR_EVENT     = 6,
-    OE_EVENT_COMBO     = 7
-};
+namespace oe {
 
-enum OE_ERROR_IMPORTANCE { OE_WARNING = 0, OE_ERROR = 1, OE_FATAL = 2 };
+    enum event_type {
+        CUSTOM_EVENT     = 0,
+        KEYBOARD_EVENT   = 1,
+        MOUSE_EVENT      = 2,
+        GAMEPAD_EVENT    = 3,
+        NETWORK_EVENT    = 4,
+        COLLISION_EVENT  = 5,
+        MOUSE_MOVE_EVENT = 6,
+        EVENT_COMBO      = 7
+    };
 
-typedef std::function<int(OE_Task, std::string)> OE_EVENTFUNC;
+    int template_event_func(OE_Task, std::string);
 
-int template_event_func(OE_Task, std::string);
+    typedef std::function<int(OE_Task, std::string)> event_func_type;
 
-/* general event type */
-class OE_Event : public OE_THREAD_SAFETY_OBJECT {
-    friend class OE_EventHandler;
-    friend class OE_InputEventHandler;
+    /* general event type */
+    class event_t : public OE_THREAD_SAFETY_OBJECT {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
 
-public:
-    static bool finished;
-    OE_Event();
-    virtual ~OE_Event();
-    virtual int call() = 0;
+    public:
+        // static bool finished;
+        event_t();
+        virtual ~event_t();
+        virtual int call() = 0;
 
-protected:
-    // internal_call() is implemented in OE_Error.cpp
-    int internal_call();
+        static std::atomic<std::size_t> current_id;
+        std::size_t                     id;
 
-    void setFunc(const OE_EVENTFUNC);
+    protected:
+        // internal_call() is implemented in OE_Error.cpp
+        int internal_call();
 
-    bool        active_{false};
-    std::string name_;
+        void set_func(const event_func_type);
 
-    OE_EVENT_TYPE type_;
-    OE_EVENTFUNC  func_;
+        bool        active_{false};
+        std::string name_;
 
-    OE_Task task_;
+        event_type      type_;
+        event_func_type func_;
 
-    bool                  has_init_{false};
-    std::set<std::string> sub_events_;
-};
+        OE_Task task_;
 
-/*button event used in keyboard/mouse/gamepad*/
+        bool                            has_init_{false};
+        std::unordered_set<std::size_t> sub_events_;
+    };
 
-
-enum OE_BUTTON { RELEASE = 0, PRESS = 2, JUST_PRESS = 1, JUST_RELEASE = 3 };
-
-/// class intended to store keyboard events (3 for each )
-class OE_KeyboardEvent : public OE_Event {
-    friend class OE_EventHandler;
-    friend class OE_InputEventHandler;
-
-public:
-    OE_KeyboardEvent();
-    ~OE_KeyboardEvent();
-    int call();
-
-protected:
-    uint8_t     keystate;
-    std::string key;
-};
-
-/// class intended to store mouse events (3 for each mouse buttons 1-5 and mouse position + mouse wheel)
-class OE_MouseEvent : public OE_Event {
-    friend class OE_EventHandler;
-    friend class OE_InputEventHandler;
-
-public:
-    OE_MouseEvent();
-    ~OE_MouseEvent();
-    int call();
-
-    static int  x, y, delta_x, delta_y, mouse_wheel;
-    static bool mousemoved;
-
-protected:
-    void signal();
-    void wait();
-
-    uint8_t keystate;
-
-    std::string key;
-};
-
-/// class intended to store gamepad events (3 for each mouse buttons 1-5 and mouse position)
-class OE_GamepadEvent : public OE_Event {
-    friend class OE_EventHandler;
-    friend class OE_InputEventHandler;
-
-public:
-    OE_GamepadEvent();
-    ~OE_GamepadEvent();
-    int call();
-
-protected:
-    uint8_t     keystate;
-    std::string key;
-
-    int  axis;
-    bool axismoved;
-    int  x, y, delta_x, delta_y;
-};
-
-/// class intended for user events
-class OE_CustomEvent : public OE_Event {
-    friend class OE_EventHandler;
-    friend class OE_InputEventHandler;
-
-public:
-    OE_CustomEvent();
-    ~OE_CustomEvent();
-    int call();
-
-protected:
-};
-
-/// class intended for error events
-class OE_ErrorEvent : public OE_Event {
-    friend class OE_EventHandler;
-    friend class OE_InputEventHandler;
-
-public:
-    OE_ErrorEvent();
-    ~OE_ErrorEvent();
-    int call();
-
-protected:
-    OE_ERROR_IMPORTANCE importance;
-    std::string         error_output;
-    std::string         error_name;
-};
+    /*button event used in keyboard/mouse/gamepad*/
 
 
-/// class intended to store multiple events
-/// TODO
-class OE_EventCombo : public OE_Event {
-    friend class OE_EventHandler;
-    friend class OE_InputEventHandler;
+    enum button_type { BUTTON_RELEASE = 0, BUTTON_PRESS = 2, BUTTON_JUST_PRESS = 1, BUTTON_JUST_RELEASE = 3 };
 
-public:
-    OE_EventCombo();
-    ~OE_EventCombo();
-    int call();
+    /// class intended to store keyboard events (3 for each )
+    class keyboard_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
 
-protected:
-    std::vector<std::string> event_list;
-    OE_EventPair             indices;
-};
+    public:
+        keyboard_event_t();
+        ~keyboard_event_t();
+        int call();
 
+    protected:
+        uint8_t     keystate_;
+        std::string key_;
+        bool        is_main_event_{false};
+    };
+
+    /// class intended to store mouse events (3 for each mouse buttons 1-5)
+    class mouse_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        mouse_event_t();
+        ~mouse_event_t();
+        int call();
+
+    protected:
+        uint8_t     keystate_;
+        bool        is_main_event_{false};
+        std::string key_;
+    };
+
+    /// class intended to store mouse move events
+    class mouse_move_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        mouse_move_event_t();
+        ~mouse_move_event_t();
+        int call();
+    };
+
+    /// class intended to store gamepad events (3 for each mouse buttons 1-5 and mouse position)
+    class gamepad_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        gamepad_event_t();
+        ~gamepad_event_t();
+        int call();
+
+    protected:
+        uint8_t     keystate_;
+        std::string key_;
+
+        int  axis_;
+        bool axismoved_;
+        int  x_, y_, delta_x_, delta_y_;
+    };
+
+    /// class intended for user events
+    class custom_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        custom_event_t();
+        ~custom_event_t();
+        int call();
+
+    protected:
+    };
+
+};     // namespace oe
 #endif // OE_EVENT_H

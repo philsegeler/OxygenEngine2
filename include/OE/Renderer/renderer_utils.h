@@ -6,15 +6,15 @@
 struct NRE_RenderGroup {
 
     // data for the z prepass
-    nre::gpu::vertex_shader vs_z_prepass;
-    std::size_t             z_prepass_program{0};
-    bool                    isZPrePassSetup{false};
+    nre::gpu::vertex_shader_t vs_z_prepass;
+    std::size_t               z_prepass_program{0};
+    bool                      isZPrePassSetup{false};
 
     // data for normal render
-    nre::gpu::vertex_shader vs;
-    nre::gpu::pixel_shader  fs;
-    std::size_t             program{0};
-    bool                    isSetup{false};
+    nre::gpu::vertex_shader_t vs;
+    nre::gpu::pixel_shader_t  fs;
+    std::size_t               program{0};
+    bool                      isSetup{false};
 
     // draw call data
     std::size_t camera{0};

@@ -77,19 +77,17 @@ namespace nre { namespace gpu {
 
     //////////////////////
     //  all variables here
-    extern void*             api;
-    extern info_struct       backend_info;
-    extern std::atomic<bool> use_wireframe;
-
-    extern uint32_t x;
-    extern uint32_t y;
+    extern void*       api;
+    extern info_struct backend_info;
     //////////////////////
 
     info_struct    get_backend_info();
     SHADER_BACKEND get_api();
 
-    std::string get_underlying_api_name();
+    int get_minor_api_version();
+    int get_major_api_version();
 
+    std::string get_underlying_api_name();
 
     std::size_t new_vertex_buf();
     std::size_t new_program();
@@ -101,10 +99,10 @@ namespace nre { namespace gpu {
     std::size_t new_renderbuffer();
 
     bool init(SHADER_BACKEND, int, int);
-    void update(uint32_t, uint32_t);
+    void update(uint32_t, uint32_t, bool);
     void destroy();
 
-    void set_renderbuffer_mode(std::size_t, TEXTURE_TYPE, int, int);
+    void set_renderbuffer_textype(std::size_t, TEXTURE_TYPE, int, int);
     void set_framebuffer_renderbuffer(std::size_t, std::size_t, int);
     ;
 
@@ -127,15 +125,15 @@ namespace nre { namespace gpu {
 
     void set_uniform_buf_state(std::size_t, std::size_t, int, std::size_t, std::size_t);
 
-    void set_program_uniform_buf_slot(std::size_t, std::string, int);
-    int  get_program_uniform_buf_slot(std::size_t, std::string);
+    void set_program_uniform_buf_slot(std::size_t, const std::string&, int);
+    int  get_program_uniform_buf_slot(std::size_t, const std::string&);
 
-    void set_program_texture_slot(std::size_t, std::string, int);
-    void set_program_uniform_data(std::size_t, std::string, uint32_t);
-    void set_program_uniform_data(std::size_t, std::string, float);
-    void set_program_uniform_data(std::size_t, std::string, const std::vector<uint32_t>&);
-    void set_program_uniform_data(std::size_t, std::string, const std::vector<float>&);
-    int  get_program_uniform_slot(std::size_t, std::string);
+    void set_program_texture_slot(std::size_t, const std::string&, int);
+    void set_program_uniform_data(std::size_t, const std::string&, uint32_t);
+    void set_program_uniform_data(std::size_t, const std::string&, float);
+    void set_program_uniform_data(std::size_t, const std::string&, const std::vector<uint32_t>&);
+    void set_program_uniform_data(std::size_t, const std::string&, const std::vector<float>&);
+    int  get_program_uniform_slot(std::size_t, const std::string&);
 
     void set_vertex_layout_format(std::size_t, std::vector<vertex_layout_input>);
     void del_vertex_layout(std::size_t);
@@ -150,8 +148,8 @@ namespace nre { namespace gpu {
     void clear_framebuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
     void del_framebuffer(std::size_t);
 
-    void set_program_vertex_shader(std::size_t, nre::gpu::vertex_shader);
-    void set_program_pixel_shader(std::size_t, nre::gpu::pixel_shader);
+    void set_program_vertex_shader(std::size_t, nre::gpu::vertex_shader_t);
+    void set_program_pixel_shader(std::size_t, nre::gpu::pixel_shader_t);
     void setup_program(std::size_t);
     void del_program(std::size_t);
 
@@ -162,7 +160,7 @@ namespace nre { namespace gpu {
     void draw_instanced(std::size_t, std::size_t, std::size_t, int);
 
     void set_render_mode(nre::gpu::RENDERMODE);
-
+    void use_wireframe(bool);
 }; }; // namespace nre::gpu
 
 

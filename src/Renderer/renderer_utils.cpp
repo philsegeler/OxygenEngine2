@@ -66,7 +66,7 @@ bool NRE_PointLightDrawCall::operator>(const NRE_PointLightDrawCall& other) cons
 void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) {
     this->pt_visible_lights.clear();
 
-    auto persp_mat = data_.cameras[camera_id].perspective_mat;
+    auto persp_mat = data_.cameras_[camera_id].perspective_mat;
 
     // set limit to 255 lights
     // why you ask?
@@ -75,32 +75,32 @@ void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) 
     // so i can only place up to 255 lights (light with index 0 inside the shaders symbolizes the lack of lights)
     // Thirdly, spot lights will be handed in a separate pass with another texture
 
-    for (auto l : data_.scenes[scene_id].pt_lights) {
+    for (auto l : data_.scenes_[scene_id].pt_lights) {
 
         // calculations happening in view space
-        OE_Vec4 model_pos = OE_Vec4(data_.pt_lights[l].model_mat[3].x, data_.pt_lights[l].model_mat[3].y,
-                                    data_.pt_lights[l].model_mat[3].z, 1.0f);
+        OE_Vec4 model_pos = OE_Vec4(data_.pt_lights_[l].model_mat[3].x, data_.pt_lights_[l].model_mat[3].y,
+                                    data_.pt_lights_[l].model_mat[3].z, 1.0f);
 
-        OE_Vec4 light_view_pos = data_.cameras[camera_id].view_mat * model_pos;
+        OE_Vec4 light_view_pos = data_.cameras_[camera_id].view_mat * model_pos;
 
         auto light_camview_radius =
-            light_view_pos - OE_Vec4(data_.pt_lights[l].range, data_.pt_lights[l].range, data_.pt_lights[l].range, 0.0f);
+            light_view_pos - OE_Vec4(data_.pt_lights_[l].range, data_.pt_lights_[l].range, data_.pt_lights_[l].range, 0.0f);
 
-        bool is_behind_camera = light_camview_radius.z > (-data_.cameras[camera_id].near);
-        bool is_too_far_away  = (light_camview_radius.z + 2 * data_.pt_lights[l].range) < (-data_.cameras[camera_id].far);
+        bool is_behind_camera = light_camview_radius.z > (-data_.cameras_[camera_id].near);
+        bool is_too_far_away  = (light_camview_radius.z + 2 * data_.pt_lights_[l].range) < (-data_.cameras_[camera_id].far);
 
         // calculations happening in clip space
         auto light_clip_radius_max_x =
-            OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(data_.pt_lights[l].range, 0.0f, 0.0f, 0.0f));
+            OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(data_.pt_lights_[l].range, 0.0f, 0.0f, 0.0f));
 
         auto light_clip_radius_min_x =
-            OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(data_.pt_lights[l].range, 0.0f, 0.0f, 0.0f));
+            OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(data_.pt_lights_[l].range, 0.0f, 0.0f, 0.0f));
 
         auto light_clip_radius_max_y =
-            OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(0.0f, data_.pt_lights[l].range, 0.0f, 0.0f));
+            OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(0.0f, data_.pt_lights_[l].range, 0.0f, 0.0f));
 
         auto light_clip_radius_min_y =
-            OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(0.0f, data_.pt_lights[l].range, 0.0f, 0.0f));
+            OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(0.0f, data_.pt_lights_[l].range, 0.0f, 0.0f));
 
         bool is_too_left  = light_clip_radius_max_x.x < -1.02f;
         bool is_too_right = light_clip_radius_min_x.x > 1.02f;
@@ -115,7 +115,7 @@ void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) 
         if ((not is_behind_camera) and (not is_too_far_away) and (not is_too_left) and (not is_too_right) and
             (not is_too_above) and (not is_too_below)) {
             auto point_light = NRE_PointLightDrawCall(
-                l, (data_.cameras[camera_id].perspective_view_mat * data_.pt_lights[l].model_mat[3])[2], 0);
+                l, (data_.cameras_[camera_id].perspective_view_mat * data_.pt_lights_[l].model_mat[3])[2], 0);
             this->pt_visible_lights.insert(point_light);
         }
     }
@@ -125,18 +125,18 @@ void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) 
 void NRE_Renderer::generateDrawCalls() {
 
     // delete all remaining draw call programs from deleted scenes
-    for (auto& sce : data_.deleted_scenes) {
+    for (auto& sce : data_.deleted_scenes_) {
         for (auto ren_group : this->sce_ren_groups[sce]) {
 
             if (ren_group.z_prepass_program != 0) nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0) nre::gpu::del_program(ren_group.program);
         }
-        data_.scenes.erase(sce);
+        data_.scenes_.erase(sce);
         this->sce_ren_groups.erase(sce);
     }
-    data_.deleted_scenes.clear();
+    data_.deleted_scenes_.clear();
 
-    for (auto& scene : data_.scenes) {
+    for (auto& scene : data_.scenes_) {
 
         if (!this->sce_ren_groups.count(scene.first)) {
             this->sce_ren_groups[scene.first] = NRE_DrawCallContainer();
@@ -153,12 +153,12 @@ void NRE_Renderer::generateDrawCalls() {
         // gemerate draw calls anew
         for (auto cam : scene.second.cameras) {
             for (auto mesh : scene.second.meshes) {
-                for (auto vgroup : data_.meshes[mesh].vgroups) {
+                for (auto vgroup : data_.meshes_[mesh].vgroups) {
                     auto render_data     = NRE_RenderGroup();
                     render_data.camera   = cam;
                     render_data.vgroup   = vgroup;
                     render_data.mesh     = mesh;
-                    render_data.material = data_.vgroups[vgroup].material_id;
+                    render_data.material = data_.vgroups_[vgroup].material_id;
                     if (!this->sce_ren_groups[scene.first].contains(render_data)) {
                         this->sce_ren_groups[scene.first].insert(render_data);
                     }
@@ -173,7 +173,7 @@ void NRE_Renderer::generateDrawCalls() {
 void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camera_id) {
     this->pt_visible_lights.clear();
 
-    auto persp_mat = data_.cameras[camera_id].perspective_mat;
+    auto persp_mat = data_.cameras_[camera_id].perspective_mat;
 
     // set limit to 255 lights
     // why you ask?
@@ -182,32 +182,32 @@ void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camer
     // so i can only place up to 255 lights (light with index 0 inside the shaders symbolizes the lack of lights)
     // Thirdly, spot lights will be handed in a separate pass with another texture
 
-    for (auto l : data_.scenes[scene_id].pt_lights) {
+    for (auto l : data_.scenes_[scene_id].pt_lights) {
 
         // calculations happening in view space
-        OE_Vec4 model_pos = OE_Vec4(data_.pt_lights[l].model_mat[3].x, data_.pt_lights[l].model_mat[3].y,
-                                    data_.pt_lights[l].model_mat[3].z, 1.0f);
+        OE_Vec4 model_pos = OE_Vec4(data_.pt_lights_[l].model_mat[3].x, data_.pt_lights_[l].model_mat[3].y,
+                                    data_.pt_lights_[l].model_mat[3].z, 1.0f);
 
-        OE_Vec4 light_view_pos = data_.cameras[camera_id].view_mat * model_pos;
+        OE_Vec4 light_view_pos = data_.cameras_[camera_id].view_mat * model_pos;
 
         auto light_camview_radius =
-            light_view_pos - OE_Vec4(data_.pt_lights[l].range, data_.pt_lights[l].range, data_.pt_lights[l].range, 0.0f);
+            light_view_pos - OE_Vec4(data_.pt_lights_[l].range, data_.pt_lights_[l].range, data_.pt_lights_[l].range, 0.0f);
 
-        bool is_behind_camera = light_camview_radius.z > (-data_.cameras[camera_id].near);
-        bool is_too_far_away  = (light_camview_radius.z + 2 * data_.pt_lights[l].range) < (-data_.cameras[camera_id].far);
+        bool is_behind_camera = light_camview_radius.z > (-data_.cameras_[camera_id].near);
+        bool is_too_far_away  = (light_camview_radius.z + 2 * data_.pt_lights_[l].range) < (-data_.cameras_[camera_id].far);
 
         // calculations happening in clip space
         auto light_clip_radius_max_x =
-            OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(data_.pt_lights[l].range, 0.0f, 0.0f, 0.0f));
+            OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(data_.pt_lights_[l].range, 0.0f, 0.0f, 0.0f));
 
         auto light_clip_radius_min_x =
-            OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(data_.pt_lights[l].range, 0.0f, 0.0f, 0.0f));
+            OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(data_.pt_lights_[l].range, 0.0f, 0.0f, 0.0f));
 
         auto light_clip_radius_max_y =
-            OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(0.0f, data_.pt_lights[l].range, 0.0f, 0.0f));
+            OE_GetClipCoords(persp_mat, light_view_pos + OE_Vec4(0.0f, data_.pt_lights_[l].range, 0.0f, 0.0f));
 
         auto light_clip_radius_min_y =
-            OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(0.0f, data_.pt_lights[l].range, 0.0f, 0.0f));
+            OE_GetClipCoords(persp_mat, light_view_pos - OE_Vec4(0.0f, data_.pt_lights_[l].range, 0.0f, 0.0f));
 
         bool is_too_left  = light_clip_radius_max_x.x < -1.02f;
         bool is_too_right = light_clip_radius_min_x.x > 1.02f;
@@ -222,7 +222,7 @@ void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camer
         if ((not is_behind_camera) and (not is_too_far_away) and (not is_too_left) and (not is_too_right) and
             (not is_too_above) and (not is_too_below)) {
             auto point_light = NRE_PointLightDrawCall(
-                l, (data_.cameras[camera_id].perspective_view_mat * data_.pt_lights[l].model_mat[3])[2], 0);
+                l, (data_.cameras_[camera_id].perspective_view_mat * data_.pt_lights_[l].model_mat[3])[2], 0);
             this->pt_visible_lights.insert(point_light);
         }
     }
@@ -232,18 +232,18 @@ void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camer
 void NRE_RendererLegacy::generateDrawCalls() {
 
     // delete all remaining draw call programs from deleted scenes
-    for (auto& sce : data_.deleted_scenes) {
+    for (auto& sce : data_.deleted_scenes_) {
         for (auto ren_group : this->sce_ren_groups[sce]) {
 
             if (ren_group.z_prepass_program != 0) nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0) nre::gpu::del_program(ren_group.program);
         }
-        data_.scenes.erase(sce);
+        data_.scenes_.erase(sce);
         this->sce_ren_groups.erase(sce);
     }
-    data_.deleted_scenes.clear();
+    data_.deleted_scenes_.clear();
 
-    for (auto& scene : data_.scenes) {
+    for (auto& scene : data_.scenes_) {
 
         if (!this->sce_ren_groups.count(scene.first)) {
             this->sce_ren_groups[scene.first] = NRE_DrawCallContainer();
@@ -260,12 +260,12 @@ void NRE_RendererLegacy::generateDrawCalls() {
         // gemerate draw calls anew
         for (auto cam : scene.second.cameras) {
             for (auto mesh : scene.second.meshes) {
-                for (auto vgroup : data_.meshes[mesh].vgroups) {
+                for (auto vgroup : data_.meshes_[mesh].vgroups) {
                     auto render_data     = NRE_RenderGroup();
                     render_data.camera   = cam;
                     render_data.vgroup   = vgroup;
                     render_data.mesh     = mesh;
-                    render_data.material = data_.vgroups[vgroup].material_id;
+                    render_data.material = data_.vgroups_[vgroup].material_id;
                     if (!this->sce_ren_groups[scene.first].contains(render_data)) {
                         this->sce_ren_groups[scene.first].insert(render_data);
                     }

@@ -106,18 +106,31 @@ public:
 
     // very important variable
     std::atomic<bool> done;
+    bool              errors_on_init{false};
 
-
-    OE_THREAD_SAFETY_OBJECT renderer_mutex;
-    OE_RendererBase*        renderer{nullptr};
+    OE_THREAD_SAFETY_OBJECT  renderer_mutex;
+    oe::renderer_base_t*     renderer{nullptr};
+    oe::renderer_init_info   renderer_init_info;
+    oe::renderer_update_info renderer_info;
+    bool                     renderer_init_errors{false};
+    std::atomic<bool>        restart_renderer{false};
 
     OE_THREAD_SAFETY_OBJECT physics_mutex;
-    OE_PhysicsEngineBase*   physics{nullptr};
+    oe::physics_base_t*     physics{nullptr};
+    oe::physics_update_info physics_info;
+    bool                    physics_init_errors{false};
+    oe::physics_init_info   physics_init_info;
 
     OE_THREAD_SAFETY_OBJECT window_mutex;
-    OE_WindowSystemBase*    window{nullptr};
+    oe::winsys_base_t*      window{nullptr};
+    oe::winsys_update_info  window_info;
+    oe::winsys_init_info    window_init_info;
+    oe::winsys_output       window_output;
+    bool                    winsys_init_errors{false};
 
-    OE_NetworkingBase* network{nullptr};
+    oe::networking_base_t*   network{nullptr};
+    oe::networking_init_info network_init_info;
+    bool                     network_init_errors{false};
 
     std::shared_ptr<OE_World> world{nullptr};
 
@@ -145,7 +158,8 @@ public:
 
 
     // Main functions
-    int  Init(std::string, int, int, bool, bool);
+    int  Init(std::string, int, int, bool, oe::renderer_init_info, oe::winsys_init_info, oe::physics_init_info,
+              oe::networking_init_info);
     void CreateNewThread(std::string);
     void CreateUnsyncThread(std::string, const OE_METHOD);
     void Step();
@@ -186,15 +200,16 @@ private:
     int tryRun_unsync_thread(OE_UnsyncThreadData*);
     int tryRun_task(const std::string&, OE_Task&);
 
-    void tryRun_physics_updateMultiThread(const std::string&, const int&);
+    // ALL these return true if error is found so it terminates the engine
+    bool tryRun_physics_updateMultiThread(const std::string&, const int&);
     bool tryRun_renderer_updateSingleThread();
-    void tryRun_renderer_updateData();
+    bool tryRun_renderer_updateData();
     bool tryRun_winsys_update();
 
-    void tryRun_winsys_init(int, int, std::string, bool, bool, void*);
-    void tryRun_physics_init();
-    void tryRun_renderer_init();
-    void tryRun_network_init();
+    bool tryRun_winsys_init(int, int, std::string, bool, oe::winsys_init_info);
+    bool tryRun_physics_init(oe::physics_init_info);
+    bool tryRun_renderer_init(oe::renderer_init_info);
+    bool tryRun_network_init(oe::networking_init_info);
 };
 
 #endif
