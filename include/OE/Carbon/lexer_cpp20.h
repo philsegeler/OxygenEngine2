@@ -43,16 +43,15 @@ namespace csl {
 
 
     template <typename ReturnType, typename First, typename... Rest>
-    constexpr inline std::optional<ReturnType> for_each(lexer_input_it_t& it) {
+    constexpr inline ReturnType for_each(lexer_input_it_t& it) {
         if (const auto m = First::matcher(it)) {
-            std::optional<ReturnType> result = ReturnType{First::token_type, m.to_view()};
-            return result;
+            return ReturnType{First::token_type, m.to_view()};
         }
         else {
             if constexpr (sizeof...(Rest) > 0)
                 return for_each<ReturnType, Rest...>(it);
             else {
-                return std::nullopt;
+                throw 1;
             }
         }
     }
@@ -141,15 +140,8 @@ namespace csl {
                 return;
             }
 
-            // TODO: Test without optional
-            std::optional<token_t<token_t_type>> opt = for_each<token_t<token_t_type>, TokenDefs_...>(input_it_);
-            if (opt) {
-                t_ = *opt;
-                input_it_ += t_.content.size();
-            }
-            else {
-                throw 1;
-            }
+            t_ = for_each<token_t<token_t_type>, TokenDefs_...>(input_it_);
+            input_it_ += t_.content.size();
         }
 
         token_t<token_t_type>& get_token() {
