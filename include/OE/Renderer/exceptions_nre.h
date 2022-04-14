@@ -18,7 +18,7 @@ namespace nre {
 
         class invalid_render_buffer : public oe::renderer_error {
         public:
-            invalid_render_buffer(std::size_t id, const std::string& func) {
+            invalid_render_buffer(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::invalid_render_buffer";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -33,7 +33,7 @@ namespace nre {
 
         class invalid_vertex_buffer : public oe::renderer_error {
         public:
-            invalid_vertex_buffer(std::size_t id, const std::string& func) {
+            invalid_vertex_buffer(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::invalid_vertex_buffer";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -48,7 +48,7 @@ namespace nre {
 
         class invalid_index_buffer : public oe::renderer_error {
         public:
-            invalid_index_buffer(std::size_t id, const std::string& func) {
+            invalid_index_buffer(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::invalid_index_buffer";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -63,7 +63,7 @@ namespace nre {
 
         class invalid_uniform_buffer : public oe::renderer_error {
         public:
-            invalid_uniform_buffer(std::size_t id, const std::string& func) {
+            invalid_uniform_buffer(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::invalid_uniform_buffer";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -78,7 +78,7 @@ namespace nre {
 
         class invalid_uniform_property : public oe::renderer_error {
         public:
-            invalid_uniform_property(std::size_t id, const std::string& uniform, int length, const std::string& func,
+            invalid_uniform_property(std::size_t id, std::string_view uniform, int length, std::string_view func,
                                      bool is_type_problem) {
                 name_            = "nre::gpu::invalid_uniform_property";
                 id_              = std::to_string(id);
@@ -105,7 +105,7 @@ namespace nre {
 
         class invalid_vertex_layout : public oe::renderer_error {
         public:
-            invalid_vertex_layout(std::size_t id, const std::string& func) {
+            invalid_vertex_layout(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::invalid_vertex_layout";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -120,7 +120,7 @@ namespace nre {
 
         class invalid_framebuffer : public oe::renderer_error {
         public:
-            invalid_framebuffer(std::size_t id, const std::string& func) {
+            invalid_framebuffer(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::invalid_framebuffer";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -135,7 +135,7 @@ namespace nre {
 
         class invalid_texture : public oe::renderer_error {
         public:
-            invalid_texture(std::size_t id, const std::string& func) {
+            invalid_texture(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::invalid_texture";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -150,7 +150,7 @@ namespace nre {
 
         class invalid_vertex_layout_buffer : public oe::renderer_error {
         public:
-            invalid_vertex_layout_buffer(std::size_t id, std::size_t vbo, const std::string& func) {
+            invalid_vertex_layout_buffer(std::size_t id, std::size_t vbo, std::string_view func) {
                 name_ = "nre::gpu::invalid_vertex_layout_buffer";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -168,7 +168,7 @@ namespace nre {
 
         class invalid_program_id : public oe::renderer_error {
         public:
-            invalid_program_id(std::size_t id, const std::string& func) {
+            invalid_program_id(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::invalid_program_id";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -183,7 +183,7 @@ namespace nre {
 
         class invalid_program_uniform : public oe::renderer_error {
         public:
-            invalid_program_uniform(std::size_t id, std::string uniform, const std::string& func) {
+            invalid_program_uniform(std::size_t id, std::string_view uniform, std::string_view func) {
                 name_    = "nre::gpu::invalid_program_uniform";
                 id_      = std::to_string(id);
                 func_    = func;
@@ -203,7 +203,7 @@ namespace nre {
 
         class invalid_program_uniform_block : public oe::renderer_error {
         public:
-            invalid_program_uniform_block(std::size_t id, std::string uniform, const std::string& func) {
+            invalid_program_uniform_block(std::size_t id, std::string_view uniform, std::string_view func) {
                 name_    = "nre::gpu::invalid_program_uniform_block";
                 id_      = std::to_string(id);
                 func_    = func;
@@ -224,7 +224,8 @@ namespace nre {
 
         class invalid_buffer_offset_length : public oe::renderer_error {
         public:
-            invalid_buffer_offset_length(std::size_t id, std::size_t off_length, std::string buffer, const std::string& func) {
+            invalid_buffer_offset_length(std::size_t id, std::size_t off_length, std::string_view buffer,
+                                         std::string_view func) {
                 name_       = "nre::gpu::invalid_buffer_offset_length";
                 id_         = std::to_string(id);
                 func_       = func;
@@ -244,7 +245,7 @@ namespace nre {
 
         class unimplemented_function : public oe::renderer_error {
         public:
-            unimplemented_function(const std::string& func, const std::string& api_name, const std::string& extra_info) {
+            unimplemented_function(std::string_view func, std::string_view api_name, std::string_view extra_info) {
                 name_ = "nre::gpu::unimplemented_function";
                 func_ = func;
                 api_  = api_name;
@@ -262,7 +263,7 @@ namespace nre {
 
         class incomplete_program : public oe::renderer_error {
         public:
-            incomplete_program(std::size_t id, const std::string& func) {
+            incomplete_program(std::size_t id, std::string_view func) {
                 name_ = "nre::gpu::incomplete_program";
                 id_   = std::to_string(id);
                 func_ = func;
@@ -279,7 +280,7 @@ namespace nre {
         class invalid_draw_range : public oe::renderer_error {
         public:
             invalid_draw_range(std::size_t id, std::size_t length, std::size_t offset, std::size_t count,
-                               const std::string& func) {
+                               std::string_view func) {
                 name_   = "nre::gpu::invalid_draw_range";
                 id_     = std::to_string(id);
                 length_ = std::to_string(length);
@@ -302,7 +303,7 @@ namespace nre {
 
         class unsupported_texture : public oe::renderer_error {
         public:
-            unsupported_texture(const std::string& func, const std::string& api_name, const std::string& tex_type_in) {
+            unsupported_texture(std::string_view func, std::string_view api_name, std::string_view tex_type_in) {
                 name_     = "nre::gpu::unsupported_texture";
                 func_     = func;
                 api_      = api_name;
@@ -321,8 +322,8 @@ namespace nre {
 
         class unsupported_rendermode : public oe::renderer_error {
         public:
-            unsupported_rendermode(const std::string& func, const std::string& api_name, const std::string& rendermode,
-                                   const std::string& info) {
+            unsupported_rendermode(std::string_view func, std::string_view api_name, std::string_view rendermode,
+                                   std::string_view info) {
                 name_       = "nre::gpu::unsupported_rendermode";
                 func_       = func;
                 api_        = api_name;
