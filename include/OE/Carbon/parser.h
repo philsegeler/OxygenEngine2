@@ -12,6 +12,7 @@
 #include <sstream>
 #include <variant>
 #include <vector>
+#include <iostream>
 
 #include <OE/Carbon/exceptions_csl.h>
 #include <OE/Carbon/lexer.h>
