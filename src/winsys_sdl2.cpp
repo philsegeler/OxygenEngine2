@@ -83,12 +83,14 @@ oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::
     SDL_Init(SDL_INIT_VIDEO);
 #endif
 
-    this->createWindow(x, y);
+
+
 
     if (not use_legacy_renderer) {
 
 #ifndef OE_PLATFORM_WEB
         if (init_info.requested_backend == nre::gpu::GL) {
+            this->createWindow(x, y);
             this->context = SDL_GL_CreateContext(this->window);
             if (context == NULL) {
                 cout << "OE WARNING: Could not initialize OpenGL 3.3 Core Context, " << SDL_GetError() << endl;
@@ -102,6 +104,11 @@ oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::
 #endif
         // Request an OpenGL ES 3.0 context
 
+
+#ifdef OE_PLATFORM_WINDOWS
+        SDL_SetHint(SDL_HINT_VIDEO_WIN_D3DCOMPILER, "d3dcompiler_43.dll");
+        SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
+#endif
         SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
@@ -118,6 +125,7 @@ oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
+        this->createWindow(x, y);
         this->context = SDL_GL_CreateContext(this->window);
         if (context == NULL) {
             cout << "OE WARNING: Could not initialize OpenGL ES 3.0 Context, " << SDL_GetError() << endl;
@@ -132,6 +140,12 @@ oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::
     // Request an OpenGL ES 2.0 context if everything else fails
     // If this does not work either then consider not trying to run the engine on prehistoric stuff that
     // does not even support basic shaders. Or use a software OpenGL renderer.
+
+#ifdef OE_PLATFORM_WINDOWS
+    SDL_SetHint(SDL_HINT_VIDEO_WIN_D3DCOMPILER, "d3dcompiler_43.dll");
+    SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
+#endif
+
 
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -148,8 +162,13 @@ oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::
 #endif
     // Also request a depth buffer
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#ifndef OE_PLATFORM_WINDOWS
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+#else
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+#endif
 
+    this->createWindow(x, y);
     this->context = SDL_GL_CreateContext(this->window);
     if (context == NULL) {
         cout << "OE WARNING: Could not initialize OpenGL ES 2.0 Context, " << SDL_GetError() << endl;

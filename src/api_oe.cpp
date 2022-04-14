@@ -12,19 +12,11 @@ oe::physics_init_info    oe::preinit::physics_parameters    = oe::physics_init_i
 oe::networking_init_info oe::preinit::networking_parameters = oe::networking_init_info();
 
 void oe::preinit::request_gles2() {
-    // NOTE: Windows needs ANGLE to support OpenGL ES. For now let's use the other renderer
-    // ANGLE is not easy to install as a library and use
-#ifndef OE_PLATFORM_WINDOWS
     oe::preinit::winsys_parameters.requested_backend = nre::gpu::GLES2;
-#endif
 }
 
 void oe::preinit::request_gles31() {
-    // NOTE: Windows needs ANGLE to support OpenGL ES. For now let's use the other renderer
-    // ANGLE is not easy to install as a library and use
-#ifndef OE_PLATFORM_WINDOWS
     oe::preinit::winsys_parameters.requested_backend = nre::gpu::GLES;
-#endif
 }
 
 size_t oe::init() {
