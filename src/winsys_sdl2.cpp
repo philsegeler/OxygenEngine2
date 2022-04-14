@@ -85,7 +85,6 @@ oe::winsys_output OE_SDL_WindowSystem::init(oe::winsys_init_info init_info, oe::
 
 
 
-
     if (not use_legacy_renderer) {
 
 #ifndef OE_PLATFORM_WEB
