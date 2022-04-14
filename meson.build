@@ -1,5 +1,7 @@
 project('Oxygen Engine', ['cpp', 'c'], default_options : ['cpp_std=c++20', 'buildtype=release'])
 
+add_global_arguments('-fconcepts-diagnostics-depth=8', language : 'cpp')
+
 src = ['src/Renderer/glad.c',
        'src/Renderer/api_gpu.cpp',
        'src/Renderer/shaders_gpu.cpp',

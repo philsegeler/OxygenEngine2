@@ -481,16 +481,15 @@ namespace csl {
         constexpr auto is_not_whitespace    = [](auto token) { return (token.type != token_type::whitespace); };
         constexpr auto remove_string_quotes = [](auto token) -> decltype(token) {
             if (token.type == token_type::string)
-                return {token_type::string, token.content.substr(1, token.content.size()-2)};
+                return {token_type::string, token.content.substr(1, token.content.size() - 2)};
             else
                 return token;
         };
 
-        auto token_range = lexer | std::views::filter(is_not_whitespace) | std::views::transform(remove_string_quotes);
-        auto begin       = token_range.begin();
-        auto end         = token_range.end();
+        auto token_range = lexer | std::views::filter(is_not_whitespace);
+//                                 | std::views::transform(remove_string_quotes);
 
-        parser_t parser(begin, end);
+        parser_t parser(token_range.begin(), token_range.end());
         return parser.parse();
     }
 } // namespace csl

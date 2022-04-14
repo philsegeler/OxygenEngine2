@@ -83,11 +83,11 @@ namespace csl {
 
     template <typename... TokenDefs_>
     class generic_lexer_t {
+
+        using token_t_type = typename get_token_defs_token_type<TokenDefs_...>::type;
+
     public:
         class iterator_t {
-
-            using token_t_type = typename get_token_defs_token_type<TokenDefs_...>::type;
-
         public:
             using iterator_category = std::input_iterator_tag;
             using value_type        = token_t<token_t_type>;
@@ -96,21 +96,19 @@ namespace csl {
             using pointer           = token_t<token_t_type>*;
 
             iterator_t() = default;
-            iterator_t(const std::string_view& input) : input_it_(input.begin()), end_it_(input.end()) {
-            }
-            iterator_t(const std::string_view::iterator& input_it, const std::string_view::iterator& end_it)
-                : input_it_(input_it), end_it_(end_it) {
+            iterator_t(generic_lexer_t* lexer) : lexer_(lexer) {
             }
 
             const token_t<token_t_type>* operator->() const {
-                return &t_;
+                return &lexer_->get_token();
             }
             const token_t<token_t_type>& operator*() const {
-                return t_;
+                return lexer_->get_token();
             }
 
+            // Test performance when returning reference
             iterator_t& operator++() {
-                next();
+                lexer_->next();
                 return *this;
             }
             iterator_t operator++(int) {
@@ -120,48 +118,65 @@ namespace csl {
             }
 
             bool operator==(const iterator_t& rhs) const {
-                return ((t_ == rhs.t_) && (input_it_ == rhs.input_it_));
+                return (at_end() && rhs.at_end());
             }
             bool operator!=(const iterator_t& rhs) const {
-                return !((*this) == rhs);
+                return !(*this==rhs);
             }
 
         private:
-            token_t<token_t_type>      t_;
-            std::string_view::iterator input_it_;
-            std::string_view::iterator end_it_;
+            generic_lexer_t* lexer_ = nullptr;
 
-            void next() {
-                if (input_it_ == end_it_) {
-                    t_ = token_t<token_t_type>{{}, end_it_};
-                    return;
-                }
-
-                std::optional<token_t<token_t_type>> opt = for_each<token_t<token_t_type>, TokenDefs_...>(input_it_);
-                if (opt) {
-                    t_ = *opt;
-                    input_it_ += t_.content.size();
-                }
-                else {
-                    throw 1;
-                }
+            bool at_end() const {
+                return ((lexer_ == nullptr) || lexer_->at_end());
             }
         };
 
 
-        generic_lexer_t(const std::string_view input) : input_(input){};
+        generic_lexer_t(const std::string_view input) : input_it_(input.begin()), end_it_{input.end()} {};
 
+        void next() {
+            if (input_it_ == end_it_) {
+                t_ = token_t<token_t_type>{{}, end_it_};
+                return;
+            }
 
-        iterator_t begin() const {
-            return ++iterator_t{input_.begin(), input_.end()};
+            // TODO: Test without optional
+            std::optional<token_t<token_t_type>> opt = for_each<token_t<token_t_type>, TokenDefs_...>(input_it_);
+            if (opt) {
+                t_ = *opt;
+                input_it_ += t_.content.size();
+            }
+            else {
+                throw 1;
+            }
         }
 
+        token_t<token_t_type>& get_token() {
+            return t_;
+        }
+
+        iterator_t begin() {
+            return ++iterator_t{this};
+        }
+        iterator_t end() {
+            return iterator_t{nullptr};
+        }
+        iterator_t begin() const {
+            return ++iterator_t{this};
+        }
         iterator_t end() const {
-            return ++iterator_t{input_.end(), input_.end()};
+            return iterator_t{nullptr};
+        }
+
+        bool at_end() const {
+            return (input_it_ == end_it_);
         }
 
     private:
-        std::string_view input_;
+        token_t<token_t_type>      t_;
+        std::string_view::iterator input_it_;
+        std::string_view::iterator end_it_;
     };
 
 
