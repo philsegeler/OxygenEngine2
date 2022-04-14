@@ -28,7 +28,7 @@ jobs:
   
     - name: Create build directory
       working-directory: ${{github.workspace}}
-      run: CC=gcc-11 CXX=g++11 meson builddir
+      run: CC=gcc-11 CXX=g++-11 meson builddir
 
     - name: Build
       working-directory: ${{github.workspace}}
