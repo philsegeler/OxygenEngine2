@@ -25,10 +25,6 @@ namespace csl {
     struct token_t {
         Type_            type;
         std::string_view content;
-
-        constexpr bool operator==(const token_t& rhs) const {
-            return ((type == rhs.type) && (content == rhs.content));
-        }
     };
 
 
@@ -91,47 +87,47 @@ namespace csl {
             using reference         = token_t<token_t_type>&;
             using pointer           = token_t<token_t_type>*;
 
-            iterator_t() = default;
-            iterator_t(generic_lexer_t* lexer) : lexer_(lexer) {
+            constexpr iterator_t() = default;
+            constexpr iterator_t(generic_lexer_t* lexer) : lexer_(lexer) {
             }
 
-            const token_t<token_t_type>* operator->() const {
+            constexpr const token_t<token_t_type>* operator->() const {
                 return &lexer_->get_token();
             }
-            const token_t<token_t_type>& operator*() const {
+            constexpr const token_t<token_t_type>& operator*() const {
                 return lexer_->get_token();
             }
 
             // Test performance when returning reference
-            iterator_t& operator++() {
+            constexpr iterator_t& operator++() {
                 lexer_->next();
                 return *this;
             }
-            iterator_t operator++(int) {
+            constexpr iterator_t operator++(int) {
                 iterator_t tmp(*this);
                 ++(*this);
                 return tmp;
             }
 
-            bool operator==(const iterator_t& rhs) const {
+            constexpr bool operator==(const iterator_t& rhs) const {
                 return (at_end() && rhs.at_end());
             }
-            bool operator!=(const iterator_t& rhs) const {
+            constexpr bool operator!=(const iterator_t& rhs) const {
                 return !(*this==rhs);
             }
 
         private:
             generic_lexer_t* lexer_ = nullptr;
 
-            bool at_end() const {
+            constexpr bool at_end() const {
                 return ((lexer_ == nullptr) || lexer_->at_end());
             }
         };
 
 
-        generic_lexer_t(const std::string_view input) : input_it_(input.begin()), end_it_{input.end()} {};
+        constexpr generic_lexer_t(const std::string_view input) : input_it_(input.begin()), end_it_{input.end()} {};
 
-        void next() {
+        constexpr void next() {
             if (input_it_ == end_it_) {
                 t_ = token_t<token_t_type>{{}, end_it_};
                 return;
@@ -141,24 +137,24 @@ namespace csl {
             input_it_ += t_.content.size();
         }
 
-        token_t<token_t_type>& get_token() {
+        constexpr token_t<token_t_type>& get_token() {
             return t_;
         }
 
-        iterator_t begin() {
+        constexpr iterator_t begin() {
             return ++iterator_t{this};
         }
-        iterator_t end() {
+        constexpr iterator_t end() {
             return iterator_t{nullptr};
         }
-        iterator_t begin() const {
+        constexpr iterator_t begin() const {
             return ++iterator_t{this};
         }
-        iterator_t end() const {
+        constexpr iterator_t end() const {
             return iterator_t{nullptr};
         }
 
-        bool at_end() const {
+        constexpr bool at_end() const {
             return (input_it_ == end_it_);
         }
 

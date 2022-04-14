@@ -7,12 +7,12 @@
 #endif
 
 
+#include <iostream>
 #include <map>
 #include <ranges>
 #include <sstream>
 #include <variant>
 #include <vector>
-#include <iostream>
 
 #include <OE/Carbon/exceptions_csl.h>
 #include <OE/Carbon/lexer.h>
@@ -395,7 +395,6 @@ namespace csl {
             return result;
         }
 
-        // TODO: Get rid of RTTI use
         generic_assignment_t parse_assignment() {
             // TODO: Check where to put this in order to get better performance
             expect_token(token_type::integer, token_type::floating_point, token_type::identifier, token_type::open_brace,
@@ -421,7 +420,6 @@ namespace csl {
             list_assignment_t result;
 
             if (is_value()) {
-                // TODO: Try emplace_back
                 result.push_back((*token_it_).content);
                 ++token_it_;
 
@@ -429,7 +427,6 @@ namespace csl {
                     ++token_it_;
                     expect_value();
 
-                    // TODO: Try emplace_back
                     result.push_back((*token_it_).content);
                     ++token_it_;
                 }
@@ -447,8 +444,6 @@ namespace csl {
             bool b = (has_type(type) || ...);
 
             if (!b) {
-                // TODO: Test performance, if const char* is used here instead of std::string
-                // TODO: Regardles, make all of this evaluate at compile-time
                 std::string expected = (get_token_type_string_rep(type) + ...);
                 expected.erase(expected.size() - 2, 2);
                 std::string unexpected((*token_it_).content);
@@ -460,7 +455,6 @@ namespace csl {
             }
         }
 
-        // TODO: Rename to match_type? Check literature
         bool has_type(token_type type) const {
             return ((*token_it_).type == type);
         }
@@ -479,16 +473,9 @@ namespace csl {
     inline element parse(std::string& input) {
         lexer_t lexer(input);
 
-        constexpr auto is_not_whitespace    = [](auto token) { return (token.type != token_type::whitespace); };
-        constexpr auto remove_string_quotes = [](auto token) -> decltype(token) {
-            if (token.type == token_type::string)
-                return {token_type::string, token.content.substr(1, token.content.size() - 2)};
-            else
-                return token;
-        };
+        constexpr auto is_not_whitespace = [](auto token) { return (token.type != token_type::whitespace); };
 
         auto token_range = lexer | std::views::filter(is_not_whitespace);
-//                                 | std::views::transform(remove_string_quotes);
 
         parser_t parser(token_range.begin(), token_range.end());
         return parser.parse();
