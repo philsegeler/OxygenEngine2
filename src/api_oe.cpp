@@ -644,6 +644,23 @@ void oe::toggle_render_HDR() {
     OE_Main->renderer_mutex.unlockMutex();
 }
 
+void oe::render_z_prepass(bool value) {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->renderer_mutex.lockMutex();
+    OE_Main->renderer_info.use_z_prepass = value;
+    OE_Main->renderer_mutex.unlockMutex();
+}
+
+void oe::toggle_render_z_prepass() {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->renderer_mutex.lockMutex();
+    if (OE_Main->renderer_info.use_z_prepass)
+        OE_Main->renderer_info.use_z_prepass = false;
+    else
+        OE_Main->renderer_info.use_z_prepass = true;
+    OE_Main->renderer_mutex.unlockMutex();
+}
+
 void oe::set_renderer_sanity_checks(bool value) {
     OE_API_Helpers::checkIfInit();
     OE_Main->renderer_mutex.lockMutex();
