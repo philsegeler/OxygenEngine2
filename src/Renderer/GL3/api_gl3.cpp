@@ -243,7 +243,7 @@ void nre::gl3::api_t::check_vao_id_(std::size_t id, std::string_view func) {
 }
 
 void nre::gl3::api_t::check_prog_id_(std::size_t id, std::string_view func) {
-    if (this->progs_.count(id) == 0) {
+    if (not this->progs_.contains(id)) {
         throw nre::gpu::invalid_program_id(id, func);
     }
 }

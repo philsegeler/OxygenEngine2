@@ -208,7 +208,7 @@ void nre::gles2::api_t::check_vao_id(std::size_t id, std::string_view func) {
 
 void nre::gles2::api_t::check_prog_id(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
-    if (this->progs_.count(id) == 0) {
+    if (not this->progs_.contains(id)) {
         throw nre::gpu::invalid_program_id(id, func);
     }
 }
@@ -630,19 +630,22 @@ void nre::gles2::api_t::set_program_uniform_data(std::size_t id, std::string_vie
     this->check_prog_complete(id, "set_program_uniform_data");
     this->check_prog_uniform(id, name, "set_program_uniform_data");
 
-    if (this->active_prog_ != this->progs_[id].handle) {
-        glUseProgram(this->progs_[id].handle);
-        this->active_prog_ = this->progs_[id].handle;
+    auto prog_handle    = this->progs_[id].handle;
+    auto uniform_handle = this->prog_db_[this->progs_[id]].uniforms[std::string(name)];
+
+    if (this->active_prog_ != prog_handle) {
+        glUseProgram(prog_handle);
+        this->active_prog_ = prog_handle;
     }
-    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[std::string(name)].type;
+    auto uniform_type_enum = uniform_handle.type;
     if (uniform_type_enum == GL_INT) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[std::string(name)].slot, data);
+        glUniform1i(uniform_handle.slot, data);
 #else
-        glUniform1i(glGetUniformLocation(this->progs_[id].handle, std::string(name).c_str()), data);
+        glUniform1i(glGetUniformLocation(prog_handle, std::string(name).c_str()), data);
 #endif
     }
     else {
@@ -657,19 +660,22 @@ void nre::gles2::api_t::set_program_uniform_data(std::size_t id, std::string_vie
     this->check_prog_complete(id, "set_program_uniform_data");
     this->check_prog_uniform(id, name, "set_program_uniform_data");
 
-    if (this->active_prog_ != this->progs_[id].handle) {
-        glUseProgram(this->progs_[id].handle);
-        this->active_prog_ = this->progs_[id].handle;
+    auto prog_handle    = this->progs_[id].handle;
+    auto uniform_handle = this->prog_db_[this->progs_[id]].uniforms[std::string(name)];
+
+    if (this->active_prog_ != prog_handle) {
+        glUseProgram(prog_handle);
+        this->active_prog_ = prog_handle;
     }
-    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[std::string(name)].type;
+    auto uniform_type_enum = uniform_handle.type;
     if (uniform_type_enum == GL_FLOAT) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1f(this->prog_db_[this->progs_[id]].uniforms[std::string(name)].slot, data);
+        glUniform1f(uniform_handle.slot, data);
 #else
-        glUniform1f(glGetUniformLocation(this->progs_[id].handle, std::string(name).c_str()), data);
+        glUniform1f(glGetUniformLocation(prog_handle, std::string(name).c_str()), data);
 #endif
     }
     else {
@@ -684,17 +690,19 @@ void nre::gles2::api_t::set_program_uniform_data(std::size_t id, std::string_vie
     this->check_prog_uniform(id, name, "set_program_uniform_data");
     this->check_prog_uniform_property(id, name, data.size(), "set_program_uniform_data", false);
 
+    auto prog_handle    = this->progs_[id].handle;
+    auto uniform_handle = this->prog_db_[this->progs_[id]].uniforms[std::string(name)];
 
-    if (this->active_prog_ != this->progs_[id].handle) {
-        glUseProgram(this->progs_[id].handle);
-        this->active_prog_ = this->progs_[id].handle;
+    if (this->active_prog_ != prog_handle) {
+        glUseProgram(prog_handle);
+        this->active_prog_ = prog_handle;
     }
-    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[std::string(name)].type;
+    auto uniform_type_enum = uniform_handle.type;
     // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
     // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
     // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-    auto uniform_id = this->prog_db_[this->progs_[id]].uniforms[std::string(name)].slot;
+    auto uniform_id = uniform_handle.slot;
     if (uniform_type_enum == GL_FLOAT_VEC2) {
         glUniform2f(uniform_id, data[0], data[1]);
     }
@@ -714,22 +722,21 @@ void nre::gles2::api_t::set_program_uniform_data(std::size_t id, std::string_vie
     }
 #else
     if (uniform_type_enum == GL_FLOAT_VEC2) {
-        glUniform2f(glGetUniformLocation(this->progs_[id].handle, std::string(name).c_str()), data[0], data[1]);
+        glUniform2f(glGetUniformLocation(prog_handle, std::string(name).c_str()), data[0], data[1]);
     }
     else if (uniform_type_enum == GL_FLOAT_VEC3) {
-        glUniform3f(glGetUniformLocation(this->progs_[id].handle, std::string(name).c_str()), data[0], data[1], data[2]);
+        glUniform3f(glGetUniformLocation(prog_handle, std::string(name).c_str()), data[0], data[1], data[2]);
     }
     else if ((uniform_type_enum == GL_FLOAT_VEC4) or (uniform_type_enum == GL_FLOAT_MAT2)) {
-        glUniform4f(glGetUniformLocation(this->progs_[id].handle, std::string(name).c_str()), data[0], data[1], data[2],
-                    data[3]);
+        glUniform4f(glGetUniformLocation(prog_handle, std::string(name).c_str()), data[0], data[1], data[2], data[3]);
     }
     else if (uniform_type_enum == GL_FLOAT_MAT3) {
-        glUniformMatrix3fv(glGetUniformLocation(this->progs_[id].handle, std::string(name).c_str()), 1, false, &data[0]);
+        glUniformMatrix3fv(glGetUniformLocation(prog_handle, std::string(name).c_str()), 1, false, &data[0]);
     }
     else if (uniform_type_enum == GL_FLOAT_MAT4) {
         // cout << "SUCCESS" << id << " " << name <<  endl;
 
-        glUniformMatrix4fv(glGetUniformLocation(this->progs_[id].handle, std::string(name).c_str()), 1, false, &data[0]);
+        glUniformMatrix4fv(glGetUniformLocation(prog_handle, std::string(name).c_str()), 1, false, &data[0]);
     }
 #endif
     else {
