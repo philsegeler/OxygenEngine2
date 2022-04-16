@@ -322,11 +322,11 @@ namespace csl {
 
             expect_token(token_type::identifier);
 
-            std::string_view el_name = (*token_it_).content;
+            std::string_view el_name = token_it_->content;
             ++token_it_;
 
             while (has_type(token_type::identifier)) {
-                std::string_view att_name = (*token_it_).content;
+                std::string_view att_name = token_it_->content;
                 ++token_it_;
 
                 expect_token(token_type::eq);
@@ -345,7 +345,7 @@ namespace csl {
 
             while (token_it_ != end_it_) {
                 if (has_type(token_type::identifier)) {
-                    std::string_view as_name = (*token_it_).content;
+                    std::string_view as_name = token_it_->content;
 
                     ++token_it_;
 
@@ -366,7 +366,7 @@ namespace csl {
                 }
                 else if (has_type(token_type::lt)) {
                     ++token_it_;
-                    std::string_view sub_el_name = (*token_it_).content;
+                    std::string_view sub_el_name = token_it_->content;
                     result.elements[sub_el_name].push_back(parse_element());
                 }
                 else {
@@ -383,7 +383,7 @@ namespace csl {
 
             expect_token(token_type::identifier);
 
-            if ((*token_it_).content != el_name)
+            if (token_it_->content != el_name)
                 throw semantic_error_t("Closing tag identifier does not match opening tag"
                                        " identifier");
 
@@ -410,7 +410,7 @@ namespace csl {
         }
 
         single_assignment_t parse_single_assignment() {
-            single_assignment_t value = (*token_it_).content;
+            single_assignment_t value = token_it_->content;
             ++token_it_;
 
             return value;
@@ -420,14 +420,14 @@ namespace csl {
             list_assignment_t result;
 
             if (is_value()) {
-                result.push_back((*token_it_).content);
+                result.push_back(token_it_->content);
                 ++token_it_;
 
                 while (has_type(token_type::semicolon)) {
                     ++token_it_;
                     expect_value();
 
-                    result.push_back((*token_it_).content);
+                    result.push_back(token_it_->content);
                     ++token_it_;
                 }
             }
@@ -446,17 +446,17 @@ namespace csl {
             if (!b) {
                 std::string expected = (get_token_type_string_rep(type) + ...);
                 expected.erase(expected.size() - 2, 2);
-                std::string unexpected((*token_it_).content);
+                std::string unexpected(token_it_->content);
 
                 // TODO
                 throw unexpected_symbol_error_t(unexpected, expected, 0, 0);
                 //                throw unexpected_symbol_error_t(unexpected, expected, lexer_.get_line_num(),
-                //                                                lexer_.get_col_num() - (*token_it_).content.size());
+                //                                                lexer_.get_col_num() - token_it_->content.size());
             }
         }
 
         bool has_type(token_type type) const {
-            return ((*token_it_).type == type);
+            return (token_it_->type == type);
         }
 
         bool is_value() {
