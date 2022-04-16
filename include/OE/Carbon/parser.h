@@ -2,11 +2,6 @@
 #define CSL_PARSER_H_
 
 
-#if (__cplusplus > 201703L)
-#define CPP20
-#endif
-
-
 #include <iostream>
 #include <map>
 #include <ranges>
@@ -220,7 +215,7 @@ namespace csl {
 
         element parse() {
             expect_token(token_type::lt);
-            ++token_it_;
+            pass_token();
 
             return parse_element();
         }
@@ -239,21 +234,21 @@ namespace csl {
             expect_token(token_type::identifier);
 
             std::string_view el_name = token_it_->content;
-            ++token_it_;
+            pass_token();
 
             while (has_type(token_type::identifier)) {
                 std::string_view att_name = token_it_->content;
-                ++token_it_;
+                pass_token();
 
                 expect_token(token_type::eq);
-                ++token_it_;
+                pass_token();
 
                 // TODO: Is emplace_back (or the equivalent for maps) applicable here?
                 result.attributes[att_name] = parse_single_assignment();
             }
 
             expect_token(token_type::gt);
-            ++token_it_;
+            pass_token();
 
 
             // Parse element content
@@ -263,10 +258,10 @@ namespace csl {
                 if (has_type(token_type::identifier)) {
                     std::string_view as_name = token_it_->content;
 
-                    ++token_it_;
+                    pass_token();
 
                     expect_token(token_type::eq);
-                    ++token_it_;
+                    pass_token();
 
                     generic_assignment_t as_generic = parse_assignment();
 
@@ -280,7 +275,7 @@ namespace csl {
                     }
                 }
                 else if (has_type(token_type::lt)) {
-                    ++token_it_;
+                    pass_token();
                     std::string_view sub_el_name = token_it_->content;
                     result.elements[sub_el_name].push_back(parse_element());
                 }
@@ -294,17 +289,17 @@ namespace csl {
 
 
             expect_token(token_type::identifier, token_type::lt, token_type::lt_slash);
-            ++token_it_;
+            pass_token();
 
             expect_token(token_type::identifier);
 
             if (token_it_->content != el_name)
                 throw semantic_error_t{"Closing tag identifier does not match opening tag identifier"};
 
-            ++token_it_;
+            pass_token();
 
             expect_token(token_type::gt);
-            ++token_it_;
+            pass_token();
 
             return result;
         }
@@ -314,7 +309,7 @@ namespace csl {
                          token_type::string);
 
             if (has_type(token_type::open_brace)) {
-                ++token_it_;
+                pass_token();
                 return parse_list_assignment();
             }
             else {
@@ -332,7 +327,7 @@ namespace csl {
                 value = token_it_->content;
             }
 
-            ++token_it_;
+            pass_token();
 
             return value;
         }
@@ -342,20 +337,20 @@ namespace csl {
 
             if (is_value()) {
                 result.push_back(token_it_->content);
-                ++token_it_;
+                pass_token();
 
                 while (has_type(token_type::semicolon)) {
-                    ++token_it_;
+                    pass_token();
                     expect_value();
 
                     result.push_back(token_it_->content);
-                    ++token_it_;
+                    pass_token();
                 }
             }
 
             // TODO: Not only '}' is expected
             expect_token(token_type::close_brace);
-            ++token_it_;
+            pass_token();
 
             return result;
         }
@@ -386,6 +381,16 @@ namespace csl {
         void expect_value() {
             expect_token(token_type::integer, token_type::floating_point, token_type::identifier, token_type::string);
         }
+
+        void pass_token() {
+#ifdef __EMSCRIPTEN__
+            ++token_it_;
+            while (token_it_->type == token_type::whitespace)
+                ++token_it_;
+#elif
+            ++token_it_;
+#endif
+        }
     };
 
 
@@ -393,11 +398,15 @@ namespace csl {
     inline element parse(std::string& input) {
         lexer_t lexer(input);
 
+#ifdef __EMSCRIPTEN__
+        parser_t parser(lexer.begin(), lexer.end());
+#elif
         constexpr auto is_not_whitespace = [](auto token) { return (token.type != token_type::whitespace); };
 
         auto token_range = lexer | std::views::filter(is_not_whitespace);
-
         parser_t parser(token_range.begin(), token_range.end());
+#endif
+
         return parser.parse();
     }
 
