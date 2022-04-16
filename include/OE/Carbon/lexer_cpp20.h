@@ -1,6 +1,8 @@
 #include <ctre.hpp>
 #include <string_view>
 
+#include <OE/Carbon/exceptions_csl.h>
+
 
 namespace csl {
 
@@ -59,7 +61,8 @@ namespace csl {
             if constexpr (sizeof...(Rest) > 0)
                 return get_matched_token<Rest...>(it);
             else
-                throw 1;
+                // TODO: Set line and column numbers
+                throw unexpected_symbol_error_t{*it, 0, 0};
         }
     }
 

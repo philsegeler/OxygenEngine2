@@ -34,7 +34,7 @@ int main() {
 
         oe::destroy();
 
-    } catch(csl::unexpected_symbol_error_t& e) {
+    } catch(csl::unexpected_token_error_t& e) {
         std::cout << e.what() << std::endl;
     }
    
