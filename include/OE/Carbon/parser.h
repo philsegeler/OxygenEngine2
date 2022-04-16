@@ -387,7 +387,7 @@ namespace csl {
             ++token_it_;
             while (token_it_->type == token_type::whitespace)
                 ++token_it_;
-#elif
+#else
             ++token_it_;
 #endif
         }
@@ -400,7 +400,7 @@ namespace csl {
 
 #ifdef __EMSCRIPTEN__
         parser_t parser(lexer.begin(), lexer.end());
-#elif
+#else
         constexpr auto is_not_whitespace = [](auto token) { return (token.type != token_type::whitespace); };
 
         auto token_range = lexer | std::views::filter(is_not_whitespace);
