@@ -29,7 +29,7 @@ namespace csl {
     class unexpected_symbol_error_t : public lexer_error_t {
     public:
         unexpected_symbol_error_t(char unexpected, std::size_t line_num, std::size_t col_num)
-                : unexpected_(unexpected), line_num_(line_num), col_num_(col_num) {
+            : unexpected_(unexpected), line_num_(line_num), col_num_(col_num) {
             name_ = "csl::unexpected_token_error_t";
         };
 
