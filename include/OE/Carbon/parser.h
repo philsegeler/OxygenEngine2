@@ -323,7 +323,15 @@ namespace csl {
         }
 
         single_assignment_t parse_single_assignment() {
-            single_assignment_t value = token_it_->content;
+            single_assignment_t value;
+
+            if (token_it_->type == token_type::string) {
+                value = token_it_->content.substr(1, (token_it_->content.size() - 2));
+            }
+            else {
+                value = token_it_->content;
+            }
+
             ++token_it_;
 
             return value;
