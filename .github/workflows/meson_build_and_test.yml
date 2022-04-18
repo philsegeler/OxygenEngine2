@@ -24,11 +24,11 @@ jobs:
       run: pip install meson ninja
       
     - name: Install required libraries
-      run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev
+      run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test&& sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev gcc-11 g++-11
   
     - name: Create build directory
       working-directory: ${{github.workspace}}
-      run: CC=${{env.CC}} CXX=${{env.CXX}} meson builddir
+      run: CC=gcc-11 CXX=g++-11 meson builddir
 
     - name: Build
       working-directory: ${{github.workspace}}
@@ -76,7 +76,7 @@ jobs:
         run: pip install meson ninja
 
       - name: Install required packages
-        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev mingw-w64
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libxi-dev g++-mingw-w64
 
       - name: Run Windows cross build
         working-directory: ${{github.workspace}}

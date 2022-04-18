@@ -14,6 +14,8 @@
  */
 
 namespace nre { namespace gpu {
+    // useful for string containers to accept string view
+
 
     struct vertex_layout_input {
         std::size_t  vertex_buffer;
@@ -125,15 +127,15 @@ namespace nre { namespace gpu {
 
     void set_uniform_buf_state(std::size_t, std::size_t, int, std::size_t, std::size_t);
 
-    void set_program_uniform_buf_slot(std::size_t, const std::string&, int);
-    int  get_program_uniform_buf_slot(std::size_t, const std::string&);
+    void set_program_uniform_buf_slot(std::size_t, std::string_view, int);
+    int  get_program_uniform_buf_slot(std::size_t, std::string_view);
 
-    void set_program_texture_slot(std::size_t, const std::string&, int);
-    void set_program_uniform_data(std::size_t, const std::string&, uint32_t);
-    void set_program_uniform_data(std::size_t, const std::string&, float);
-    void set_program_uniform_data(std::size_t, const std::string&, const std::vector<uint32_t>&);
-    void set_program_uniform_data(std::size_t, const std::string&, const std::vector<float>&);
-    int  get_program_uniform_slot(std::size_t, const std::string&);
+    void set_program_texture_slot(std::size_t, std::string_view, int);
+    void set_program_uniform_data(std::size_t, std::string_view, uint32_t);
+    void set_program_uniform_data(std::size_t, std::string_view, float);
+    void set_program_uniform_data(std::size_t, std::string_view, const std::vector<uint32_t>&);
+    void set_program_uniform_data(std::size_t, std::string_view, const std::vector<float>&);
+    int  get_program_uniform_slot(std::size_t, std::string_view);
 
     void set_vertex_layout_format(std::size_t, std::vector<vertex_layout_input>);
     void del_vertex_layout(std::size_t);

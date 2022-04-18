@@ -12,19 +12,11 @@ oe::physics_init_info    oe::preinit::physics_parameters    = oe::physics_init_i
 oe::networking_init_info oe::preinit::networking_parameters = oe::networking_init_info();
 
 void oe::preinit::request_gles2() {
-    // NOTE: Windows needs ANGLE to support OpenGL ES. For now let's use the other renderer
-    // ANGLE is not easy to install as a library and use
-#ifndef OE_PLATFORM_WINDOWS
     oe::preinit::winsys_parameters.requested_backend = nre::gpu::GLES2;
-#endif
 }
 
 void oe::preinit::request_gles31() {
-    // NOTE: Windows needs ANGLE to support OpenGL ES. For now let's use the other renderer
-    // ANGLE is not easy to install as a library and use
-#ifndef OE_PLATFORM_WINDOWS
     oe::preinit::winsys_parameters.requested_backend = nre::gpu::GLES;
-#endif
 }
 
 size_t oe::init() {
@@ -649,6 +641,23 @@ void oe::toggle_render_HDR() {
         OE_Main->renderer_info.use_hdr = false;
     else
         OE_Main->renderer_info.use_hdr = true;
+    OE_Main->renderer_mutex.unlockMutex();
+}
+
+void oe::render_z_prepass(bool value) {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->renderer_mutex.lockMutex();
+    OE_Main->renderer_info.use_z_prepass = value;
+    OE_Main->renderer_mutex.unlockMutex();
+}
+
+void oe::toggle_render_z_prepass() {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->renderer_mutex.lockMutex();
+    if (OE_Main->renderer_info.use_z_prepass)
+        OE_Main->renderer_info.use_z_prepass = false;
+    else
+        OE_Main->renderer_info.use_z_prepass = true;
     OE_Main->renderer_mutex.unlockMutex();
 }
 

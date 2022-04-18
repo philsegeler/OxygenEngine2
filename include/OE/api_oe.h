@@ -413,6 +413,8 @@ namespace oe {
     void render_HDR(bool);
     void toggle_render_HDR();
 
+    void render_z_prepass(bool);
+    void toggle_render_z_prepass();
 
     // Debug options
     void set_renderer_sanity_checks(bool);

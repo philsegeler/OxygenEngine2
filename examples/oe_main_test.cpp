@@ -133,6 +133,9 @@ int test_task3(oe::task task){
     else if (oe::is_key_just_pressed("keyboard-3")){
         oe::load_world_func("assets/monkeys.csl", &OnLoadObject);
     }
+    else if (oe::is_key_just_pressed("keyboard-4")){
+        oe::load_world_func("assets/car_gma950.csl", &OnLoadObject);
+    }
     else {
     
     }
@@ -142,6 +145,7 @@ int test_task3(oe::task task){
 
 int toggle_debug_mode(oe::task task, string event_name){
     oe::toggle_renderer_sanity_checks();
+    oe::toggle_render_z_prepass();
     return 0;
 }
 
@@ -185,7 +189,7 @@ int main(){
     // everything in namespace oe::preinit needs to be run before oe::init() to take effect
     oe::preinit::request_gles2();
 
-    oe::init("Oxygen Engine Demo", 800, 480, false);
+    oe::init("Oxygen Engine Demo", 852, 480, false);
     //oe::pause(20);
 	//oe::load_world_func("assets/OE_Mat_light_test.csl", &OnLoadObject);
 	//oe::load_world_func("assets/challenge_car.csl", &OnLoadObject);
