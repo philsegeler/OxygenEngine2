@@ -453,7 +453,7 @@ void nre::gpu::set_uniform_buf_state(std::size_t id, std::size_t program, int sl
     }
 }
 // program uniform buffer/texture state
-void nre::gpu::set_program_uniform_buf_slot(std::size_t id, const std::string& ubo, int slot) {
+void nre::gpu::set_program_uniform_buf_slot(std::size_t id, std::string_view ubo, int slot) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
@@ -466,7 +466,7 @@ void nre::gpu::set_program_uniform_buf_slot(std::size_t id, const std::string& u
         return;
     }
 }
-int nre::gpu::get_program_uniform_buf_slot(std::size_t id, const std::string& name) {
+int nre::gpu::get_program_uniform_buf_slot(std::size_t id, std::string_view name) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
@@ -478,7 +478,7 @@ int nre::gpu::get_program_uniform_buf_slot(std::size_t id, const std::string& na
         return -2;
     }
 }
-void nre::gpu::set_program_texture_slot(std::size_t id, const std::string& name, int slot) {
+void nre::gpu::set_program_texture_slot(std::size_t id, std::string_view name, int slot) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
@@ -493,7 +493,7 @@ void nre::gpu::set_program_texture_slot(std::size_t id, const std::string& name,
 }
 
 // program uniform data
-void nre::gpu::set_program_uniform_data(std::size_t id, const std::string& name, uint32_t data) {
+void nre::gpu::set_program_uniform_data(std::size_t id, std::string_view name, uint32_t data) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
@@ -506,7 +506,7 @@ void nre::gpu::set_program_uniform_data(std::size_t id, const std::string& name,
         return;
     }
 }
-void nre::gpu::set_program_uniform_data(std::size_t id, const std::string& name, float data) {
+void nre::gpu::set_program_uniform_data(std::size_t id, std::string_view name, float data) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
@@ -519,7 +519,7 @@ void nre::gpu::set_program_uniform_data(std::size_t id, const std::string& name,
         return;
     }
 }
-void nre::gpu::set_program_uniform_data(std::size_t id, const std::string& name, const std::vector<uint32_t>& data) {
+void nre::gpu::set_program_uniform_data(std::size_t id, std::string_view name, const std::vector<uint32_t>& data) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
@@ -532,7 +532,7 @@ void nre::gpu::set_program_uniform_data(std::size_t id, const std::string& name,
         return;
     }
 }
-void nre::gpu::set_program_uniform_data(std::size_t id, const std::string& name, const std::vector<float>& data) {
+void nre::gpu::set_program_uniform_data(std::size_t id, std::string_view name, const std::vector<float>& data) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:
@@ -548,7 +548,7 @@ void nre::gpu::set_program_uniform_data(std::size_t id, const std::string& name,
     }
 }
 
-int nre::gpu::get_program_uniform_slot(std::size_t id, const std::string& name) {
+int nre::gpu::get_program_uniform_slot(std::size_t id, std::string_view name) {
     switch (nre::gpu::get_api()) {
     case GL:
     case GLES:

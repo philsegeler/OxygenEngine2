@@ -77,12 +77,12 @@ GLenum nre::gl3::buffer_use(nre::gpu::BUFFER_USAGE usage) {
 }
 
 // get index of a uniform block variable in a shader program
-bool nre::gl3::program_data_t::has_uniform_block(const std::string& name) {
+bool nre::gl3::program_data_t::has_uniform_block(std::string_view name) {
     return this->uniform_blocks.contains(name);
 }
 
 // get index of a uniform variable in a shader program
-bool nre::gl3::program_data_t::has_uniform(const std::string& name) {
+bool nre::gl3::program_data_t::has_uniform(std::string_view name) {
     return this->uniforms.contains(name);
 }
 
@@ -196,80 +196,80 @@ std::string nre::gl3::api_t::get_rendering_api() {
 
 //-------------------Handle errors--------------------------------//
 
-void nre::gl3::api_t::check_rbo_id_(std::size_t id, const std::string& func) {
+void nre::gl3::api_t::check_rbo_id_(std::size_t id, std::string_view func) {
     if (this->rbos_.count(id) == 0) {
         throw nre::gpu::invalid_render_buffer(id, func);
     }
 }
 
-void nre::gl3::api_t::check_vbo_id_(std::size_t id, const std::string& func) {
+void nre::gl3::api_t::check_vbo_id_(std::size_t id, std::string_view func) {
     if (this->vbos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_buffer(id, func);
     }
 }
-void nre::gl3::api_t::check_ubo_id_(std::size_t id, const std::string& func) {
+void nre::gl3::api_t::check_ubo_id_(std::size_t id, std::string_view func) {
     if (this->ubos_.count(id) == 0) {
         throw nre::gpu::invalid_uniform_buffer(id, func);
     }
 }
-void nre::gl3::api_t::check_ibo_id_(std::size_t id, const std::string& func) {
+void nre::gl3::api_t::check_ibo_id_(std::size_t id, std::string_view func) {
     if (this->ibos_.count(id) == 0) {
         throw nre::gpu::invalid_index_buffer(id, func);
     }
 }
 
-void nre::gl3::api_t::check_vbo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
+void nre::gl3::api_t::check_vbo_offset_length_(std::size_t id, std::size_t off_len, std::string_view func) {
     if (off_len > this->vbos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "vertex", func);
     }
 }
 
-void nre::gl3::api_t::check_ubo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
+void nre::gl3::api_t::check_ubo_offset_length_(std::size_t id, std::size_t off_len, std::string_view func) {
     if (off_len > this->ubos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "uniform", func);
     }
 }
 
-void nre::gl3::api_t::check_ibo_offset_length_(std::size_t id, std::size_t off_len, const std::string& func) {
+void nre::gl3::api_t::check_ibo_offset_length_(std::size_t id, std::size_t off_len, std::string_view func) {
     if (off_len > this->ibos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "index", func);
     }
 }
 
-void nre::gl3::api_t::check_vao_id_(std::size_t id, const std::string& func) {
+void nre::gl3::api_t::check_vao_id_(std::size_t id, std::string_view func) {
     if (this->vaos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_layout(id, func);
     }
 }
 
-void nre::gl3::api_t::check_prog_id_(std::size_t id, const std::string& func) {
-    if (this->progs_.count(id) == 0) {
+void nre::gl3::api_t::check_prog_id_(std::size_t id, std::string_view func) {
+    if (not this->progs_.contains(id)) {
         throw nre::gpu::invalid_program_id(id, func);
     }
 }
 
-void nre::gl3::api_t::check_prog_complete_(std::size_t id, const std::string& func) {
+void nre::gl3::api_t::check_prog_complete_(std::size_t id, std::string_view func) {
     if (not this->progs_[id].setup) {
         throw nre::gpu::incomplete_program(id, func);
     }
 }
 
 
-void nre::gl3::api_t::check_prog_uniform_block_(std::size_t id, const std::string& name, const std::string& func) {
+void nre::gl3::api_t::check_prog_uniform_block_(std::size_t id, std::string_view name, std::string_view func) {
     if (not this->prog_db_[this->progs_[id]].has_uniform_block(name)) {
         throw nre::gpu::invalid_program_uniform_block(id, name, func);
     }
 }
 
-void nre::gl3::api_t::check_prog_uniform_(std::size_t id, const std::string& name, const std::string& func) {
+void nre::gl3::api_t::check_prog_uniform_(std::size_t id, std::string_view name, std::string_view func) {
     if (not this->prog_db_[this->progs_[id]].has_uniform(name)) {
         throw nre::gpu::invalid_program_uniform(id, name, func);
     }
 }
 
-void nre::gl3::api_t::check_prog_uniform_property_(std::size_t id, const std::string& name, std::size_t length,
-                                                   const std::string& func, bool is_type_problem) {
-    auto uniform_typ = this->prog_db_[this->progs_[id]].uniforms[name].type;
+void nre::gl3::api_t::check_prog_uniform_property_(std::size_t id, std::string_view name, std::size_t length,
+                                                   std::string_view func, bool is_type_problem) {
+    auto uniform_typ = this->prog_db_[this->progs_[id]].uniforms[std::string(name)].type;
     bool is_vec2     = (uniform_typ == GL_FLOAT_VEC2) and (length >= 2);
     bool is_vec3     = (uniform_typ == GL_FLOAT_VEC3) and (length >= 3);
     bool is_vec4     = (uniform_typ == GL_FLOAT_VEC4) and (length >= 4);
@@ -281,26 +281,26 @@ void nre::gl3::api_t::check_prog_uniform_property_(std::size_t id, const std::st
     }
 }
 
-void nre::gl3::api_t::check_vao_vbo_(std::size_t id, std::size_t vbo_id, const std::string& func) {
+void nre::gl3::api_t::check_vao_vbo_(std::size_t id, std::size_t vbo_id, std::string_view func) {
     if (this->vbos_.count(vbo_id) == 0) {
         throw nre::gpu::invalid_vertex_layout_buffer(id, vbo_id, func);
     }
 }
 
-void nre::gl3::api_t::check_fbo_id_(std::size_t id, const std::string& func) {
+void nre::gl3::api_t::check_fbo_id_(std::size_t id, std::string_view func) {
     if (this->fbos_.count(id) == 0) {
         throw nre::gpu::invalid_framebuffer(id, func);
     }
 }
 
-void nre::gl3::api_t::check_texture_id_(std::size_t id, const std::string& func) {
+void nre::gl3::api_t::check_texture_id_(std::size_t id, std::string_view func) {
     if (this->textures_.count(id) == 0) {
         throw nre::gpu::invalid_texture(id, func);
     }
 }
 
 void nre::gl3::api_t::check_draw_range_(std::size_t id, std::size_t length, std::size_t offset, std::size_t count,
-                                        const std::string& func) {
+                                        std::string_view func) {
     if ((offset + count) > length) {
         throw nre::gpu::invalid_draw_range(id, length, offset, count, func);
     }
@@ -656,7 +656,7 @@ void nre::gl3::api_t::set_uniform_buffer_data(std::size_t id, const std::vector<
 
 //----------------------Uniform State ----------------//
 
-void nre::gl3::api_t::set_program_texture_slot(std::size_t id, const std::string& name, int slot) {
+void nre::gl3::api_t::set_program_texture_slot(std::size_t id, std::string_view name, int slot) {
     this->check_prog_id_(id, "set_program_texture_slot");
     this->check_prog_complete_(id, "set_program_texture_slot");
     this->check_prog_uniform_(id, name, "set_program_texture_slot");
@@ -666,46 +666,48 @@ void nre::gl3::api_t::set_program_texture_slot(std::size_t id, const std::string
         glUseProgram(this->progs_[id].handle);
         this->active_prog_ = this->progs_[id].handle;
     }
-    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
+    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[std::string(name)].type;
     if ((uniform_type_enum == GL_SAMPLER_2D) or (uniform_type_enum == GL_SAMPLER_2D_SHADOW)) {
-        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[name].slot, slot);
+        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[std::string(name)].slot, slot);
     }
     else {
         cout << "[NRE Warning] No sampler2D uniform named '" << name << "' in program ID: " << id << "." << endl;
-        OE_WriteToLog("[NRE Warning] No sampler2D uniform named '" + name + "' in program ID: " + to_string(id) + ".");
+        OE_WriteToLog("[NRE Warning] No sampler2D uniform named '" + std::string(name) + "' in program ID: " + to_string(id) +
+                      ".");
     }
 }
-void nre::gl3::api_t::set_program_uniform_data(std::size_t id, const std::string& name, uint32_t data) {
+void nre::gl3::api_t::set_program_uniform_data(std::size_t id, std::string_view name, uint32_t data) {
     this->check_prog_id_(id, "set_program_uniform_data");
     this->check_prog_complete_(id, "set_program_uniform_data");
     this->check_prog_uniform_(id, name, "set_program_uniform_data");
     // TODO
 }
-void nre::gl3::api_t::set_program_uniform_data(std::size_t id, const std::string& name, std::vector<uint32_t> data) {
+void nre::gl3::api_t::set_program_uniform_data(std::size_t id, std::string_view name, std::vector<uint32_t> data) {
     this->check_prog_id_(id, "set_program_uniform_data");
     this->check_prog_complete_(id, "set_program_uniform_data");
     this->check_prog_uniform_(id, name, "set_program_uniform_data");
     // TODO
 }
 
-int nre::gl3::api_t::get_program_uniform_slot(std::size_t id, const std::string& name) {
+int nre::gl3::api_t::get_program_uniform_slot(std::size_t id, std::string_view name) {
     this->check_prog_id_(id, "get_program_uniform_slot");
     this->check_prog_complete_(id, "get_program_uniform_slot");
     if (this->prog_db_[this->progs_[id]].has_uniform(name)) {
-        return this->prog_db_[this->progs_[id]].uniforms[name].slot;
+        return this->prog_db_[this->progs_[id]].uniforms[std::string(name)].slot;
     }
     return -2;
 }
 
-void nre::gl3::api_t::set_program_uniform_block_slot(std::size_t id, const std::string& name, int slot) {
+void nre::gl3::api_t::set_program_uniform_block_slot(std::size_t id, std::string_view name, int slot) {
 
     this->check_prog_id_(id, "set_program_uniform_block_slot");
     this->check_prog_complete_(id, "set_program_uniform_block_slot");
     this->check_prog_uniform_block_(id, name, "set_program_uniform_block_slot");
 
-    this->prog_db_[this->progs_[id]].uniform_blocks[name].slot = slot;
+    this->prog_db_[this->progs_[id]].uniform_blocks[std::string(name)].slot = slot;
 
-    glUniformBlockBinding(this->progs_[id].handle, this->prog_db_[this->progs_[id]].uniform_block_indices[name], slot);
+    glUniformBlockBinding(this->progs_[id].handle, this->prog_db_[this->progs_[id]].uniform_block_indices[std::string(name)],
+                          slot);
 }
 
 void nre::gl3::api_t::set_uniform_block_state(std::size_t id, std::size_t program, int slot, std::size_t offset,
@@ -722,11 +724,11 @@ void nre::gl3::api_t::set_uniform_block_state(std::size_t id, std::size_t progra
                           static_cast<GLuint>(length));
 }
 
-int nre::gl3::api_t::get_program_uniform_block_slot(std::size_t id, const std::string& name) {
+int nre::gl3::api_t::get_program_uniform_block_slot(std::size_t id, std::string_view name) {
     this->check_prog_id_(id, "get_program_uniform_block_slot");
     this->check_prog_complete_(id, "get_program_uniform_block_slot");
     if (this->prog_db_[this->progs_[id]].has_uniform_block(name)) {
-        return this->prog_db_[this->progs_[id]].uniform_blocks[name].slot;
+        return this->prog_db_[this->progs_[id]].uniform_blocks[std::string(name)].slot;
     }
     return -2;
 }

@@ -61,10 +61,10 @@ namespace nre { namespace gles2 {
     };
 
     struct program_data_t {
-        bool                                                     checked{false};
-        GLuint                                                   handle{0};
-        std::unordered_map<std::string, program_uniform_state_t> uniforms;
-        bool                                                     has_uniform(const std::string&);
+        bool                                                                                      checked{false};
+        GLuint                                                                                    handle{0};
+        std::unordered_map<std::string, program_uniform_state_t, oe_string_hash, std::equal_to<>> uniforms;
+        bool                                                                                      has_uniform(std::string_view);
     };
 
     struct program_t {
@@ -132,11 +132,11 @@ namespace nre { namespace gles2 {
         void set_index_buffer_memory_data(std::size_t, const std::vector<uint32_t>&, nre::gpu::BUFFER_USAGE);
         void delete_index_buffer(std::size_t);
 
-        void set_program_texture_slot(std::size_t, const std::string&, int);
-        void set_program_uniform_data(std::size_t, const std::string&, uint32_t);
-        void set_program_uniform_data(std::size_t, const std::string&, float);
-        void set_program_uniform_data(std::size_t, const std::string&, const std::vector<float>&);
-        int  get_program_uniform_slot(std::size_t, const std::string&);
+        void set_program_texture_slot(std::size_t, std::string_view, int);
+        void set_program_uniform_data(std::size_t, std::string_view, uint32_t);
+        void set_program_uniform_data(std::size_t, std::string_view, float);
+        void set_program_uniform_data(std::size_t, std::string_view, const std::vector<float>&);
+        int  get_program_uniform_slot(std::size_t, std::string_view);
 
         void set_vertex_layout_format(std::size_t, std::vector<nre::gpu::vertex_layout_input>);
         void delete_vertex_layout(std::size_t);
@@ -193,25 +193,25 @@ namespace nre { namespace gles2 {
         std::unordered_map<program_t, program_data_t>         prog_db_;
 
     private:
-        void check_rbo_id(std::size_t, const std::string&);
-        void check_vbo_id(std::size_t, const std::string&);
-        void check_ibo_id(std::size_t, const std::string&);
+        void check_rbo_id(std::size_t, std::string_view);
+        void check_vbo_id(std::size_t, std::string_view);
+        void check_ibo_id(std::size_t, std::string_view);
 
-        void check_vbo_offset_length(std::size_t, std::size_t, const std::string&);
-        void check_ibo_offset_length(std::size_t, std::size_t, const std::string&);
+        void check_vbo_offset_length(std::size_t, std::size_t, std::string_view);
+        void check_ibo_offset_length(std::size_t, std::size_t, std::string_view);
 
-        void check_vao_id(std::size_t, const std::string&);
-        void check_prog_id(std::size_t, const std::string&);
-        void check_prog_complete(std::size_t, const std::string&);
+        void check_vao_id(std::size_t, std::string_view);
+        void check_prog_id(std::size_t, std::string_view);
+        void check_prog_complete(std::size_t, std::string_view);
 
-        void check_prog_uniform_block(std::size_t, const std::string&, const std::string&);
-        void check_prog_uniform(std::size_t, const std::string&, const std::string&);
-        void check_prog_uniform_property(std::size_t, const std::string&, std::size_t, const std::string&, bool);
-        void check_vao_vbo(std::size_t, std::size_t, const std::string&);
+        void check_prog_uniform_block(std::size_t, std::string_view, std::string_view);
+        void check_prog_uniform(std::size_t, std::string_view, std::string_view);
+        void check_prog_uniform_property(std::size_t, std::string_view, std::size_t, std::string_view, bool);
+        void check_vao_vbo(std::size_t, std::size_t, std::string_view);
 
-        void check_fbo_id(std::size_t, const std::string&);
-        void check_texture_id(std::size_t, const std::string&);
-        void check_draw_range(std::size_t, std::size_t, std::size_t, std::size_t, const std::string&);
+        void check_fbo_id(std::size_t, std::string_view);
+        void check_texture_id(std::size_t, std::string_view);
+        void check_draw_range(std::size_t, std::size_t, std::size_t, std::size_t, std::string_view);
 
         void get_program_all_uniforms(std::size_t);
 

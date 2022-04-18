@@ -41,7 +41,7 @@ NRE_DrawCallContainer::Iterator NRE_DrawCallContainer::end() {
 }
 
 bool NRE_DrawCallContainer::contains(const NRE_RenderGroup& ren_group) {
-    return this->data_.find(ren_group) != this->data_.end();
+    return this->data_.contains(ren_group);
 }
 
 void NRE_DrawCallContainer::insert(NRE_RenderGroup ren_group) {

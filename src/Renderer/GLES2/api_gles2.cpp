@@ -28,7 +28,7 @@ GLenum nre::gles2::buffer_use(nre::gpu::BUFFER_USAGE usage) {
 }
 
 // get index of a uniform variable in a shader program
-bool nre::gles2::program_data_t::has_uniform(const std::string& name) {
+bool nre::gles2::program_data_t::has_uniform(std::string_view name) {
     return this->uniforms.contains(name);
 }
 
@@ -165,72 +165,72 @@ std::string nre::gles2::api_t::get_rendering_api() {
 
 //-------------------Handle errors--------------------------------//
 
-void nre::gles2::api_t::check_rbo_id(std::size_t id, const std::string& func) {
+void nre::gles2::api_t::check_rbo_id(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
     if (this->rbos_.count(id) == 0) {
         throw nre::gpu::invalid_render_buffer(id, func);
     }
 }
 
-void nre::gles2::api_t::check_vbo_id(std::size_t id, const std::string& func) {
+void nre::gles2::api_t::check_vbo_id(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
     if (this->vbos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_buffer(id, func);
     }
 }
-void nre::gles2::api_t::check_ibo_id(std::size_t id, const std::string& func) {
+void nre::gles2::api_t::check_ibo_id(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
     if (this->ibos_.count(id) == 0) {
         throw nre::gpu::invalid_index_buffer(id, func);
     }
 }
 
-void nre::gles2::api_t::check_vbo_offset_length(std::size_t id, std::size_t off_len, const std::string& func) {
+void nre::gles2::api_t::check_vbo_offset_length(std::size_t id, std::size_t off_len, std::string_view func) {
     if (not sanity_checks_) return;
     if (off_len > this->vbos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "vertex", func);
     }
 }
 
-void nre::gles2::api_t::check_ibo_offset_length(std::size_t id, std::size_t off_len, const std::string& func) {
+void nre::gles2::api_t::check_ibo_offset_length(std::size_t id, std::size_t off_len, std::string_view func) {
     if (not sanity_checks_) return;
     if (off_len > this->ibos_[id].size) {
         throw nre::gpu::invalid_buffer_offset_length(id, off_len, "index", func);
     }
 }
 
-void nre::gles2::api_t::check_vao_id(std::size_t id, const std::string& func) {
+void nre::gles2::api_t::check_vao_id(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
     if (this->vaos_.count(id) == 0) {
         throw nre::gpu::invalid_vertex_layout(id, func);
     }
 }
 
-void nre::gles2::api_t::check_prog_id(std::size_t id, const std::string& func) {
+void nre::gles2::api_t::check_prog_id(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
-    if (this->progs_.count(id) == 0) {
+    if (not this->progs_.contains(id)) {
         throw nre::gpu::invalid_program_id(id, func);
     }
 }
 
-void nre::gles2::api_t::check_prog_complete(std::size_t id, const std::string& func) {
+void nre::gles2::api_t::check_prog_complete(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
     if (not this->progs_[id].setup) {
         throw nre::gpu::incomplete_program(id, func);
     }
 }
 
-void nre::gles2::api_t::check_prog_uniform(std::size_t id, const std::string& name, const std::string& func) {
+void nre::gles2::api_t::check_prog_uniform(std::size_t id, std::string_view name, std::string_view func) {
     if (not sanity_checks_) return;
     if (not this->prog_db_[this->progs_[id]].has_uniform(name)) {
         throw nre::gpu::invalid_program_uniform(id, name, func);
     }
 }
 
-void nre::gles2::api_t::check_prog_uniform_property(std::size_t id, const std::string& name, std::size_t length,
-                                                    const std::string& func, bool is_type_problem) {
+void nre::gles2::api_t::check_prog_uniform_property(std::size_t id, std::string_view name, std::size_t length,
+                                                    std::string_view func, bool is_type_problem) {
     if (not sanity_checks_) return;
-    auto uniform_typ = this->prog_db_[this->progs_[id]].uniforms[name].type;
+    auto uniform_typ = this->prog_db_[this->progs_[id]].uniforms[std::string(name)].type;
     bool is_vec2     = (uniform_typ == GL_FLOAT_VEC2) and (length >= 2);
     bool is_vec3     = (uniform_typ == GL_FLOAT_VEC3) and (length >= 3);
     bool is_vec4     = (uniform_typ == GL_FLOAT_VEC4) and (length >= 4);
@@ -242,21 +242,21 @@ void nre::gles2::api_t::check_prog_uniform_property(std::size_t id, const std::s
     }
 }
 
-void nre::gles2::api_t::check_vao_vbo(std::size_t id, std::size_t vbo_id, const std::string& func) {
+void nre::gles2::api_t::check_vao_vbo(std::size_t id, std::size_t vbo_id, std::string_view func) {
     if (not sanity_checks_) return;
     if (this->vbos_.count(vbo_id) == 0) {
         throw nre::gpu::invalid_vertex_layout_buffer(id, vbo_id, func);
     }
 }
 
-void nre::gles2::api_t::check_fbo_id(std::size_t id, const std::string& func) {
+void nre::gles2::api_t::check_fbo_id(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
     if (this->fbos_.count(id) == 0) {
         throw nre::gpu::invalid_framebuffer(id, func);
     }
 }
 
-void nre::gles2::api_t::check_texture_id(std::size_t id, const std::string& func) {
+void nre::gles2::api_t::check_texture_id(std::size_t id, std::string_view func) {
     if (not sanity_checks_) return;
     if (this->textures_.count(id) == 0) {
         throw nre::gpu::invalid_texture(id, func);
@@ -264,7 +264,7 @@ void nre::gles2::api_t::check_texture_id(std::size_t id, const std::string& func
 }
 
 void nre::gles2::api_t::check_draw_range(std::size_t id, std::size_t length, std::size_t offset, std::size_t count,
-                                         const std::string& func) {
+                                         std::string_view func) {
     if (not sanity_checks_) return;
     if ((offset + count) > length) {
         throw nre::gpu::invalid_draw_range(id, length, offset, count, func);
@@ -598,7 +598,7 @@ void nre::gles2::api_t::delete_index_buffer(std::size_t id) {
 
 //----------------------Uniform State ----------------//
 
-void nre::gles2::api_t::set_program_texture_slot(std::size_t id, const std::string& name, int slot) {
+void nre::gles2::api_t::set_program_texture_slot(std::size_t id, std::string_view name, int slot) {
     this->check_prog_id(id, "set_program_texture_slot");
     this->check_prog_complete(id, "set_program_texture_slot");
     this->check_prog_uniform(id, name, "set_program_texture_slot");
@@ -607,92 +607,102 @@ void nre::gles2::api_t::set_program_texture_slot(std::size_t id, const std::stri
         glUseProgram(this->progs_[id].handle);
         this->active_prog_ = this->progs_[id].handle;
     }
-    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
+    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[std::string(name)].type;
     if ((uniform_type_enum == GL_SAMPLER_2D) or (uniform_type_enum == GL_SAMPLER_2D_SHADOW)) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[name].slot, slot);
+        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[std::string(name)].slot, slot);
 #else
-        glUniform1i(glGetUniformLocation(this->progs_[id].handle, name.c_str()), slot);
+        glUniform1i(glGetUniformLocation(this->progs_[id].handle, std::string(name).c_str()), slot);
 #endif
     }
     else {
         cout << "[NRE Warning] No sampler2D uniform named '" << name << "' in program ID: " << id << "." << endl;
-        OE_WriteToLog("[NRE Warning] No sampler2D uniform named '" + name + "' in program ID: " + to_string(id) + ".");
+        OE_WriteToLog("[NRE Warning] No sampler2D uniform named '" + std::string(name) + "' in program ID: " + to_string(id) +
+                      ".");
     }
 }
 
-void nre::gles2::api_t::set_program_uniform_data(std::size_t id, const std::string& name, uint32_t data) {
+void nre::gles2::api_t::set_program_uniform_data(std::size_t id, std::string_view name, uint32_t data) {
     this->check_prog_id(id, "set_program_uniform_data");
     this->check_prog_complete(id, "set_program_uniform_data");
     this->check_prog_uniform(id, name, "set_program_uniform_data");
 
-    if (this->active_prog_ != this->progs_[id].handle) {
-        glUseProgram(this->progs_[id].handle);
-        this->active_prog_ = this->progs_[id].handle;
+    auto prog_handle    = this->progs_[id].handle;
+    auto uniform_handle = this->prog_db_[this->progs_[id]].uniforms[std::string(name)];
+
+    if (this->active_prog_ != prog_handle) {
+        glUseProgram(prog_handle);
+        this->active_prog_ = prog_handle;
     }
-    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
+    auto uniform_type_enum = uniform_handle.type;
     if (uniform_type_enum == GL_INT) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1i(this->prog_db_[this->progs_[id]].uniforms[name].slot, data);
+        glUniform1i(uniform_handle.slot, data);
 #else
-        glUniform1i(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data);
+        glUniform1i(glGetUniformLocation(prog_handle, std::string(name).c_str()), data);
 #endif
     }
     else {
         cout << "[NRE Warning] No integer uniform named '" << name << "' in program ID: " << id << "." << endl;
-        OE_WriteToLog("[NRE Warning] No integer uniform named '" + name + "' in program ID: " + to_string(id) + ".");
+        OE_WriteToLog("[NRE Warning] No integer uniform named '" + std::string(name) + "' in program ID: " + to_string(id) +
+                      ".");
     }
 }
 
-void nre::gles2::api_t::set_program_uniform_data(std::size_t id, const std::string& name, float data) {
+void nre::gles2::api_t::set_program_uniform_data(std::size_t id, std::string_view name, float data) {
     this->check_prog_id(id, "set_program_uniform_data");
     this->check_prog_complete(id, "set_program_uniform_data");
     this->check_prog_uniform(id, name, "set_program_uniform_data");
 
-    if (this->active_prog_ != this->progs_[id].handle) {
-        glUseProgram(this->progs_[id].handle);
-        this->active_prog_ = this->progs_[id].handle;
+    auto prog_handle    = this->progs_[id].handle;
+    auto uniform_handle = this->prog_db_[this->progs_[id]].uniforms[std::string(name)];
+
+    if (this->active_prog_ != prog_handle) {
+        glUseProgram(prog_handle);
+        this->active_prog_ = prog_handle;
     }
-    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
+    auto uniform_type_enum = uniform_handle.type;
     if (uniform_type_enum == GL_FLOAT) {
         // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
         // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
         // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-        glUniform1f(this->prog_db_[this->progs_[id]].uniforms[name].slot, data);
+        glUniform1f(uniform_handle.slot, data);
 #else
-        glUniform1f(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data);
+        glUniform1f(glGetUniformLocation(prog_handle, std::string(name).c_str()), data);
 #endif
     }
     else {
         cout << "[NRE Warning] No float uniform named '" << name << "' in program ID: " << id << "." << endl;
-        OE_WriteToLog("[NRE Warning] No float uniform named '" + name + "' in program ID: " + to_string(id) + ".");
+        OE_WriteToLog("[NRE Warning] No float uniform named '" + std::string(name) + "' in program ID: " + to_string(id) + ".");
     }
 }
 
-void nre::gles2::api_t::set_program_uniform_data(std::size_t id, const std::string& name, const std::vector<float>& data) {
+void nre::gles2::api_t::set_program_uniform_data(std::size_t id, std::string_view name, const std::vector<float>& data) {
     this->check_prog_id(id, "set_program_uniform_data");
     this->check_prog_complete(id, "set_program_uniform_data");
     this->check_prog_uniform(id, name, "set_program_uniform_data");
     this->check_prog_uniform_property(id, name, data.size(), "set_program_uniform_data", false);
 
+    auto prog_handle    = this->progs_[id].handle;
+    auto uniform_handle = this->prog_db_[this->progs_[id]].uniforms[std::string(name)];
 
-    if (this->active_prog_ != this->progs_[id].handle) {
-        glUseProgram(this->progs_[id].handle);
-        this->active_prog_ = this->progs_[id].handle;
+    if (this->active_prog_ != prog_handle) {
+        glUseProgram(prog_handle);
+        this->active_prog_ = prog_handle;
     }
-    auto uniform_type_enum = this->prog_db_[this->progs_[id]].uniforms[name].type;
+    auto uniform_type_enum = uniform_handle.type;
     // This is really stupid. I wasted a week trying to find what appears an intentional change in emscripten
     // apparently glUniform* function only accept glGetUniformLocation as arguments, else it is "undefined"
     // I do not understand why they did this. It just seems slow for me for no reason
 #ifndef OE_PLATFORM_WEB
-    auto uniform_id = this->prog_db_[this->progs_[id]].uniforms[name].slot;
+    auto uniform_id = uniform_handle.slot;
     if (uniform_type_enum == GL_FLOAT_VEC2) {
         glUniform2f(uniform_id, data[0], data[1]);
     }
@@ -712,21 +722,21 @@ void nre::gles2::api_t::set_program_uniform_data(std::size_t id, const std::stri
     }
 #else
     if (uniform_type_enum == GL_FLOAT_VEC2) {
-        glUniform2f(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data[0], data[1]);
+        glUniform2f(glGetUniformLocation(prog_handle, std::string(name).c_str()), data[0], data[1]);
     }
     else if (uniform_type_enum == GL_FLOAT_VEC3) {
-        glUniform3f(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data[0], data[1], data[2]);
+        glUniform3f(glGetUniformLocation(prog_handle, std::string(name).c_str()), data[0], data[1], data[2]);
     }
     else if ((uniform_type_enum == GL_FLOAT_VEC4) or (uniform_type_enum == GL_FLOAT_MAT2)) {
-        glUniform4f(glGetUniformLocation(this->progs_[id].handle, name.c_str()), data[0], data[1], data[2], data[3]);
+        glUniform4f(glGetUniformLocation(prog_handle, std::string(name).c_str()), data[0], data[1], data[2], data[3]);
     }
     else if (uniform_type_enum == GL_FLOAT_MAT3) {
-        glUniformMatrix3fv(glGetUniformLocation(this->progs_[id].handle, name.c_str()), 1, false, &data[0]);
+        glUniformMatrix3fv(glGetUniformLocation(prog_handle, std::string(name).c_str()), 1, false, &data[0]);
     }
     else if (uniform_type_enum == GL_FLOAT_MAT4) {
         // cout << "SUCCESS" << id << " " << name <<  endl;
 
-        glUniformMatrix4fv(glGetUniformLocation(this->progs_[id].handle, name.c_str()), 1, false, &data[0]);
+        glUniformMatrix4fv(glGetUniformLocation(prog_handle, std::string(name).c_str()), 1, false, &data[0]);
     }
 #endif
     else {
@@ -734,11 +744,11 @@ void nre::gles2::api_t::set_program_uniform_data(std::size_t id, const std::stri
     }
 }
 
-int nre::gles2::api_t::get_program_uniform_slot(std::size_t id, const std::string& name) {
+int nre::gles2::api_t::get_program_uniform_slot(std::size_t id, std::string_view name) {
     this->check_prog_id(id, "get_program_uniform_slot");
     this->check_prog_complete(id, "get_program_uniform_slot");
     if (this->prog_db_[this->progs_[id]].has_uniform(name)) {
-        return this->prog_db_[this->progs_[id]].uniforms[name].slot;
+        return this->prog_db_[this->progs_[id]].uniforms[std::string(name)].slot;
     }
     return -2;
 }

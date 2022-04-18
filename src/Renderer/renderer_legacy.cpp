@@ -213,21 +213,29 @@ bool NRE_RendererLegacy::update_single_thread(oe::renderer_update_info update_in
         auto scene_id  = data_.cameras_[camera_id].scene_id;
 
         // draw everything required for the z prepass, which also populates the depth buffer
-        nre::gpu::set_render_mode(nre::gpu::Z_PREPASS_BACKFACE);
-        for (auto x : this->sce_ren_groups[scene_id]) {
-            if (x.camera == camera_id) {
-                this->drawRenderGroupZPrePass(x);
-                this->sce_ren_groups[scene_id].replace(x);
+        if (update_info.use_z_prepass) {
+            nre::gpu::set_render_mode(nre::gpu::Z_PREPASS_BACKFACE);
+            for (auto x : this->sce_ren_groups[scene_id]) {
+                if (x.camera == camera_id) {
+                    this->drawRenderGroupZPrePass(x);
+                    this->sce_ren_groups[scene_id].replace(x);
+                }
             }
+            this->sce_ren_groups[scene_id].update();
         }
-        this->sce_ren_groups[scene_id].update();
 
         // sort and draw lights
         this->sortPointLights(scene_id, camera_id);
 
         // draw everything normally
         nre::gpu::use_framebuffer(this->framebuffer);
-        nre::gpu::set_render_mode(nre::gpu::AFTERPREPASS_BACKFACE);
+        if (update_info.use_z_prepass) {
+            nre::gpu::set_render_mode(nre::gpu::AFTERPREPASS_BACKFACE);
+        }
+        else {
+            nre::gpu::set_render_mode(nre::gpu::REGULAR_BACKFACE);
+        }
+
         for (auto x : this->sce_ren_groups[scene_id]) {
             if (x.camera == camera_id) {
                 this->drawRenderGroup(x);
