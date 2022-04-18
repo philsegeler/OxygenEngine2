@@ -233,11 +233,11 @@ namespace csl {
 
             expect_token(token_type::identifier);
 
-            std::string_view el_name = token_it_->content;
+            std::string_view el_name = get_token_content();
             pass_token();
 
             while (has_type(token_type::identifier)) {
-                std::string_view att_name = token_it_->content;
+                std::string_view att_name = get_token_content();
                 pass_token();
 
                 expect_token(token_type::eq);
@@ -256,7 +256,7 @@ namespace csl {
 
             while (token_it_ != end_it_) {
                 if (has_type(token_type::identifier)) {
-                    std::string_view as_name = token_it_->content;
+                    std::string_view as_name = get_token_content();
 
                     pass_token();
 
@@ -276,7 +276,7 @@ namespace csl {
                 }
                 else if (has_type(token_type::lt)) {
                     pass_token();
-                    std::string_view sub_el_name = token_it_->content;
+                    std::string_view sub_el_name = get_token_content();
                     result.elements[sub_el_name].push_back(parse_element());
                 }
                 else {
@@ -293,7 +293,7 @@ namespace csl {
 
             expect_token(token_type::identifier);
 
-            if (token_it_->content != el_name)
+            if (get_token_content() != el_name)
                 throw semantic_error_t{"Closing tag identifier does not match opening tag identifier"};
 
             pass_token();
@@ -320,12 +320,7 @@ namespace csl {
         single_assignment_t parse_single_assignment() {
             single_assignment_t value;
 
-            if (token_it_->type == token_type::string) {
-                value = token_it_->content.substr(1, (token_it_->content.size() - 2));
-            }
-            else {
-                value = token_it_->content;
-            }
+            value = get_token_content();
 
             pass_token();
 
@@ -336,14 +331,14 @@ namespace csl {
             list_assignment_t result;
 
             if (is_value()) {
-                result.push_back(token_it_->content);
+                result.push_back(get_token_content());
                 pass_token();
 
                 while (has_type(token_type::semicolon)) {
                     pass_token();
                     expect_value();
 
-                    result.push_back(token_it_->content);
+                    result.push_back(get_token_content());
                     pass_token();
                 }
             }
@@ -362,7 +357,7 @@ namespace csl {
             if (!b) {
                 std::string expected = (get_token_type_string_rep(type) + ...);
                 expected.erase(expected.size() - 2, 2);
-                std::string unexpected(token_it_->content);
+                std::string unexpected(get_token_content());
 
                 // TODO: Set line and column numbers
                 throw unexpected_token_error_t{unexpected, expected, 0, 0};
@@ -370,7 +365,7 @@ namespace csl {
         }
 
         bool has_type(token_type type) const {
-            return (token_it_->type == type);
+            return ((*token_it_).type == type);
         }
 
         bool is_value() {
@@ -385,10 +380,21 @@ namespace csl {
         void pass_token() {
 #ifdef __EMSCRIPTEN__
             ++token_it_;
-            while (token_it_->type == token_type::whitespace)
+            while ((*token_it_).type == token_type::whitespace)
                 ++token_it_;
 #else
             ++token_it_;
+#endif
+        }
+
+        const std::string_view get_token_content() const {
+#ifdef __EMSCRIPTEN__
+            if ((*token_it_).type == token_type::string)
+                return (*token_it_).content.substr(1, (*token_it_).content.size() - 2);
+            else
+                return (*token_it_).content;
+#else
+            return (*token_it_).content;
 #endif
         }
     };
@@ -402,8 +408,14 @@ namespace csl {
         parser_t parser(lexer.begin(), lexer.end());
 #else
         constexpr auto is_not_whitespace = [](auto token) { return (token.type != token_type::whitespace); };
+        constexpr auto remove_string_quotes = [](auto token) -> decltype(token) {
+            if (token.type == token_type::string)
+                return {token_type::string, token.content.substr(1, token.content.size() - 2)};
+            else
+                return token;
+        };
 
-        auto token_range = lexer | std::views::filter(is_not_whitespace);
+        auto token_range = lexer | std::views::filter(is_not_whitespace) | std::views::transform(remove_string_quotes);
         parser_t parser(token_range.begin(), token_range.end());
 #endif
 
