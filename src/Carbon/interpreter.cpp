@@ -182,8 +182,8 @@ namespace csl {
         // TODO: Make functions more readable: make a function for current_state
         auto cs_v = camera_e.list_assignments.at("current_state");
         if (cs_v.size() != 10)
-            throw semantic_error("The current_state member variable must have exactly"
-                                 "10 elements");
+            throw semantic_error_t("The current_state member variable must have exactly"
+                                   "10 elements");
 
         result->current_state.pos_x = sv_to_float(cs_v[0]);
         result->current_state.pos_y = sv_to_float(cs_v[1]);
@@ -235,8 +235,8 @@ namespace csl {
 
         auto cs_v = light_e.list_assignments.at("current_state");
         if (cs_v.size() != 10)
-            throw semantic_error("The current_state member variable must have exactly"
-                                 "10 elements");
+            throw semantic_error_t("The current_state member variable must have exactly"
+                                   "10 elements");
 
         // TODO: Make functions more readable: make a function for current_state
         result->current_state.pos_x = sv_to_float(cs_v[0]);
@@ -251,7 +251,7 @@ namespace csl {
         result->current_state.sca_z = sv_to_float(cs_v[9]);
 
         auto color_v = light_e.list_assignments.at("color");
-        if (color_v.size() != 3) throw semantic_error("The color member variable must have exactly 3 elements");
+        if (color_v.size() != 3) throw semantic_error_t("The color member variable must have exactly 3 elements");
 
         result->color.r = sv_to_float(color_v[0]);
         result->color.g = sv_to_float(color_v[1]);
@@ -317,8 +317,8 @@ namespace csl {
 
         auto cs_v = mesh_e.list_assignments.at("current_state");
         if (cs_v.size() != 10)
-            throw semantic_error("The current_state member variable must have exactly"
-                                 "10 elements");
+            throw semantic_error_t("The current_state member variable must have exactly"
+                                   "10 elements");
 
         // TODO: Make functions more readable: make a function for current_state
         result->current_state.pos_x = sv_to_float(cs_v[0]);
@@ -629,8 +629,8 @@ namespace csl {
 
         if ((v1_v.size() != num_of_indices) || (v2_v.size() != num_of_indices) || (v3_v.size() != num_of_indices))
 
-            throw semantic_error("The v1, v2 and v3 list member variables must hold exactly 2 more"
-                                 " values than the number of uvmaps");
+            throw semantic_error_t("The v1, v2 and v3 list member variables must hold exactly 2 more"
+                                   " values than the number of uvmaps");
 
 
         uint32_t vertex_arr[num_of_indices];

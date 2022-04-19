@@ -25,13 +25,13 @@ int oe::event_t::internal_call() {
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
-    } catch (csl::parser_error& e) {
+    } catch (csl::parser_error_t& e) {
         std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->name_ +
                                 "', event invocation counter: " + std::to_string(this->task_.GetCounter()) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
-    } catch (csl::interpreter_error& e) {
+    } catch (csl::interpreter_error_t& e) {
         std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->name_ +
                                 "', event invocation counter: " + std::to_string(this->task_.GetCounter()) + "\n";
         error_str += "\t" + e.what() + "\n";
@@ -66,12 +66,12 @@ int OE_TaskManager::tryRun_unsync_thread(OE_UnsyncThreadData* actual_data) {
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
-    } catch (csl::parser_error& e) {
+    } catch (csl::parser_error_t& e) {
         std::string error_str = "[CSL Error] " + e.name_ + " thrown in unsync thread: '" + unsync_task.GetName() + "'" + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
-    } catch (csl::interpreter_error& e) {
+    } catch (csl::interpreter_error_t& e) {
         std::string error_str = "[CSL Error] " + e.name_ + " thrown in unsync thread: '" + unsync_task.GetName() + "'" + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
@@ -108,14 +108,14 @@ int OE_TaskManager::tryRun_task(const std::string& name, OE_Task& task) {
         cout << error_str;
         OE_WriteToLog(error_str);
         output = 1;
-    } catch (csl::parser_error& e) {
+    } catch (csl::parser_error_t& e) {
         std::string error_str = "[CSL Error] " + e.name_ + " thrown in task: '" + task.name + "', thread: '" + name;
         error_str += "', invocation: " + std::to_string(task.counter) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
         output = 1;
-    } catch (csl::interpreter_error& e) {
+    } catch (csl::interpreter_error_t& e) {
         std::string error_str = "[CSL Error] " + e.name_ + " thrown in task: '" + task.name + "', thread: '" + name;
         error_str += "', invocation: " + std::to_string(task.counter) + "\n";
         error_str += "\t" + e.what() + "\n";

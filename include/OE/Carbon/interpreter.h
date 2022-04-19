@@ -10,6 +10,7 @@
 
 #include <bitset>
 #include <charconv>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <string_view>

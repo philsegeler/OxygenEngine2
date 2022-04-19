@@ -10,35 +10,35 @@ int update_monkey_rot( oe::task, string event_name, string obj_name){
 
 int update_monkey_rot_neg( oe::task, string event_name){
 
-    oe::change_object_local_pos("\"Camera\"", oe::vec3(0.0f, 0.0f, 0.1f));
+    oe::change_object_local_pos("Camera", oe::vec3(0.0f, 0.0f, 0.1f));
     return 0;
 }
 
 int update_monkey_rot_x( oe::task, string event_name){
 
-    oe::change_object_local_pos("\"Camera\"", oe::vec3(0.0f, 0.1f, 0.0f));
-    //oe::change_object_rot("\"Suzanne\"", oe::vec4(0.1f, 1.0f, 0.0f, 0.0f));
-    //oe::change_object_scale("\"Suzanne\"", oe::vec3(0.0f, 0.1f, 0.0f));
+    oe::change_object_local_pos("Camera", oe::vec3(0.0f, 0.1f, 0.0f));
+    //oe::change_object_rot("Suzanne", oe::vec4(0.1f, 1.0f, 0.0f, 0.0f));
+    //oe::change_object_scale("Suzanne", oe::vec3(0.0f, 0.1f, 0.0f));
     return 0;
 }
 
 int update_monkey_rot_neg_x( oe::task, string event_name){
 
-    oe::change_object_local_pos("\"Camera\"", oe::vec3(0.0f, -0.1f, 0.0f));
-    //oe::change_object_rot("\"Suzanne\"", oe::vec4(-0.1f, 1.0f, 0.0f, 0.0f));
-    //oe::change_object_scale("\"Suzanne\"", oe::vec3(0.0f, -0.1f, 0.0f));
+    oe::change_object_local_pos("Camera", oe::vec3(0.0f, -0.1f, 0.0f));
+    //oe::change_object_rot("Suzanne", oe::vec4(-0.1f, 1.0f, 0.0f, 0.0f));
+    //oe::change_object_scale("Suzanne", oe::vec3(0.0f, -0.1f, 0.0f));
     return 0;
 }
 
 int update_monkey_rot_z( oe::task, string event_name){
 
-    oe::change_object_local_pos("\"Camera\"", oe::vec3(-0.1f, 0.0f, 0.0f));
+    oe::change_object_local_pos("Camera", oe::vec3(-0.1f, 0.0f, 0.0f));
     return 0;
 }
 
 int update_monkey_rot_neg_z( oe::task, string event_name){
 
-    oe::change_object_local_pos("\"Camera\"", oe::vec3(0.1f, 0.0f, 0.0f));
+    oe::change_object_local_pos("Camera", oe::vec3(0.1f, 0.0f, 0.0f));
     return 0;
 }
 
@@ -152,14 +152,14 @@ int toggle_debug_mode(oe::task task, string event_name){
 int OnLoadObject(oe::task load_event_task, string event_name){
     cout << "SUCCESSFULLY loaded '" << event_name << "'" << endl;
     
-    oe::set_event_func("keyboard-w", &update_monkey_rot, "\"Camera\"");
+    oe::set_event_func("keyboard-w", &update_monkey_rot, "Camera");
     oe::set_event_func("keyboard-s", &update_monkey_rot_neg);
     oe::set_event_func("keyboard-q", &update_monkey_rot_x);
     oe::set_event_func("keyboard-e", &update_monkey_rot_neg_x);
     oe::set_event_func("keyboard-a", &update_monkey_rot_z);
     oe::set_event_func("keyboard-d", &update_monkey_rot_neg_z);
     
-    oe::set_event_func("keyboard-w+", &update_monkey_rot,  "\"Camera\"");
+    oe::set_event_func("keyboard-w+", &update_monkey_rot,  "Camera");
     oe::set_event_func("keyboard-s+", &update_monkey_rot_neg);
     oe::set_event_func("keyboard-q+", &update_monkey_rot_x);
     oe::set_event_func("keyboard-e+", &update_monkey_rot_neg_x);
@@ -174,7 +174,7 @@ int OnLoadObject(oe::task load_event_task, string event_name){
     oe::set_event_func("keyboard-f8+", &renderer_toggle_bounding_boxes);
     oe::set_event_func("keyboard-f9+", &toggle_debug_mode);
     
-    oe::add_task_func("test_task1", &test_task1, "\"Camera\"");
+    oe::add_task_func("test_task1", &test_task1, "Camera");
     oe::add_task_func("test_task0", 2, &test_task0);
     oe::add_task_func("test_task2", 3, &test_task2);
     oe::add_task_func("test_task3", 4, &test_task3);

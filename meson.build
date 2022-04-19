@@ -43,32 +43,45 @@ src = ['src/Renderer/glad.c',
        'src/types/world.cpp']
 
 
-internal_inc = include_directories('./include')
+internal_inc = include_directories('./include') 
+
+
+# external dependencies
+
+
+cmake = import('cmake')
+sub_proj = cmake.subproject('ctre')
+ctre_dep = sub_proj.dependency('ctre')
+ctre_inc = sub_proj.include_directories('ctre')
 
 glm_dep = dependency('glm')
 
-#thread_dep = dependency('threads')
+
+# Compile examples
+
+
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
     sdl2_dep = dependency('sdl2')
     dl_dep = dependency('dl', required : false)
-    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep, dl_dep, glm_dep], include_directories : internal_inc)
+    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep, dl_dep, glm_dep], include_directories : [internal_inc, ctre_inc])
 else
     thread_dep = dependency('threads')
-    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [thread_dep, glm_dep], include_directories : internal_inc)
+    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [thread_dep, glm_dep], include_directories : [internal_inc, ctre_inc])
 endif
 
-oe_dep = declare_dependency(link_with : oe_lib, include_directories : internal_inc)
+oe_dep = declare_dependency(link_with : oe_lib, include_directories : [internal_inc, ctre_inc])
 
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
-    executable('CSL_Test', sources : 'examples/csl_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
-    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
+    executable('CSL_Test', sources : 'examples/csl_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
+    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
 else
-    #executable('CSL_Test', sources : 'esamples/csl_main_test.cpp', dependencies : [oe_dep], win_subsystem: 'windows')
-    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
+    #executable('CSL_Test', sources : 'esamples/csl_main_test.cpp', dependencies : [oe_dep, ctre_dep], win_subsystem: 'windows')
+    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
 endif
 
 
-# Unit tests
+# Compile unit tests
+
 
 if not meson.is_cross_build()
     gtest_dep = dependency('gtest_main')
