@@ -9,7 +9,7 @@
 #include <map>
 #include <memory>
 #include <set>
-
+#include <iostream>
 
 
 /** New General class intended to optimize and properly parallelize accesing of
@@ -225,10 +225,11 @@ public:
 
     void force_appendUNSAFE_now(const std::string& name, std::shared_ptr<T> element) {
         if (names_.count(name) == 1) {
-            this->elements_.erase(this->name2id[name]);
-            this->id2name_.erase(this->name2id[name]);
-            changed_.remove(this->name2id[name]);
-            deleted_.add(this->name2id[name]);
+            auto prev_id = this->name2id[name];
+            this->elements_.erase(prev_id);
+            this->id2name_.erase(prev_id);
+            changed_.remove(prev_id);
+            deleted_.add(prev_id);
         }
         this->elements_[element->id] = element;
         this->id2name_[element->id]  = name;
@@ -283,13 +284,13 @@ public:
                 this->elements_.erase(this->name2id[pending_id2name_[x.first]]);
                 this->id2name_.erase(this->name2id[pending_id2name_[x.first]]);
             }
-
+            
+            //std::cout << "Pending element: " << x.first << " " << pending_id2name_[x.first] << (x.second == nullptr) << std::endl;
             elements_[x.first] = x.second;
             id2name_[x.first]  = pending_id2name_[x.first];
             names_.insert(pending_id2name_[x.first]);
             changed_.add(x.first);
         }
-
         pending_elements_.clear();
         pending_id2name_.clear();
         unlockMutex();
@@ -501,9 +502,7 @@ public:
 
         void add(const std::size_t& index) {
             indices_.insert(index);
-            if (db_.elements_.count(index) != 0) {
-                db_.changed_.remove(index);
-            }
+            db_.changed_.remove(index);
         }
 
         void remove(const std::size_t& index) {
