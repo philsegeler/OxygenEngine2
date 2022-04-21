@@ -176,10 +176,11 @@ namespace oe {
 
         void force_appendUNSAFE(const std::string& name, std::shared_ptr<T> element) {
             if (names_.count(name) == 1) {
-                this->elements_.erase(this->name2id[name]);
-                this->id2name_.erase(this->name2id[name]);
-                registered_.remove(this->name2id[name]);
-                deleted_.add(this->name2id[name]);
+                size_t prev_id = this->name2id[name];
+                this->elements_.erase(prev_id);
+                this->id2name_.erase(prev_id);
+                registered_.remove(prev_id);
+                deleted_.add(prev_id);
             }
             this->elements_[element->id] = element;
             this->id2name_[element->id]  = name;
