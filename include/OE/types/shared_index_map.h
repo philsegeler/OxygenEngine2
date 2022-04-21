@@ -5,11 +5,11 @@
 #include <OE/error_oe.h>
 #include <OE/types/base_types.h>
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <map>
 #include <memory>
 #include <set>
-#include <iostream>
 
 
 /** New General class intended to optimize and properly parallelize accesing of
@@ -284,8 +284,9 @@ public:
                 this->elements_.erase(this->name2id[pending_id2name_[x.first]]);
                 this->id2name_.erase(this->name2id[pending_id2name_[x.first]]);
             }
-            
-            //std::cout << "Pending element: " << x.first << " " << pending_id2name_[x.first] << (x.second == nullptr) << std::endl;
+
+            // std::cout << "Pending element: " << x.first << " " << pending_id2name_[x.first] << (x.second == nullptr) <<
+            // std::endl;
             elements_[x.first] = x.second;
             id2name_[x.first]  = pending_id2name_[x.first];
             names_.insert(pending_id2name_[x.first]);
