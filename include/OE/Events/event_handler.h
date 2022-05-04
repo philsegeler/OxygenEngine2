@@ -16,11 +16,11 @@ namespace oe {
         void                         init();
         std::shared_ptr<oe::event_t> get_ievent(const std::string&);
 
-        void create_user_event(const std::string&);
-        void set_ievent_func(std::size_t, const oe::event_func_type);
-        void set_ievent_func(const std::string&, const oe::event_func_type);
-        void broadcast_ievent(std::size_t);
-        void broadcast_ievent(const std::string&);
+        std::size_t create_user_event(const std::string&);
+        void        set_ievent_func(std::size_t, const oe::event_func_type);
+        void        set_ievent_func(const std::string&, const oe::event_func_type);
+        void        broadcast_ievent(std::size_t);
+        void        broadcast_ievent(const std::string&);
 
         void broadcast_ievent_wait(std::size_t, int); // TODO
         void map_ievent(std::size_t, std::size_t);

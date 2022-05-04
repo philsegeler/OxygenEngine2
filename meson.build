@@ -74,6 +74,7 @@ oe_dep = declare_dependency(link_with : oe_lib, include_directories : [internal_
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
     executable('CSL_Test', sources : 'examples/csl_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
     executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
+    executable('EventsTasksTest', sources : 'examples/events_tasks_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
 else
     #executable('CSL_Test', sources : 'esamples/csl_main_test.cpp', dependencies : [oe_dep, ctre_dep], win_subsystem: 'windows')
     executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')

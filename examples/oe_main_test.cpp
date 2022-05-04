@@ -43,7 +43,7 @@ int update_monkey_rot_neg_z( oe::task, string event_name){
 }
 
 int toggle_mouse_locked_state( oe::task, string event_name){
-    
+
     if (oe::is_mouse_locked()){
         oe::mouse_unlock();
     } else {

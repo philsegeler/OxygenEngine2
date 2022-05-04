@@ -85,9 +85,19 @@ void oe::broadcast_event(std::string name) {
     OE_API_Helpers::checkIfInit();
     OE_Main->window->event_handler_.broadcast_ievent(name);
 }
-void oe::create_event(std::string name) {
+std::size_t oe::create_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.create_user_event(name);
+    return OE_Main->window->event_handler_.create_user_event(name);
+}
+
+void oe::broadcast_event(std::size_t id) {
+    OE_API_Helpers::checkIfInit();
+    OE_Main->window->event_handler_.broadcast_ievent(id);
+}
+
+std::size_t oe::get_event_id(std::string name) {
+    OE_API_Helpers::checkIfInit();
+    return OE_Main->window->event_handler_.get_event_id(name);
 }
 
 size_t oe::get_event_activations(std::string name) {

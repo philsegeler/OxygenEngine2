@@ -213,8 +213,10 @@ namespace oe {
     void remove_task(std::string);
     void remove_task(std::string, std::string);
 
-    void broadcast_event(std::string);
-    void create_event(std::string);
+    void        broadcast_event(std::string);
+    void        broadcast_event(std::size_t);
+    std::size_t create_event(std::string);
+    std::size_t get_event_id(std::string);
 
     template <typename T, typename... Args>
     void set_event_func(std::string name, T func, Args... arguments) {

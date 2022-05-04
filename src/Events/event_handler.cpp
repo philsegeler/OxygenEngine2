@@ -51,11 +51,12 @@ std::size_t oe::event_handler_t::get_event_id(const string& event_name) {
 }
 
 
-void oe::event_handler_t::create_user_event(const string& event_name) {
+std::size_t oe::event_handler_t::create_user_event(const string& event_name) {
 
     std::shared_ptr<oe::custom_event_t> event = std::make_shared<oe::custom_event_t>();
     event->name_                              = event_name;
     event->set_func(&template_event_func);
+    std::size_t event_id = event->id;
 
     lockMutex();
     if (events_list_.count(event_name) == 0) {
@@ -63,6 +64,7 @@ void oe::event_handler_t::create_user_event(const string& event_name) {
         happened_events_counter_[events_list_[event_name].id_] = 0;
     }
     unlockMutex();
+    return event_id;
 }
 
 
