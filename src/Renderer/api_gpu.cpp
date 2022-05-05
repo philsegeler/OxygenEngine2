@@ -671,6 +671,21 @@ void nre::gpu::use_framebuffer(std::size_t id) {
         return;
     }
 }
+
+void nre::gpu::discard_framebuffer(std::size_t id) {
+    switch (nre::gpu::get_api()) {
+    case GL:
+    case GLES:
+        static_cast<nre::gl3::api_t*>(nre::gpu::api)->discard_framebuffer(id);
+        break;
+    case GLES2:
+        static_cast<nre::gles2::api_t*>(nre::gpu::api)->discard_framebuffer(id);
+        break;
+    default:
+        return;
+    }
+}
+
 void nre::gpu::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY fbcopy, float alpha) {
     switch (nre::gpu::get_api()) {
     case GL:

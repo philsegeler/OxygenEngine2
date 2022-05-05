@@ -168,6 +168,7 @@ namespace nre { namespace gl3 {
 
         void copy_framebuffer(std::size_t, std::size_t, nre::gpu::FRAMEBUFFER_COPY);
         void use_framebuffer(std::size_t);
+        void discard_framebuffer(std::size_t);
         void clear_framebuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
         void delete_framebuffer(std::size_t);
 
@@ -194,7 +195,7 @@ namespace nre { namespace gl3 {
         void set_render_mode(nre::gpu::RENDERMODE);
         void use_wireframe(bool);
 
-    protected:
+    private:
         std::size_t cur_rbo_{0};
         std::size_t cur_vbo_{0};
         std::size_t cur_ibo_{0};
@@ -219,7 +220,6 @@ namespace nre { namespace gl3 {
         std::unordered_map<nre::gpu::pixel_shader_t, GLuint>  fs_db_;
         std::unordered_map<program_t, program_data_t>         prog_db_;
 
-    private:
         void check_rbo_id_(std::size_t, std::string_view);
         void check_vbo_id_(std::size_t, std::string_view);
         void check_ubo_id_(std::size_t, std::string_view);

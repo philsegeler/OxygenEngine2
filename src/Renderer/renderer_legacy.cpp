@@ -290,6 +290,8 @@ bool NRE_RendererLegacy::update_single_thread(oe::renderer_update_info update_in
     nre::gpu::set_texture_slot(this->colortexture, 0);
 
     nre::gpu::draw(this->gamma_cor_prog, this->vao_fullscreen_quad);
+
+    nre::gpu::discard_framebuffer(this->framebuffer);
     return true;
 }
 

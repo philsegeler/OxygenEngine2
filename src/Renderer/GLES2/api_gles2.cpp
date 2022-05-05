@@ -96,6 +96,8 @@ nre::gles2::api_t::api_t(nre::gpu::info_struct& backend_info) {
             has_oes_element_index_uint_ = true;
         else if (extension_es == "GL_OES_texture_float")
             has_oes_texture_float_ = true;
+        else if (extension_es == "GL_EXT_discard_framebuffer")
+            has_ext_discard_framebuffer_ = true;
         else
             continue;
     }
@@ -109,6 +111,9 @@ nre::gles2::api_t::~api_t() {
 void nre::gles2::api_t::update(uint32_t x_in, uint32_t y_in, bool sanity_checks) {
 
     sanity_checks_ = sanity_checks;
+
+    this->discard_framebuffer(0);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     if (x_in != x_ or y_in != y_) {
         glViewport(0, 0, x_in, y_in);
@@ -900,6 +905,26 @@ void nre::gles2::api_t::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_
     else {
     }
     if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+}
+
+void nre::gles2::api_t::discard_framebuffer(std::size_t id) {
+
+#ifndef __EMSCRIPTEN__
+    const GLenum attachment_discards[]  = {GL_DEPTH_ATTACHMENT, GL_COLOR_ATTACHMENT0};
+
+    if (id != 0) {
+        this->check_fbo_id(id, "discard_framebuffer");
+        if (not has_ext_discard_framebuffer_) return;
+
+        glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[id].handle);
+        glDiscardFramebufferEXT(GL_FRAMEBUFFER, 2, attachment_discards);
+    }
+    else {
+        if (not has_ext_discard_framebuffer_) return;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDiscardFramebufferEXT(GL_FRAMEBUFFER, 2, attachment_discards);
+    }
+#endif
 }
 
 void nre::gles2::api_t::use_framebuffer(std::size_t id) {

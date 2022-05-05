@@ -148,6 +148,7 @@ namespace nre { namespace gpu {
     void copy_framebuffer(std::size_t, std::size_t, FRAMEBUFFER_COPY);
     void use_framebuffer(std::size_t);
     void clear_framebuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
+    void discard_framebuffer(std::size_t);
     void del_framebuffer(std::size_t);
 
     void set_program_vertex_shader(std::size_t, nre::gpu::vertex_shader_t);
