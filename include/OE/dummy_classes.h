@@ -152,7 +152,7 @@ namespace oe {
     class physics_base_t : public OE_THREAD_SAFETY_OBJECT {
     public:
         physics_base_t() = delete;
-        physics_base_t(bool, std::string);
+        physics_base_t(std::string);
         virtual ~physics_base_t();
 
         virtual bool init(physics_init_info);
@@ -162,11 +162,9 @@ namespace oe {
         virtual void destroy();
 
         void              set_world(std::shared_ptr<OE_World>);
-        bool              is_multi_threaded();
         const std::string get_name();
 
     protected:
-        const bool                use_multithreading_;
         std::shared_ptr<OE_World> world_{nullptr};
         const std::string         name_;
     };

@@ -162,7 +162,7 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, oe::
     this->renderer_mutex.unlockMutex();
 
     this->physics_mutex.lockMutex();
-    this->physics             = new oe::physics_base_t(true, "default");
+    this->physics             = new oe::physics_base_t("default");
     this->physics_init_errors = this->tryRun_physics_init(physics_init_info_in);
     this->physics_mutex.unlockMutex();
 

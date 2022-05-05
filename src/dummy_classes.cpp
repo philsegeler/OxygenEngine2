@@ -76,7 +76,7 @@ const std::string oe::renderer_base_t::get_name() {
     return name_;
 }
 
-oe::physics_base_t::physics_base_t(bool mt, std::string name) : use_multithreading_(mt), name_(name) {
+oe::physics_base_t::physics_base_t(std::string name) : name_(name) {
 }
 
 oe::physics_base_t::~physics_base_t() {
@@ -104,9 +104,7 @@ void oe::physics_base_t::set_world(std::shared_ptr<OE_World> world_in) {
     world_ = world_in;
     unlockMutex();
 }
-bool oe::physics_base_t::is_multi_threaded() {
-    return use_multithreading_;
-}
+
 const std::string oe::physics_base_t::get_name() {
     return name_;
 }
