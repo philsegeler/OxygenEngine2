@@ -97,15 +97,15 @@ std::map<std::string, std::shared_ptr<oe::event_t>> oe::input_event_handler_t::c
 void oe::event_handler_t::update_input() {
     lockMutex();
     for (auto key_event_elem : this->events_list_) {
-        if (key_event_elem.p_->type_ == KEYBOARD_EVENT) {
+        if (key_event_elem->type_ == KEYBOARD_EVENT) {
 
-            auto key_event = static_cast<oe::keyboard_event_t*>(key_event_elem.p_.get());
+            auto key_event = static_cast<oe::keyboard_event_t*>(key_event_elem.pointer().get());
             if (key_event->keystate_ == oe::BUTTON_JUST_PRESS) {
                 key_event->keystate_ += 1;
             }
             else if (key_event->keystate_ == oe::BUTTON_PRESS) {
                 if (key_event->is_main_event_) {
-                    this->broadcast_ievent(key_event_elem.id_);
+                    this->broadcast_ievent(key_event_elem.id());
                 }
             }
             else if (key_event->keystate_ == oe::BUTTON_JUST_RELEASE) {
@@ -115,14 +115,14 @@ void oe::event_handler_t::update_input() {
                 continue;
             }
         }
-        else if (key_event_elem.p_->type_ == MOUSE_EVENT) {
-            auto key_event = static_cast<oe::mouse_event_t*>(key_event_elem.p_.get());
+        else if (key_event_elem->type_ == MOUSE_EVENT) {
+            auto key_event = static_cast<oe::mouse_event_t*>(key_event_elem.pointer().get());
             if (key_event->keystate_ == oe::BUTTON_JUST_PRESS) {
                 key_event->keystate_ += 1;
             }
             else if (key_event->keystate_ == oe::BUTTON_PRESS) {
                 if (key_event->is_main_event_) {
-                    this->broadcast_ievent(key_event_elem.id_);
+                    this->broadcast_ievent(key_event_elem.id());
                 }
             }
             else if (key_event->keystate_ == oe::BUTTON_JUST_RELEASE) {

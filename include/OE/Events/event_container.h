@@ -14,10 +14,9 @@
 
 /** New General class based on oe::shared_index_map_t intended to optimize and properly parallelize accesing of
  * individual events. Stores ids and names. Only stores one name per element and one id per element.
- * Supports input iterators. Everything apart from iterators is 100% thread-safe.
  * The difference between this and oe::shared_index_map is that
  *  - No pending elements, elements are added directly
- *  - Registered is renamed to Registered and an event can come more than once
+ *  - Changed is renamed to Registered and an event can come more than once
  *  - No mutexes, this is totally thread-unsafe, but it is guarded by the event handler mutex
  */
 
@@ -28,10 +27,10 @@ namespace oe {
         friend class Registered;
         friend class Element;
 
-        event_container_t() : registered_(*this), deleted_(*this) {
+        event_container_t()
+            : registered_(*this), deleted_(*this){
 
-            this->name2id_ = OE_Name2ID(&this->id2name_);
-        };
+                                  };
 
         event_container_t(const event_container_t&) = delete;
 
@@ -40,7 +39,7 @@ namespace oe {
 
         std::size_t size() {
 
-            std::size_t output = this->elements_.size();
+            std::size_t output = this->elements_container_.size();
 
             return output;
         }
@@ -52,15 +51,23 @@ namespace oe {
         public:
             Element() {
             }
-            Element(event_container_t<T>* db, std::size_t index, std::shared_ptr<T> element)
-                : id_(index), p_(element), db_(db) {
+            Element(event_container_t<T>* db, std::size_t index, std::shared_ptr<T> element) : p_(element), db_(db) {
             }
 
-            std::size_t        id_{0};
-            std::shared_ptr<T> p_{nullptr};
+            auto operator->() {
+                return p_.operator->();
+            }
+
+            std::shared_ptr<T> pointer() {
+                return p_;
+            }
+
+            std::size_t id() {
+                return p_->id;
+            }
 
             void flag_as_registered() {
-                db_->register_event(this->id_);
+                db_->register_event(this->id());
             }
 
             bool is_valid() {
@@ -68,10 +75,11 @@ namespace oe {
             }
 
             std::string get_name() {
-                return db_->get_name(id_);
+                return db_->get_name(p_->id);
             }
 
-        protected:
+        private:
+            std::shared_ptr<T>    p_{nullptr};
             event_container_t<T>* db_;
         };
 
@@ -99,7 +107,7 @@ namespace oe {
         int count(std::size_t index) {
             int output = 0;
 
-            if (this->elements_.count(index) == 1) {
+            if (this->elements_container_.count(index) == 1) {
                 output = 1;
             }
 
@@ -111,7 +119,7 @@ namespace oe {
         int count(const std::string& name) {
             int output = 0;
 
-            if (this->names_.count(name) == 1) {
+            if (this->name2id_container_.count(name) == 1) {
                 output = 1;
             }
 
@@ -119,13 +127,13 @@ namespace oe {
         }
 
         std::string get_name(const std::size_t& index) {
-            if (id2name_.count(index) != 0) return id2name_[index];
+            if (id2name_container_.count(index) != 0) return id2name_container_[index];
             return "";
         }
 
         std::size_t get_id(const std::string& name) {
-            if (this->names_.count(name) == 1) {
-                return this->name2id_[name];
+            if (this->name2id_container_.count(name) == 1) {
+                return this->name2id_container_[name];
             }
             else {
                 return 0;
@@ -134,9 +142,9 @@ namespace oe {
 
         void append(const std::string& name, std::shared_ptr<T> element) {
             if ((this->count(element->id) == 0)) {
-                this->elements_[element->id] = element;
-                this->id2name_[element->id]  = name;
-                this->names_.insert(name);
+                this->elements_container_[element->id] = element;
+                this->id2name_container_[element->id]  = name;
+                this->name2id_container_[name]         = element->id;
             }
             else {
                 OE_Warn("Element with ID: '" + std::to_string(element->id) + "' and name: '" + name +
@@ -145,24 +153,24 @@ namespace oe {
         }
 
         void force_append(const std::string& name, std::shared_ptr<T> element) {
-            if (names_.count(name) == 1) {
+            if (name2id_container_.count(name) == 1) {
                 size_t prev_id = this->name2id[name];
-                this->elements_.erase(prev_id);
-                this->id2name_.erase(prev_id);
+                this->elements_container_.erase(prev_id);
+                this->id2name_container_.erase(prev_id);
                 registered_.remove(prev_id);
                 deleted_.add(prev_id);
             }
-            this->elements_[element->id] = element;
-            this->id2name_[element->id]  = name;
+            this->elements_container_[element->id] = element;
+            this->id2name_container_[element->id]  = name;
             this->registered_.add(element->id);
-            this->names_.insert(name);
+            this->name2id_container_[name] = element->id;
         }
 
         std::string to_str() {
 
             std::string output = "[\n";
-            for (auto x : elements_) {
-                output.append(id2name_[x.first] + " ; " + std::to_string(x.first));
+            for (auto x : elements_container_) {
+                output.append(id2name_container_[x.first] + " ; " + std::to_string(x.first));
                 output.append("\n");
             }
             output.append("]");
@@ -181,10 +189,10 @@ namespace oe {
             this->reset_registered();
 
             for (auto x : deleted_.indices_) {
-                if (elements_.count(x) == 0) continue;
-                elements_.erase(x);
-                names_.erase(id2name_[x]);
-                id2name_.erase(x);
+                if (elements_container_.count(x) == 0) continue;
+                elements_container_.erase(x);
+                name2id_container_.erase(id2name_container_[x]);
+                id2name_container_.erase(x);
             }
 
             deleted_.clear();
@@ -197,14 +205,14 @@ namespace oe {
             auto output = Element();
 
 
-            if (elements_.count(index) != 0)
-                output = Element(this, index, elements_[index]);
+            if (elements_container_.contains(index))
+                output = Element(this, index, elements_container_[index]);
             else
                 output = Element(this, index, nullptr);
 
 
             if (!output.is_valid()) {
-                OE_Warn("Element with ID: '" + std::to_string(output.id_) + "' does not exist in SharedIndexMap<" +
+                OE_Warn("Element with ID: '" + std::to_string(output.id()) + "' does not exist in SharedIndexMap<" +
                         typeid(T).name() + ">.");
             }
 
@@ -216,12 +224,12 @@ namespace oe {
             auto output = Element();
 
 
-            if (this->names_.count(name) != 0) {
-                size_t elem_id = name2id_[name];
-                output         = Element(this, elem_id, elements_[elem_id]);
+            if (this->name2id_container_.contains(name)) {
+                size_t elem_id = name2id_container_[name];
+                output         = Element(this, elem_id, elements_container_[elem_id]);
             }
             else
-                output = Element(this, name2id_[name], nullptr);
+                output = Element(this, 0, nullptr);
 
 
             if (!output.is_valid()) {
@@ -299,11 +307,11 @@ namespace oe {
         };
 
         Iterator begin() {
-            return Iterator(*this, this->elements_.begin());
+            return Iterator(*this, this->elements_container_.begin());
         }
 
         Iterator end() {
-            return Iterator(*this, this->elements_.end());
+            return Iterator(*this, this->elements_container_.end());
         }
 
         //*******************************************/
@@ -316,7 +324,7 @@ namespace oe {
             }
 
             void add(const std::size_t& index) {
-                if ((db_.elements_.count(index) != 0) && (db_.deleted_.count(index) == 0)) indices_.push_back(index);
+                if ((db_.elements_container_.count(index) != 0) && (db_.deleted_.count(index) == 0)) indices_.push_back(index);
             }
 
             void remove(const std::size_t& index) {
@@ -380,7 +388,7 @@ namespace oe {
 
             void add(const std::size_t& index) {
                 indices_.insert(index);
-                if (db_.elements_.count(index) != 0) {
+                if (db_.elements_container_.count(index) != 0) {
                     db_.registered_.remove(index);
                 }
             }
@@ -422,11 +430,10 @@ namespace oe {
         }
 
     protected:
-        std::unordered_map<std::size_t, std::shared_ptr<T>> elements_;
-        std::set<std::string>                               names_;
+        std::unordered_map<std::size_t, std::shared_ptr<T>> elements_container_;
+        std::unordered_map<std::string, std::size_t>        name2id_container_;
 
-        std::unordered_map<std::size_t, std::string> id2name_;
-        OE_Name2ID                                   name2id_;
+        std::unordered_map<std::size_t, std::string> id2name_container_;
 
 
         Registered registered_;
@@ -436,14 +443,14 @@ namespace oe {
 
         void clear_internally() {
 
-            for (auto x : elements_) {
+            for (auto x : elements_container_) {
                 this->deleted_.add(x.first);
             }
-            elements_.clear();
+            elements_container_.clear();
             registered_.clear();
 
-            names_.clear();
-            id2name_.clear();
+            name2id_container_.clear();
+            id2name_container_.clear();
         }
     };
 }; // namespace oe

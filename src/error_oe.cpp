@@ -12,41 +12,40 @@ int oe::event_handler_t::call_ievent(size_t event_id) {
     auto event = events_list_[event_id];
     if (event.is_valid()) {
 
-        event.p_->lockMutex();
+        event->lockMutex();
         try {
-            event.p_->call();
+            event->call();
         } catch (oe::api_error& e) {
-            std::string error_str = "[OE Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event.p_->id) +
-                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter()) + "\n";
+            std::string error_str = "[OE Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event->id) +
+                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter()) + "\n";
             error_str += "\t" + e.what() + "\n";
             cout << error_str;
             OE_WriteToLog(error_str);
         } catch (csl::parser_error_t& e) {
-            std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event.p_->id) +
-                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter()) + "\n";
+            std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event->id) +
+                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter()) + "\n";
             error_str += "\t" + e.what() + "\n";
             cout << error_str;
             OE_WriteToLog(error_str);
         } catch (csl::interpreter_error_t& e) {
-            std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event.p_->id) +
-                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter()) + "\n";
+            std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event->id) +
+                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter()) + "\n";
             error_str += "\t" + e.what() + "\n";
             cout << error_str;
             OE_WriteToLog(error_str);
         } catch (std::exception& e) {
-            std::string error_str = "[OE Error] std::exception variant thrown in event: '" +
-                                    this->get_event_name(event.p_->id) +
-                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter()) + "\n";
+            std::string error_str = "[OE Error] std::exception variant thrown in event: '" + this->get_event_name(event->id) +
+                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter()) + "\n";
             error_str += "\t" + string(e.what()) + "\n";
             cout << error_str;
             OE_WriteToLog(error_str);
         } catch (...) {
-            std::string error_str = "[OE Error] Exception thrown in event: '" + this->get_event_name(event.p_->id) +
-                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter());
+            std::string error_str = "[OE Error] Exception thrown in event: '" + this->get_event_name(event->id) +
+                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter());
             cout << error_str << endl;
             OE_WriteToLog(error_str + "\n");
         }
-        event.p_->unlockMutex();
+        event->unlockMutex();
     }
     else {
         // TODO: Warning

@@ -83,6 +83,18 @@ public:
         std::size_t        id_{0};
         std::shared_ptr<T> p_{nullptr};
 
+        auto operator->() {
+            return p_.operator->();
+        }
+
+        std::shared_ptr<T> pointer() {
+            return p_;
+        }
+
+        std::size_t id() {
+            return p_->id;
+        }
+
         void flag_as_changed() {
             db_->change(this->id_);
         }

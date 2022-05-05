@@ -89,7 +89,7 @@ namespace oe {
         ~keyboard_event_t();
         int call();
 
-    protected:
+    private:
         uint8_t     keystate_;
         std::string key_;
         bool        is_main_event_{false};
@@ -105,7 +105,7 @@ namespace oe {
         ~mouse_event_t();
         int call();
 
-    protected:
+    private:
         uint8_t     keystate_;
         bool        is_main_event_{false};
         std::string key_;
@@ -132,7 +132,7 @@ namespace oe {
         ~gamepad_event_t();
         int call();
 
-    protected:
+    private:
         uint8_t     keystate_;
         std::string key_;
 
