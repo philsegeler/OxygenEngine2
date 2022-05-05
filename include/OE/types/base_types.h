@@ -105,15 +105,15 @@ public:
  * and fetching a name from an id
  * It is only supposed to be static.
  */
-class OE_Name2ID : public OE_THREAD_SAFETY_OBJECT {
+class OE_Name2ID_Container : public OE_THREAD_SAFETY_OBJECT {
 
     friend class CSL_Interpreter;
 
 public:
-    OE_Name2ID();
-    OE_Name2ID(std::unordered_map<std::size_t, std::string>*);
+    OE_Name2ID_Container();
+    OE_Name2ID_Container(std::unordered_map<std::size_t, std::string>*);
 
-    ~OE_Name2ID();
+    ~OE_Name2ID_Container();
     std::size_t operator[](std::string name);
     std::size_t operator()(std::string name);
 

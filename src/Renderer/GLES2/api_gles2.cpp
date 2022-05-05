@@ -451,7 +451,11 @@ void nre::gles2::api_t::set_renderbuffer_textype(std::size_t id, nre::gpu::TEXTU
 
     glBindRenderbuffer(GL_RENDERBUFFER, this->rbos_[id].handle);
     glRenderbufferStorage(GL_RENDERBUFFER, this->teximage_internalformat(a_type), x, y);
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::set_framebuffer_renderbuffer(std::size_t fbo_id, std::size_t rbo_id, int slot) {
@@ -473,7 +477,11 @@ void nre::gles2::api_t::set_framebuffer_renderbuffer(std::size_t fbo_id, std::si
 #endif
     }
 
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 //---------------------Vertex Buffer-----------------------------//
@@ -814,7 +822,11 @@ void nre::gles2::api_t::set_texture_format(std::size_t id, nre::gpu::TEXTURE_TYP
     else {
         // TODO
     }
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::set_framebuffer_texture(std::size_t fbo_id, std::size_t texture_id, int slot) {
@@ -836,14 +848,22 @@ void nre::gles2::api_t::set_framebuffer_texture(std::size_t fbo_id, std::size_t 
                                0);
     }
 
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::set_texture_slot(std::size_t id, int slot) {
     this->check_texture_id(id, "set_texture_slot");
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, this->textures_[id].handle);
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::delete_texture(std::size_t id) {
@@ -878,7 +898,11 @@ void nre::gles2::api_t::copy_framebuffer(std::size_t src, std::size_t target, nr
         glBlitFramebuffer(0, 0, x_tmp, y_tmp, 0, 0, x_tmp, y_tmp,
                           GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
     }
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_COPY clear, float alpha_value) {
@@ -904,25 +928,34 @@ void nre::gles2::api_t::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_
     }
     else {
     }
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::discard_framebuffer(std::size_t id) {
 
 #ifndef __EMSCRIPTEN__
-    const GLenum attachment_discards[] = {GL_DEPTH_ATTACHMENT, GL_COLOR_ATTACHMENT0};
 
     if (id != 0) {
         this->check_fbo_id(id, "discard_framebuffer");
         if (not has_ext_discard_framebuffer_) return;
-
+        const GLenum attachment_discards[] = {GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT};
         glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[id].handle);
-        glDiscardFramebufferEXT(GL_FRAMEBUFFER, 2, attachment_discards);
+        glDiscardFramebufferEXT(GL_FRAMEBUFFER, 3, &attachment_discards[0]);
     }
     else {
         if (not has_ext_discard_framebuffer_) return;
+        const GLenum attachment_discards[] = {GL_COLOR, GL_DEPTH};
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDiscardFramebufferEXT(GL_FRAMEBUFFER, 2, attachment_discards);
+        glDiscardFramebufferEXT(GL_FRAMEBUFFER, 2, &attachment_discards[0]);
+    }
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
     }
 #endif
 }
@@ -936,7 +969,11 @@ void nre::gles2::api_t::use_framebuffer(std::size_t id) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::delete_framebuffer(std::size_t id) {
@@ -1157,7 +1194,11 @@ void nre::gles2::api_t::setup_program(std::size_t id) {
 
     this->progs_[id].setup = true;
 
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::delete_program(std::size_t id) {
@@ -1246,7 +1287,11 @@ void nre::gles2::api_t::draw(nre::gpu::draw_call dc_info) {
             glDrawArrays(GL_TRIANGLES, 0, this->get_vao_size(vao_id));
         }
     }
-    if (glGetError() > 0) cout << "GL Error: " << glGetError() << endl;
+    auto possible_error = glGetError();
+    if (possible_error > 0) {
+        cout << "GL Error: " << possible_error << endl;
+        OE_WriteToLog(std::to_string(possible_error));
+    }
 }
 
 void nre::gles2::api_t::set_render_mode(nre::gpu::RENDERMODE rendermode) {

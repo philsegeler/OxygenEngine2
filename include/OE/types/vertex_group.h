@@ -18,7 +18,7 @@ class OE_VertexGroup : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
 public:
     static std::unordered_map<std::size_t, std::string> id2name;
     static std::atomic<std::size_t>                     current_id;
-    static OE_Name2ID                                   name2id;
+    static OE_Name2ID_Container                         name2id;
     const std::size_t                                   id;
 
     OE_VertexGroup();
