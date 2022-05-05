@@ -89,7 +89,7 @@ nre::gles2::api_t::api_t(nre::gpu::info_struct& backend_info) {
             has_oes_packed_depth_stencil_ = true;
         else if (extension_es == "GL_OES_depth24")
             has_oes_depth24_ = true;
-        else if (extension_es == "GL_OES_depth_texture")
+        else if ((extension_es == "GL_OES_depth_texture") or (extension_es == "GL_ANGLE_depth_texture"))
             has_oes_depth_texture_ = true;
         else if (extension_es == "GL_EXT_color_buffer_float")
             has_ext_color_buffer_float_ = true;
