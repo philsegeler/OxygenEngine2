@@ -910,7 +910,7 @@ void nre::gles2::api_t::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_
 void nre::gles2::api_t::discard_framebuffer(std::size_t id) {
 
 #ifndef __EMSCRIPTEN__
-    const GLenum attachment_discards[]  = {GL_DEPTH_ATTACHMENT, GL_COLOR_ATTACHMENT0};
+    const GLenum attachment_discards[] = {GL_DEPTH_ATTACHMENT, GL_COLOR_ATTACHMENT0};
 
     if (id != 0) {
         this->check_fbo_id(id, "discard_framebuffer");
