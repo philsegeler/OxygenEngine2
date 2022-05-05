@@ -80,7 +80,10 @@ nre::gles2::api_t::api_t(nre::gpu::info_struct& backend_info) {
     std::istringstream       iss(extensions_gl);
     std::vector<std::string> extensions_split(std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
 
+
     for (auto extension_es : extensions_split) {
+
+        OE_WriteToLog(extension_es + "\n");
 
         if (extension_es == "GL_OES_packed_depth_stencil")
             has_oes_packed_depth_stencil_ = true;
