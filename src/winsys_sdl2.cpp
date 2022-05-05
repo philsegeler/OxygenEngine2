@@ -192,9 +192,12 @@ oe::winsys_output OE_SDL_WindowSystem::finishInit() {
     SDL_GL_MakeCurrent(this->window, this->context);
 #endif
     std::stringstream ss;
-    ss << "Vendor:   '" << glGetString(GL_VENDOR) << "'" << "\n";
-    ss << "Renderer: '" << glGetString(GL_RENDERER) << "'" << "\n";
-    ss << "Version:  '" << glGetString(GL_VERSION) << "'" << "\n";
+    ss << "Vendor:   '" << glGetString(GL_VENDOR) << "'"
+       << "\n";
+    ss << "Renderer: '" << glGetString(GL_RENDERER) << "'"
+       << "\n";
+    ss << "Version:  '" << glGetString(GL_VERSION) << "'"
+       << "\n";
 
     cout << ss.str();
     OE_WriteToLog(ss.str());
