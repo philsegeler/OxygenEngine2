@@ -35,9 +35,10 @@ int OnloadVerySimple(oe::task load_event_task, std::size_t event_id){
 
     oe::add_task_func("move_camera", &move_camera, "Camera");
 
-    for (int i=0; i<4000; i++){
+    for (int i=0; i<10000; i++){
         std::size_t event_id = oe::create_event("test_event" + std::to_string(i));
-        oe::set_event_func("test_event" + std::to_string(i), &test_event_func);
+        if (i < 1000)
+            oe::set_event_func("test_event" + std::to_string(i), &test_event_func);
 
         dummy_list["test_event" + std::to_string(i)] = 0;
         event_ids.insert(event_id);

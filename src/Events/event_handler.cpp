@@ -50,21 +50,20 @@ std::string oe::event_handler_t::get_event_name(std::size_t id) {
 std::size_t oe::event_handler_t::get_event_id(const string& event_name) {
     lockMutex();
 
-    auto event_elem = events_list_[event_name];
-    if (!event_elem.is_valid()) {
+    std::size_t event_id = events_list_.get_id(event_name);
+    if (event_id == 0) {
         unlockMutex();
         throw oe::invalid_event(event_name);
     }
     unlockMutex();
-    return event_elem.id_;
+    return event_id;
 }
 
 
 std::size_t oe::event_handler_t::create_user_event(const string& event_name) {
 
-    std::shared_ptr<oe::custom_event_t> event = std::make_shared<oe::custom_event_t>();
-    event->set_func(&template_event_func);
-    std::size_t event_id = event->id;
+    std::shared_ptr<oe::custom_event_t> event    = std::make_shared<oe::custom_event_t>();
+    std::size_t                         event_id = event->id;
 
     lockMutex();
     if (events_list_.count(event_name) == 0) {

@@ -55,7 +55,7 @@ namespace oe {
         virtual int call();
 
         static std::atomic<std::size_t> current_id;
-        std::size_t                     id;
+        const std::size_t               id;
 
     protected:
         // internal_call() is implemented in OE_Error.cpp
@@ -63,10 +63,10 @@ namespace oe {
 
         void set_func(const event_func_type);
 
-        bool active_{false};
+        std::atomic<bool> active_{false};
 
         event_type      type_;
-        event_func_type func_;
+        event_func_type func_{&template_event_func};
 
         OE_Task task_;
 

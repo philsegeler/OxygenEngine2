@@ -24,37 +24,13 @@
 namespace oe {
     template <typename T>
     class event_container_t : public OE_THREAD_SAFETY_OBJECT {
-    protected:
-        std::unordered_map<std::size_t, std::shared_ptr<T>> elements_;
-        std::set<std::string>                               names_;
-
-        void register_event(const std::size_t& index) {
-
-            this->registered_.add(index);
-        }
-
-        void clear_internally() {
-
-            for (auto x : elements_) {
-                this->deleted_.add(x.first);
-            }
-            elements_.clear();
-            registered_.clear();
-
-            names_.clear();
-            id2name_.clear();
-        }
-
     public:
-        std::unordered_map<std::size_t, std::string> id2name_;
-        OE_Name2ID                                   name2id;
-
         friend class Registered;
         friend class Element;
 
         event_container_t() : registered_(*this), deleted_(*this) {
 
-            this->name2id = OE_Name2ID(&this->id2name_);
+            this->name2id_ = OE_Name2ID(&this->id2name_);
         };
 
         event_container_t(const event_container_t&) = delete;
@@ -109,12 +85,12 @@ namespace oe {
 
             if (!override_names) {
                 for (auto x : other) {
-                    this->appendUNSAFE(x.get_name(), x.p_);
+                    this->append(x.get_name(), x.p_);
                 }
             }
             else {
                 for (auto x : other) {
-                    this->force_appendUNSAFE(x.get_name(), x.p_);
+                    this->force_append(x.get_name(), x.p_);
                 }
             }
         }
@@ -145,6 +121,15 @@ namespace oe {
         std::string get_name(const std::size_t& index) {
             if (id2name_.count(index) != 0) return id2name_[index];
             return "";
+        }
+
+        std::size_t get_id(const std::string& name) {
+            if (this->names_.count(name) == 1) {
+                return this->name2id_[name];
+            }
+            else {
+                return 0;
+            }
         }
 
         void append(const std::string& name, std::shared_ptr<T> element) {
@@ -232,11 +217,11 @@ namespace oe {
 
 
             if (this->names_.count(name) != 0) {
-                size_t elem_id = name2id[name];
+                size_t elem_id = name2id_[name];
                 output         = Element(this, elem_id, elements_[elem_id]);
             }
             else
-                output = Element(this, name2id[name], nullptr);
+                output = Element(this, name2id_[name], nullptr);
 
 
             if (!output.is_valid()) {
@@ -362,7 +347,7 @@ namespace oe {
             std::vector<std::size_t> indices_;
         };
 
-        Registered registered_;
+
 
         Registered& registered() {
             return this->registered_;
@@ -370,6 +355,11 @@ namespace oe {
 
         const std::vector<std::size_t>& get_all_registered() {
             return this->registered_.indices_;
+        }
+
+        void register_event(const std::size_t& index) {
+
+            this->registered_.add(index);
         }
 
         bool has_registered_events() {
@@ -423,14 +413,37 @@ namespace oe {
             std::set<std::size_t, std::greater<std::size_t>> indices_;
         };
 
-        Deleted deleted_;
-
         Deleted& deleted() {
             return this->deleted_;
         }
 
         std::vector<std::size_t> get_all_deleted() {
             return this->deleted_.indices_;
+        }
+
+    protected:
+        std::unordered_map<std::size_t, std::shared_ptr<T>> elements_;
+        std::set<std::string>                               names_;
+
+        std::unordered_map<std::size_t, std::string> id2name_;
+        OE_Name2ID                                   name2id_;
+
+
+        Registered registered_;
+
+        Deleted deleted_;
+
+
+        void clear_internally() {
+
+            for (auto x : elements_) {
+                this->deleted_.add(x.first);
+            }
+            elements_.clear();
+            registered_.clear();
+
+            names_.clear();
+            id2name_.clear();
         }
     };
 }; // namespace oe
