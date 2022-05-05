@@ -57,7 +57,7 @@ void oe::destroy() {
 }
 bool oe::is_done() {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->done;
+    return OE_Main->is_done();
 }
 // ?? Where do i even need this ??? UPDATE: Now I remember
 void oe::finish() {
@@ -573,7 +573,7 @@ void oe::change_object_scale(std::string name, OE_Vec3 sca) {
 void oe::restart_renderer() {
     OE_API_Helpers::checkIfInit();
     OE_Main->window_mutex.lockMutex();
-    OE_Main->restart_renderer = true;
+    OE_Main->force_restart_renderer();
     OE_Main->window_mutex.unlockMutex();
 }
 

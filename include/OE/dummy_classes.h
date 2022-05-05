@@ -7,6 +7,8 @@
 #include <OE/types/base_types.h>
 #include <OE/types/world.h>
 
+class OE_TaskManager;
+
 namespace oe {
 
     enum OS : int { OS_UNDEFINED = 0, OS_LINUX = 1, OS_WINDOWS = 2, OS_ANDROID = 3, OS_WEB = 4 };
@@ -72,15 +74,17 @@ namespace oe {
         virtual void lock_mouse();
         virtual void unlock_mouse();
 
-        virtual bool update_events();
         virtual void destroy();
 
-        OS     os_{OS_UNDEFINED};
-        WINSYS winsys_{WINSYS_NONE};
 
         // The global event handler is here and must be initialized in all sub classes
         // YES this MUST be a public member, but i made sure one cannot fuck it up easily
         oe::event_handler_t event_handler_;
+
+    protected:
+        virtual bool update_events();
+        OS           os_{OS_UNDEFINED};
+        WINSYS       winsys_{WINSYS_NONE};
     };
 
     /** This is a dummy class aimed to be a base class for
@@ -109,7 +113,8 @@ namespace oe {
 
     class renderer_base_t : public OE_THREAD_SAFETY_OBJECT {
     public:
-        renderer_base_t();
+        renderer_base_t() = delete;
+        renderer_base_t(bool, std::string);
         virtual ~renderer_base_t();
 
         virtual bool init(renderer_init_info, renderer_update_info, winsys_output);
@@ -120,9 +125,14 @@ namespace oe {
         virtual bool update_multi_thread(OE_Task*, int); // stub for now
         virtual void destroy();
 
-        bool                      isMultiThreaded{false};
-        std::shared_ptr<OE_World> world{nullptr};
-        std::string               name{"default"};
+        void              set_world(std::shared_ptr<OE_World>);
+        bool              is_multi_threaded();
+        const std::string get_name();
+
+    protected:
+        const bool                use_multithreading_{false};
+        std::shared_ptr<OE_World> world_{nullptr};
+        const std::string         name_;
     };
 
     /** This is a dummy class aimed to be a base class for
@@ -141,7 +151,8 @@ namespace oe {
 
     class physics_base_t : public OE_THREAD_SAFETY_OBJECT {
     public:
-        physics_base_t();
+        physics_base_t() = delete;
+        physics_base_t(bool, std::string);
         virtual ~physics_base_t();
 
         virtual bool init(physics_init_info);
@@ -150,12 +161,14 @@ namespace oe {
         virtual bool update_multi_thread(OE_Task*, int);
         virtual void destroy();
 
-        bool                      isMultiThreaded{false};
-        std::shared_ptr<OE_World> world{nullptr};
-        // You do not actually need this since you can use API functions directly in your
-        // Physics engine .cpp :))
-        // OE_EventHandler*    handler{nullptr};
-        std::string name{"default"};
+        void              set_world(std::shared_ptr<OE_World>);
+        bool              is_multi_threaded();
+        const std::string get_name();
+
+    protected:
+        const bool                use_multithreading_;
+        std::shared_ptr<OE_World> world_{nullptr};
+        const std::string         name_;
     };
 
     /** This is a dummy class aimed to be a base class for
@@ -168,15 +181,19 @@ namespace oe {
 
     class networking_base_t : public OE_THREAD_SAFETY_OBJECT {
     public:
-        networking_base_t();
+        networking_base_t() = delete;
+        networking_base_t(std::string);
         virtual ~networking_base_t();
 
         virtual void init(networking_init_info);
         virtual int  execute(OE_Task);
         virtual void destroy();
 
-        std::atomic<bool> done{false};
-        std::string       name{"default"};
+        const std::string get_name();
+
+    protected:
+        std::atomic<bool> done_{false};
+        const std::string name_;
     };
 }; // namespace oe
 #endif

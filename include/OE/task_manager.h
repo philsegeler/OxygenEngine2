@@ -88,37 +88,20 @@ struct SDL_Thread;
 class OE_TaskManager : public OE_MutexCondition {
 
     friend int oxygen_engine_update_unsync_thread(void*);
+    friend int oxygen_engine_update_thread(void*);
 
 public:
     OE_TaskManager();
     ~OE_TaskManager();
 
-    // stores threads by their name
-    std::map<std::string, struct OE_ThreadStruct> threads   = {};
-    std::map<std::string, SDL_Thread*>            threadIDs = {};
-
-    // stores threads which should not be synchronized
-    // std::map<std::string, struct OE_ThreadStruct>  unsync_threads = {};
-    std::map<std::string, SDL_Thread*> unsync_threadIDs          = {};
-    std::set<std::string>              finished_unsync_threadIDs = {};
-
-    std::map<std::string, std::string> active_tasks = {};
-
-    // very important variable
-    std::atomic<bool> done;
-    bool              errors_on_init{false};
-
     OE_THREAD_SAFETY_OBJECT  renderer_mutex;
     oe::renderer_base_t*     renderer{nullptr};
     oe::renderer_init_info   renderer_init_info;
     oe::renderer_update_info renderer_info;
-    bool                     renderer_init_errors{false};
-    std::atomic<bool>        restart_renderer{false};
 
     OE_THREAD_SAFETY_OBJECT physics_mutex;
     oe::physics_base_t*     physics{nullptr};
     oe::physics_update_info physics_info;
-    bool                    physics_init_errors{false};
     oe::physics_init_info   physics_init_info;
 
     OE_THREAD_SAFETY_OBJECT window_mutex;
@@ -126,16 +109,9 @@ public:
     oe::winsys_update_info  window_info;
     oe::winsys_init_info    window_init_info;
     oe::winsys_output       window_output;
-    bool                    winsys_init_errors{false};
 
     oe::networking_base_t*   network{nullptr};
     oe::networking_init_info network_init_info;
-    bool                     network_init_errors{false};
-
-    std::shared_ptr<OE_World> world{nullptr};
-
-    std::shared_ptr<OE_World> pending_world{nullptr}; // for loading a world
-
 
     unsigned int GetFrameRate();
     void         SetFrameRate(unsigned int);
@@ -173,9 +149,41 @@ public:
 
     void updateThread(const std::string);
 
+    bool is_done();
+
+    void                      set_pending_world(std::shared_ptr<OE_World>);
+    std::shared_ptr<OE_World> get_world();
+
+    void force_restart_renderer();
+
+private:
+    bool              renderer_init_errors{false};
+    std::atomic<bool> restart_renderer{false};
+    bool              physics_init_errors{false};
+    bool              winsys_init_errors{false};
+    bool              network_init_errors{false};
+
+    std::shared_ptr<OE_World> world{nullptr};
+
+    std::shared_ptr<OE_World> pending_world{nullptr}; // for loading a world
+
+    // stores threads by their name
+    std::map<std::string, struct OE_ThreadStruct> threads   = {};
+    std::map<std::string, SDL_Thread*>            threadIDs = {};
+
+    // stores threads which should not be synchronized
+    // std::map<std::string, struct OE_ThreadStruct>  unsync_threads = {};
+    std::map<std::string, SDL_Thread*> unsync_threadIDs          = {};
+    std::set<std::string>              finished_unsync_threadIDs = {};
+
+    std::map<std::string, std::string> active_tasks = {};
+
+    // very important variable
+    std::atomic<bool> done_;
+    bool              errors_on_init{false};
+
     void removeFinishedUnsyncThreads();
 
-protected:
     int          getReadyThreads();
     unsigned int framerate;
     unsigned int current_framerate;
@@ -186,7 +194,6 @@ protected:
 
     int countar{0};
 
-private:
     void syncBeginFrame();
     void syncEndFrame();
 

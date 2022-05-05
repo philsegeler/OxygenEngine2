@@ -4,7 +4,7 @@
 
 using namespace std;
 
-NRE_Renderer::NRE_Renderer() {
+NRE_Renderer::NRE_Renderer() : renderer_base_t(false, "renderer_main") {
 }
 
 NRE_Renderer::~NRE_Renderer() {
@@ -148,7 +148,7 @@ void NRE_Renderer::initLightUBOProgramFBO() {
 
 bool NRE_Renderer::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
                                bool has_renderer_restarted) {
-    assert(this->world != nullptr);
+    assert(this->world_ != nullptr);
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
 

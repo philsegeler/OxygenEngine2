@@ -106,13 +106,33 @@ void OE_ThreadStruct::updateTaskList() {
 
 OE_TaskManager::OE_TaskManager() {
     completed_threads = 0;
-    done              = false;
+    done_             = false;
     started_threads   = 0;
     countar           = 0;
     world             = nullptr;
 }
 
 OE_TaskManager::~OE_TaskManager() {
+}
+
+bool OE_TaskManager::is_done() {
+    return done_;
+}
+
+void OE_TaskManager::set_pending_world(std::shared_ptr<OE_World> worldin) {
+    lockMutex();
+    pending_world = worldin;
+    unlockMutex();
+}
+std::shared_ptr<OE_World> OE_TaskManager::get_world() {
+    lockMutex();
+    auto output = this->world;
+    unlockMutex();
+    return output;
+}
+
+void OE_TaskManager::force_restart_renderer() {
+    this->restart_renderer = true;
 }
 
 /************************
@@ -142,11 +162,11 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, oe::
     this->renderer_mutex.unlockMutex();
 
     this->physics_mutex.lockMutex();
-    this->physics             = new oe::physics_base_t();
+    this->physics             = new oe::physics_base_t(true, "default");
     this->physics_init_errors = this->tryRun_physics_init(physics_init_info_in);
     this->physics_mutex.unlockMutex();
 
-    this->network             = new oe::networking_base_t();
+    this->network             = new oe::networking_base_t("default");
     this->network_init_errors = this->tryRun_network_init(networking_init_info_in);
 
     this->createCondition();
@@ -155,7 +175,7 @@ int OE_TaskManager::Init(std::string titlea, int x, int y, bool fullscreen, oe::
     this->createCondition();
 
     this->SetFrameRate(200);
-    this->done = false;
+    this->done_ = false;
 
     this->CreateNewThread("default");
     this->CreateNewThread("something else");
@@ -296,13 +316,13 @@ void OE_TaskManager::Step() {
 
     // THIS is where obsolete unsync threads are cleaned up
     this->removeFinishedUnsyncThreads();
-    done = done or temp_done;
+    done_ = done_ or temp_done;
     this->syncEndFrame();
 }
 
 
 void OE_TaskManager::Start() {
-    done = false;
+    done_ = false;
     if (this->errors_on_init) {
         this->Destroy();
         return;
@@ -311,7 +331,7 @@ void OE_TaskManager::Start() {
 #ifdef OE_PLATFORM_WEB
     emscripten_set_main_loop(&oe::step, 0, true);
 #else
-    while (!(done)) {
+    while (!(done_)) {
         this->Step();
     }
 #endif
@@ -327,7 +347,7 @@ void OE_TaskManager::Start() {
 void OE_TaskManager::Destroy() {
 
     // finish everything
-    if (!done) {
+    if (!done_) {
         this->window->event_handler_.done_ = true;
         this->Step();
     }
@@ -377,7 +397,7 @@ void OE_TaskManager::Destroy() {
 void OE_TaskManager::updateThread(const string name) {
     // obtain the queue in which the tasks are executed if the task queue if changed
 
-    while (!done) {
+    while (!done_) {
         // synchronize at start
         this->syncBeginFrame();
         auto ticks = this->getTicks();
@@ -429,7 +449,7 @@ void OE_TaskManager::updateThread(const string name) {
             /**************************/
             // This is where physics are run
             this->threads[name].physics_task.update();
-            if (not this->physics_init_errors) done = done or this->tryRun_physics_updateMultiThread(name, comp_threads_copy);
+            if (not this->physics_init_errors) done_ = done_ or this->tryRun_physics_updateMultiThread(name, comp_threads_copy);
             /**************************/
 
             this->syncEndFrame();
@@ -486,8 +506,8 @@ void OE_TaskManager::updateWorld() {
     }
     this->pending_world = nullptr;
 
-    this->physics->world  = this->world;
-    this->renderer->world = this->world;
+    this->physics->set_world(this->world);
+    this->renderer->set_world(this->world);
     unlockMutex();
 }
 

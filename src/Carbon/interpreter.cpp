@@ -53,7 +53,7 @@ namespace csl {
         OE_World::viewportsList.extend(viewport_list_, true);
         OE_World::scenesList.extend(scene_list_, true);
 
-        oe::OE_Main->pending_world = world;
+        oe::OE_Main->set_pending_world(world);
         oe::OE_Main->unlockMutex();
     }
 

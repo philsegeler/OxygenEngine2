@@ -18,6 +18,7 @@ public:
     bool update_multi_thread(OE_Task*, int);
     void destroy();
 
+private:
     // holds all rendering data from the engine
     nre::data_handler_t data_;
 
@@ -57,7 +58,6 @@ public:
     bool setup_bbox_prog{false};
     bool setup_sphere_prog{false};
 
-protected:
     void initOffscreenFrameBuffer();
     void initFullscreenQuad();
     void initGammaCorrectionProg();

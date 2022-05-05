@@ -71,7 +71,7 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
 
     for (auto vpc : OE_World::viewportsList.changed()) {
         this->handle_viewport_data(vpc.id(), vpc.pointer());
-        this->loaded_viewport_ = OE_Main->world->loaded_viewport;
+        this->loaded_viewport_ = OE_Main->get_world()->loaded_viewport;
     }
 
     // handle deleted elements (should look if the element exists first)
