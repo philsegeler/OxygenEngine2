@@ -2,19 +2,19 @@
 
 using namespace std;
 
-int update_monkey_rot( oe::task, string event_name, string obj_name){
+int update_monkey_rot( oe::task, std::size_t event_id, string obj_name){
 
     oe::change_object_local_pos(obj_name, oe::vec3(0.0f, 0.0f, -0.1f));
     return 0;
 }
 
-int update_monkey_rot_neg( oe::task, string event_name){
+int update_monkey_rot_neg( oe::task, std::size_t event_id){
 
     oe::change_object_local_pos("Camera", oe::vec3(0.0f, 0.0f, 0.1f));
     return 0;
 }
 
-int update_monkey_rot_x( oe::task, string event_name){
+int update_monkey_rot_x( oe::task, std::size_t event_id){
 
     oe::change_object_local_pos("Camera", oe::vec3(0.0f, 0.1f, 0.0f));
     //oe::change_object_rot("Suzanne", oe::vec4(0.1f, 1.0f, 0.0f, 0.0f));
@@ -22,7 +22,7 @@ int update_monkey_rot_x( oe::task, string event_name){
     return 0;
 }
 
-int update_monkey_rot_neg_x( oe::task, string event_name){
+int update_monkey_rot_neg_x( oe::task, std::size_t event_id){
 
     oe::change_object_local_pos("Camera", oe::vec3(0.0f, -0.1f, 0.0f));
     //oe::change_object_rot("Suzanne", oe::vec4(-0.1f, 1.0f, 0.0f, 0.0f));
@@ -30,19 +30,19 @@ int update_monkey_rot_neg_x( oe::task, string event_name){
     return 0;
 }
 
-int update_monkey_rot_z( oe::task, string event_name){
+int update_monkey_rot_z( oe::task, std::size_t event_id){
 
     oe::change_object_local_pos("Camera", oe::vec3(-0.1f, 0.0f, 0.0f));
     return 0;
 }
 
-int update_monkey_rot_neg_z( oe::task, string event_name){
+int update_monkey_rot_neg_z( oe::task, std::size_t event_id){
 
     oe::change_object_local_pos("Camera", oe::vec3(0.1f, 0.0f, 0.0f));
     return 0;
 }
 
-int toggle_mouse_locked_state( oe::task, string event_name){
+int toggle_mouse_locked_state( oe::task, std::size_t event_id){
 
     if (oe::is_mouse_locked()){
         oe::mouse_unlock();
@@ -52,13 +52,13 @@ int toggle_mouse_locked_state( oe::task, string event_name){
     return 0;
 }
 
-int renderer_toggle_bounding_spheres( oe::task, string event_name){
+int renderer_toggle_bounding_spheres( oe::task, std::size_t event_id){
     
     oe::toggle_bounding_spheres_rendering();
     return 0;
 }
 
-int set_renderer_mode_normals( oe::task, string event_name){
+int set_renderer_mode_normals( oe::task, std::size_t event_id){
     
     if (oe::get_shading_mode() == oe::RENDERER_REGULAR_SHADING)
         oe::set_shading_mode(oe::RENDERER_NORMALS_SHADING);
@@ -67,16 +67,16 @@ int set_renderer_mode_normals( oe::task, string event_name){
     return 0;
 }
 
-int OnLoadObject(oe::task, string);
+int load_object_handler(oe::task, std::size_t);
 
-int renderer_toggle_wireframe( oe::task, string event_name){
+int renderer_toggle_wireframe( oe::task, std::size_t event_id){
     
     oe::toggle_wireframe_rendering();
     //oe::toggle_render_HDR();
     return 0;
 }
 
-int renderer_toggle_bounding_boxes( oe::task, string event_name){
+int renderer_toggle_bounding_boxes( oe::task, std::size_t event_id){
     
     oe::toggle_bounding_boxes_rendering();
     //throw 5;
@@ -122,35 +122,35 @@ int test_task2(oe::task task){
 }
 
 int test_task3(oe::task task){
-    
+
     //cout << " task3";
     if (oe::is_key_just_pressed("keyboard-1")){
-        oe::load_world_func("assets/OE_Demo_50MB.csl", &OnLoadObject);
+        oe::load_world_func("assets/OE_Demo_50MB.csl", &load_object_handler);
     }
     else if (oe::is_key_just_pressed("keyboard-2")){
-        oe::load_world_func("assets/OE_Demo2.csl", &OnLoadObject);
+        oe::load_world_func("assets/OE_Demo2.csl", &load_object_handler);
     }
     else if (oe::is_key_just_pressed("keyboard-3")){
-        oe::load_world_func("assets/monkeys.csl", &OnLoadObject);
+        oe::load_world_func("assets/monkeys.csl", &load_object_handler);
     }
     else if (oe::is_key_just_pressed("keyboard-4")){
-        oe::load_world_func("assets/car_gma950.csl", &OnLoadObject);
+        oe::load_world_func("assets/car_gma950.csl", &load_object_handler);
     }
     else {
-    
+
     }
 
     return task.CONTINUE();
 }
 
-int toggle_debug_mode(oe::task task, string event_name){
+int toggle_debug_mode(oe::task task, std::size_t event_id){
     oe::toggle_renderer_sanity_checks();
     oe::toggle_render_z_prepass();
     return 0;
 }
 
-int OnLoadObject(oe::task load_event_task, string event_name){
-    cout << "SUCCESSFULLY loaded '" << event_name << "'" << endl;
+int load_object_handler(oe::task load_event_task, std::size_t event_id){
+    cout << "SUCCESSFULLY loaded '" << oe::get_event_name(event_id) << "'" << endl;
     
     oe::set_event_func("keyboard-w", &update_monkey_rot, "Camera");
     oe::set_event_func("keyboard-s", &update_monkey_rot_neg);
@@ -180,8 +180,8 @@ int OnLoadObject(oe::task load_event_task, string event_name){
     oe::add_task_func("test_task3", 4, &test_task3);
     oe::mouse_lock();
 
-    oe::set_window_title("Oxygen Engine - " + event_name);
-    return 0;
+    oe::set_window_title("Oxygen Engine - " + oe::get_event_name(event_id));
+   return 0;
 }
 
 int main(){
@@ -191,15 +191,15 @@ int main(){
 
     oe::init("Oxygen Engine Demo", 852, 480, false);
     //oe::pause(20);
-	//oe::load_world_func("assets/OE_Mat_light_test.csl", &OnLoadObject);
-	//oe::load_world_func("assets/challenge_car.csl", &OnLoadObject);
-	//oe::load_world_func("assets/monkeys.csl", &OnLoadObject);
-	//oe::load_world_func("assets/csl_very_large_object_test.csl", &OnLoadObject);
-	//oe::load_world_func("assets/OE_VerySimple.csl", &OnLoadObject);
-	//oe::load_world_func("assets/some_car.csl", &OnLoadObject);
-    oe::load_world_func("assets/OE_Demo.csl", &OnLoadObject);
-    //oe::load_world_func("assets/OE_Demo2.csl", &OnLoadObject);
-	//oe::load_world_func("assets/lights_simple.csl", &OnLoadObject);
+	//oe::load_world_func("assets/OE_Mat_light_test.csl", &load_object_handler);
+	//oe::load_world_func("assets/challenge_car.csl", &load_object_handler);
+	//oe::load_world_func("assets/monkeys.csl", &load_object_handler);
+	//oe::load_world_func("assets/csl_very_large_object_test.csl", &load_object_handler);
+	//oe::load_world_func("assets/OE_VerySimple.csl", &load_object_handler);
+	//oe::load_world_func("assets/some_car.csl", &load_object_handler);
+    oe::load_world_func("assets/OE_Demo.csl", &load_object_handler);
+    //oe::load_world_func("assets/OE_Demo2.csl", &load_object_handler);
+	//oe::load_world_func("assets/lights_simple.csl", &load_object_handler);
 	//taskMgr.Start();
     //cout << "this has started " << oe::OE_Main << endl;
     oe::start();

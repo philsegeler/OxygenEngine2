@@ -18,6 +18,7 @@
  * The difference between this and oe::shared_index_map is that
  *  - No pending elements, elements are added directly
  *  - Registered is renamed to Registered and an event can come more than once
+ *  - No mutexes, this is totally thread-unsafe, but it is guarded by the event handler mutex
  */
 
 namespace oe {
@@ -28,9 +29,8 @@ namespace oe {
         std::set<std::string>                               names_;
 
         void register_event(const std::size_t& index) {
-            lockMutex();
+
             this->registered_.add(index);
-            unlockMutex();
         }
 
         void clear_internally() {
@@ -53,9 +53,8 @@ namespace oe {
         friend class Element;
 
         event_container_t() : registered_(*this), deleted_(*this) {
-            lockMutex();
+
             this->name2id = OE_Name2ID(&this->id2name_);
-            unlockMutex();
         };
 
         event_container_t(const event_container_t&) = delete;
@@ -64,9 +63,9 @@ namespace oe {
         }
 
         std::size_t size() {
-            lockMutex();
+
             std::size_t output = this->elements_.size();
-            unlockMutex();
+
             return output;
         }
 
@@ -104,7 +103,7 @@ namespace oe {
         // methods
 
         void extend(event_container_t<T>& other, bool override_names) {
-            lockMutex();
+
 
             other.synchronize(false);
 
@@ -118,18 +117,16 @@ namespace oe {
                     this->force_appendUNSAFE(x.get_name(), x.p_);
                 }
             }
-
-            unlockMutex();
         }
 
         // TODO: Add referemce count
         int count(std::size_t index) {
             int output = 0;
-            lockMutex();
+
             if (this->elements_.count(index) == 1) {
                 output = 1;
             }
-            unlockMutex();
+
             return output;
         }
 
@@ -137,11 +134,11 @@ namespace oe {
         // TODO: Add referemce count
         int count(const std::string& name) {
             int output = 0;
-            lockMutex();
+
             if (this->names_.count(name) == 1) {
                 output = 1;
             }
-            unlockMutex();
+
             return output;
         }
 
@@ -151,12 +148,6 @@ namespace oe {
         }
 
         void append(const std::string& name, std::shared_ptr<T> element) {
-            lockMutex();
-            this->appendUNSAFE(name, element);
-            unlockMutex();
-        }
-
-        void appendUNSAFE(const std::string& name, std::shared_ptr<T> element) {
             if ((this->count(element->id) == 0)) {
                 this->elements_[element->id] = element;
                 this->id2name_[element->id]  = name;
@@ -169,12 +160,6 @@ namespace oe {
         }
 
         void force_append(const std::string& name, std::shared_ptr<T> element) {
-            lockMutex();
-            this->force_appendUNSAFE(name, element);
-            unlockMutex();
-        }
-
-        void force_appendUNSAFE(const std::string& name, std::shared_ptr<T> element) {
             if (names_.count(name) == 1) {
                 size_t prev_id = this->name2id[name];
                 this->elements_.erase(prev_id);
@@ -189,32 +174,26 @@ namespace oe {
         }
 
         std::string to_str() {
-            lockMutex();
+
             std::string output = "[\n";
             for (auto x : elements_) {
                 output.append(id2name_[x.first] + " ; " + std::to_string(x.first));
                 output.append("\n");
             }
             output.append("]");
-            unlockMutex();
+
             return output;
         }
 
         void reset_registered() {
-            lockMutex();
-            this->reset_registeredUNSAFE();
-            unlockMutex();
-        }
-
-        void reset_registeredUNSAFE() {
             this->registered_.clear();
         }
 
         void synchronize(bool clear_all) noexcept {
 
-            lockMutex();
 
-            this->reset_registeredUNSAFE();
+
+            this->reset_registered();
 
             for (auto x : deleted_.indices_) {
                 if (elements_.count(x) == 0) continue;
@@ -226,19 +205,18 @@ namespace oe {
             deleted_.clear();
 
             if (clear_all) this->clear_internally();
-            unlockMutex();
         }
 
         Element operator[](const std::size_t& index) noexcept {
 
             auto output = Element();
 
-            lockMutex();
+
             if (elements_.count(index) != 0)
                 output = Element(this, index, elements_[index]);
             else
                 output = Element(this, index, nullptr);
-            unlockMutex();
+
 
             if (!output.is_valid()) {
                 OE_Warn("Element with ID: '" + std::to_string(output.id_) + "' does not exist in SharedIndexMap<" +
@@ -252,14 +230,14 @@ namespace oe {
 
             auto output = Element();
 
-            lockMutex();
+
             if (this->names_.count(name) != 0) {
                 size_t elem_id = name2id[name];
                 output         = Element(this, elem_id, elements_[elem_id]);
             }
             else
                 output = Element(this, name2id[name], nullptr);
-            unlockMutex();
+
 
             if (!output.is_valid()) {
                 OE_Warn("Element with name: '" + name + "' does not exist in SharedIndexMap<" + typeid(T).name() + ">.");
@@ -291,9 +269,8 @@ namespace oe {
         }
 
         void remove(const std::size_t& index) {
-            lockMutex();
+
             this->deleted_.add(index);
-            unlockMutex();
         }
 
         //*******************************************/
@@ -371,51 +348,14 @@ namespace oe {
                 this->indices_.clear();
             }
 
-            //*******************************************/
-            // Registered iterator for getting the registered events in the right direction
-            class RegisteredIter {
-            public:
-                typedef std::vector<std::size_t>::iterator vector_iter_t;
+            typedef std::vector<std::size_t>::iterator vector_iter_t;
 
-                using iterator_category = std::input_iterator_tag;
-                using difference_type   = int;
-
-                RegisteredIter(event_container_t<T>& db, vector_iter_t beginning) : iter(beginning), db_(db) {
-                }
-
-                RegisteredIter& operator++() {
-                    iter++;
-                    return *this;
-                }
-                RegisteredIter operator++(int) {
-                    RegisteredIter tmp = *this;
-                    ++(*this);
-                    return tmp;
-                }
-
-                // This needs robust error handling in multiple threads
-                Element operator*() {
-                    return db_[*iter];
-                }
-
-                friend bool operator==(const RegisteredIter& a, const RegisteredIter& b) {
-                    return a.iter == b.iter;
-                };
-                friend bool operator!=(const RegisteredIter& a, const RegisteredIter& b) {
-                    return a.iter != b.iter;
-                };
-
-            protected:
-                vector_iter_t         iter;
-                event_container_t<T>& db_;
-            };
-
-            RegisteredIter begin() {
-                return RegisteredIter(this->db_, this->indices_.begin());
+            vector_iter_t begin() {
+                return this->indices_.begin();
             }
 
-            RegisteredIter end() {
-                return RegisteredIter(this->db_, this->indices_.end());
+            vector_iter_t end() {
+                return this->indices_.end();
             }
 
             event_container_t<T>&    db_;
@@ -428,10 +368,14 @@ namespace oe {
             return this->registered_;
         }
 
+        std::vector<std::size_t> get_all_registered() {
+            return this->registered_.indices_;
+        }
+
         bool has_registered_events() {
-            lockMutex();
+
             bool output = not this->registered_.empty();
-            unlockMutex();
+
             return output;
         }
 
@@ -465,50 +409,14 @@ namespace oe {
                 this->indices_.clear();
             }
 
-            //*******************************************/
-            // Deleted iterator for getting only the objects that registered
-            class DeletedIter {
-            public:
-                typedef std::set<std::size_t, std::greater<std::size_t>>::iterator set_iter_t;
+            typedef std::set<std::size_t, std::greater<std::size_t>>::iterator set_iter_t;
 
-                using iterator_category = std::input_iterator_tag;
-                using difference_type   = int;
-
-                DeletedIter(event_container_t<T>& db, set_iter_t beginning) : iter(beginning), db_(db) {
-                }
-
-                DeletedIter& operator++() {
-                    iter++;
-                    return *this;
-                }
-                DeletedIter operator++(int) {
-                    DeletedIter tmp = *this;
-                    ++(*this);
-                    return tmp;
-                }
-
-                Element operator*() {
-                    return db_[*iter];
-                }
-
-                friend bool operator==(const DeletedIter& a, const DeletedIter& b) {
-                    return a.iter == b.iter;
-                };
-                friend bool operator!=(const DeletedIter& a, const DeletedIter& b) {
-                    return a.iter != b.iter;
-                };
-
-            protected:
-                set_iter_t            iter;
-                event_container_t<T>& db_;
-            };
-
-            DeletedIter begin() {
-                return DeletedIter(this->db_, this->indices_.begin());
+            set_iter_t begin() {
+                return this->indices_.begin();
             }
 
-            DeletedIter end() {
-                return DeletedIter(this->db_, this->indices_.end());
+            set_iter_t end() {
+                return this->indices_.end();
             }
 
             event_container_t<T>&                            db_;
@@ -519,6 +427,10 @@ namespace oe {
 
         Deleted deleted() {
             return this->deleted_;
+        }
+
+        std::vector<std::size_t> get_all_deleted() {
+            return this->deleted_.indices_;
         }
     };
 }; // namespace oe

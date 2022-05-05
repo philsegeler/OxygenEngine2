@@ -100,6 +100,11 @@ std::size_t oe::get_event_id(std::string name) {
     return OE_Main->window->event_handler_.get_event_id(name);
 }
 
+std::string oe::get_event_name(std::size_t id) {
+    OE_API_Helpers::checkIfInit();
+    return OE_Main->window->event_handler_.get_event_name(id);
+}
+
 size_t oe::get_event_activations(std::string name) {
     OE_API_Helpers::checkIfInit();
     size_t event_id = OE_Main->window->event_handler_.get_event_id(name);

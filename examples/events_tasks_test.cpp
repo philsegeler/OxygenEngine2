@@ -25,13 +25,13 @@ int broadcast_all_events_test(oe::task task){
     return task.CONTINUE();
 }
 
-int test_event_func(oe::task, std::string event_name){
+int test_event_func(oe::task, std::size_t event_id){
 
-    dummy_list[event_name]++;
+    dummy_list[oe::get_event_name(event_id)]++;
     return 0;
 }
 
-int OnloadVerySimple(oe::task load_event_task, std::string event_name){
+int OnloadVerySimple(oe::task load_event_task, std::size_t event_id){
 
     oe::add_task_func("move_camera", &move_camera, "Camera");
 

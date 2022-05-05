@@ -39,9 +39,9 @@ namespace oe {
         EVENT_COMBO      = 7
     };
 
-    int template_event_func(OE_Task, std::string);
+    int template_event_func(OE_Task, std::size_t);
 
-    typedef std::function<int(OE_Task, std::string)> event_func_type;
+    typedef std::function<int(OE_Task, std::size_t)> event_func_type;
 
     /* general event type */
     class event_t : public OE_THREAD_SAFETY_OBJECT {
@@ -52,7 +52,7 @@ namespace oe {
         // static bool finished;
         event_t();
         virtual ~event_t();
-        virtual int call() = 0;
+        virtual int call();
 
         static std::atomic<std::size_t> current_id;
         std::size_t                     id;
@@ -63,8 +63,7 @@ namespace oe {
 
         void set_func(const event_func_type);
 
-        bool        active_{false};
-        std::string name_;
+        bool active_{false};
 
         event_type      type_;
         event_func_type func_;
@@ -150,7 +149,6 @@ namespace oe {
     public:
         custom_event_t();
         ~custom_event_t();
-        int call();
 
     protected:
     };

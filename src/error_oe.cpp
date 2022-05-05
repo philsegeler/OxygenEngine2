@@ -6,51 +6,53 @@
 using namespace std;
 
 // This is where events' error handling is happening
-int oe::event_t::internal_call() {
-    /***************************/
-    /// generic handling
+int oe::event_handler_t::call_ievent(size_t event_id) {
 
-    if (!this->has_init_) {
+    /// generic event management
+    auto event = events_list_[event_id];
+    if (event.is_valid()) {
 
-        this->task_     = OE_Task(this->name_, 0, 0, SDL_GetTicks());
-        this->has_init_ = true;
+        event.p_->lockMutex();
+        try {
+            event.p_->call();
+        } catch (oe::api_error& e) {
+            std::string error_str = "[OE Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event.p_->id) +
+                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter()) + "\n";
+            error_str += "\t" + e.what() + "\n";
+            cout << error_str;
+            OE_WriteToLog(error_str);
+        } catch (csl::parser_error_t& e) {
+            std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event.p_->id) +
+                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter()) + "\n";
+            error_str += "\t" + e.what() + "\n";
+            cout << error_str;
+            OE_WriteToLog(error_str);
+        } catch (csl::interpreter_error_t& e) {
+            std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->get_event_name(event.p_->id) +
+                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter()) + "\n";
+            error_str += "\t" + e.what() + "\n";
+            cout << error_str;
+            OE_WriteToLog(error_str);
+        } catch (std::exception& e) {
+            std::string error_str = "[OE Error] std::exception variant thrown in event: '" +
+                                    this->get_event_name(event.p_->id) +
+                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter()) + "\n";
+            error_str += "\t" + string(e.what()) + "\n";
+            cout << error_str;
+            OE_WriteToLog(error_str);
+        } catch (...) {
+            std::string error_str = "[OE Error] Exception thrown in event: '" + this->get_event_name(event.p_->id) +
+                                    "', event invocation counter: " + std::to_string(event.p_->task_.GetCounter());
+            cout << error_str << endl;
+            OE_WriteToLog(error_str + "\n");
+        }
+        event.p_->unlockMutex();
+    }
+    else {
+        // TODO: Warning
     }
 
-    task_.update();
-    try {
-        func_(task_, name_);
-    } catch (oe::api_error& e) {
-        std::string error_str = "[OE Error] " + e.name_ + " thrown in event: '" + this->name_ +
-                                "', event invocation counter: " + std::to_string(this->task_.GetCounter()) + "\n";
-        error_str += "\t" + e.what() + "\n";
-        cout << error_str;
-        OE_WriteToLog(error_str);
-    } catch (csl::parser_error_t& e) {
-        std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->name_ +
-                                "', event invocation counter: " + std::to_string(this->task_.GetCounter()) + "\n";
-        error_str += "\t" + e.what() + "\n";
-        cout << error_str;
-        OE_WriteToLog(error_str);
-    } catch (csl::interpreter_error_t& e) {
-        std::string error_str = "[CSL Error] " + e.name_ + " thrown in event: '" + this->name_ +
-                                "', event invocation counter: " + std::to_string(this->task_.GetCounter()) + "\n";
-        error_str += "\t" + e.what() + "\n";
-        cout << error_str;
-        OE_WriteToLog(error_str);
-    } catch (std::exception& e) {
-        std::string error_str = "[OE Error] std::exception variant thrown in event: '" + this->name_ +
-                                "', event invocation counter: " + std::to_string(this->task_.GetCounter()) + "\n";
-        error_str += "\t" + string(e.what()) + "\n";
-        cout << error_str;
-        OE_WriteToLog(error_str);
-    } catch (...) {
-        std::string error_str = "[OE Error] Exception thrown in event: '" + this->name_ +
-                                "', event invocation counter: " + std::to_string(this->task_.GetCounter());
-        cout << error_str << endl;
-        OE_WriteToLog(error_str + "\n");
-    }
     return 0;
-    /**************************/
 }
 
 // error handling functions

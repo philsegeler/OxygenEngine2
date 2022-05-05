@@ -29,6 +29,7 @@ namespace oe {
         void destroy_ievent(std::size_t);
 
         std::size_t get_event_id(const std::string&);
+        std::string get_event_name(std::size_t);
         std::size_t get_event_activations(std::size_t);
         std::size_t get_event_counter(std::size_t);
 
