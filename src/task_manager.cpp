@@ -290,7 +290,7 @@ void OE_TaskManager::Step() {
     if (not this->renderer_init_errors) temp_done = temp_done or this->tryRun_renderer_updateSingleThread();
 
     if (not this->winsys_init_errors) temp_done = temp_done or this->tryRun_winsys_update();
-    temp_done = temp_done or this->window->event_handler_.done_;
+    temp_done = temp_done or this->window->event_handler_.done();
     // count how many times the step function has been called
     countar++;
 

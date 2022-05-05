@@ -85,8 +85,8 @@ namespace csl {
         auto loaded_scene    = world_e.single_assignments.at("loaded_scene");
 
         // TODO: Dependency
-        result->loaded_viewport = viewport_list_.name2id[std::string(loaded_viewport)];
-        result->loaded_scene    = scene_list_.name2id[std::string(loaded_scene)];
+        result->loaded_viewport = viewport_list_.get_id(std::string(loaded_viewport));
+        result->loaded_scene    = scene_list_.get_id(std::string(loaded_scene));
 
 
         return result;
@@ -171,7 +171,7 @@ namespace csl {
         // TODO: Make this use std::string_view
         auto parent = camera_e.single_assignments.at("parent");
         // TODO: Dependency
-        result->parent = object_list_.name2id(std::string(parent));
+        result->parent = object_list_.get_id(std::string(parent));
         // TODO: This was wrong in the previous interpreter
         result->parent_type = sv_to_int(camera_e.single_assignments.at("parent_type"));
 
@@ -226,7 +226,7 @@ namespace csl {
 
         auto parent = light_e.single_assignments.at("parent");
         // TODO: Dependency
-        result->parent      = object_list_.name2id(std::string(parent));
+        result->parent      = object_list_.get_id(std::string(parent));
         result->parent_type = sv_to_int(light_e.single_assignments.at("parent_type"));
 
 
@@ -262,7 +262,7 @@ namespace csl {
         //			// TODO: Is emplace_back an option?
         //			// TODO: Dependency
         //			// TODO: Make this not use std::string
-        //			result->objects.push_back(object_list_.name2id[std::string(o)]);
+        //			result->objects.push_back(object_list_.get_id(std::string(o)));
         //		}
 
 
@@ -308,7 +308,7 @@ namespace csl {
 
         auto parent = mesh_e.single_assignments.at("parent");
         // TODO: Dependency
-        result->parent      = object_list_.name2id(std::string(parent));
+        result->parent      = object_list_.get_id(std::string(parent));
         result->parent_type = sv_to_int(mesh_e.single_assignments.at("parent_type"));
 
 
@@ -336,7 +336,7 @@ namespace csl {
         //		for (const auto& t : mesh_e.list_assignments.at("textureCM_IDs")) {
         //			// TODO: std::string
         //			// TODO: WHY TF.
-        //			result->textureCM_IDs.push_back(oe::world::tcmsList.name2id[std::string(t)]);
+        //			result->textureCM_IDs.push_back(oe::world::tcmsList.get_id(std::string(t)));
         //		}
 
         for (const auto& v : mesh_e.list_assignments.at("vertices")) {
@@ -405,7 +405,7 @@ namespace csl {
         auto material_id = vgroup_e.single_assignments.at("material_id");
         // TODO: Dependency
         // TODO: std::string
-        result->material_id = material_list_.name2id(std::string(material_id));
+        result->material_id = material_list_.get_id(std::string(material_id));
 
 
         // List Assignments
@@ -439,7 +439,7 @@ namespace csl {
         auto camera = texture_e.single_assignments.at("camera");
         // TODO: Dependency
         // TODO: std::string
-        result->camera = object_list_.name2id(std::string(camera));
+        result->camera = object_list_.get_id(std::string(camera));
 
 
         return result;
@@ -486,7 +486,7 @@ namespace csl {
         //		for (const auto& t : material_e.list_assignments.at("textureCM_IDs")) {
         //			// TODO: Dependency
         //			// TODO: std::string
-        //			result->textureCM_IDs.push_back(tcm_list_.name2id[std::string(t)]);
+        //			result->textureCM_IDs.push_back(tcm_list_.get_id(std::string(t)));
         //		}
 
 
@@ -553,7 +553,7 @@ namespace csl {
         for (const auto& c : vpconfig_e.list_assignments.at("cameras")) {
             // TODO: Dependency
             // TODO: std::string
-            result->cameras.push_back(object_list_.name2id[std::string(c)]);
+            result->cameras.push_back(object_list_.get_id(std::string(c)));
         }
 
 
@@ -579,7 +579,7 @@ namespace csl {
         auto texture_id = tcm_texture_e.single_assignments.at("textureID");
         // TODO: Dependency
         // TODO: std::string
-        result.textureID = texture_list_.name2id(std::string(texture_id));
+        result.textureID = texture_list_.get_id(std::string(texture_id));
 
 
         return result;

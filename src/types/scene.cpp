@@ -5,16 +5,9 @@ using namespace std;
 
 std::atomic<std::size_t> OE_Scene::current_id(0);
 
-OE_Scene::OE_Scene() {
-
-    this->id = ++OE_Scene::current_id;
+OE_Scene::OE_Scene() : id(++OE_Scene::current_id) {
 }
 
-
-OE_Scene::OE_Scene(const string& name) {
-
-    this->id = ++OE_Scene::current_id;
-}
 
 OE_Scene::~OE_Scene() {
     /*for (auto object : this->objects){
@@ -40,45 +33,47 @@ OE_Scene::~OE_Scene() {
 
 string OE_Scene::to_str() const {
 
-    string output = outputTypeTag("Scene", {{"name", "\"" + OE_World::scenesList.id2name_[this->id] + "\""}});
+    lockMutex();
+    string output = outputTypeTag("Scene", {{"name", "\"" + OE_World::scenesList.get_name(this->id) + "\""}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
     for (const auto& x : this->textures) {
-        output.append(OE_World::texturesList[x].p_->to_str());
+        output.append(OE_World::texturesList[x]->to_str());
         output.append("\n");
     }
 
     for (const auto& x : this->texture_CMs) {
-        output.append(OE_World::tcmsList[x].p_->to_str());
+        output.append(OE_World::tcmsList[x]->to_str());
         output.append("\n");
     }
 
     for (const auto& x : this->materials) {
-        output.append(OE_World::materialsList[x].p_->to_str());
+        output.append(OE_World::materialsList[x]->to_str());
         output.append("\n");
     }
 
     for (const auto& x : this->objects) {
-        if (OE_World::objectsList[x].p_->getType() == OE_OBJECT_MESH) {
-            output.append(OE_World::objectsList[x].p_->to_str());
+        if (OE_World::objectsList[x]->getType() == OE_OBJECT_MESH) {
+            output.append(OE_World::objectsList[x]->to_str());
             output.append("\n");
         }
     }
     for (const auto& x : this->objects) {
-        if (OE_World::objectsList[x].p_->getType() == OE_OBJECT_LIGHT) {
-            output.append(OE_World::objectsList[x].p_->to_str());
+        if (OE_World::objectsList[x]->getType() == OE_OBJECT_LIGHT) {
+            output.append(OE_World::objectsList[x]->to_str());
             output.append("\n");
         }
     }
     for (const auto& x : this->objects) {
-        if (OE_World::objectsList[x].p_->getType() == OE_OBJECT_CAMERA) {
-            output.append(OE_World::objectsList[x].p_->to_str());
+        if (OE_World::objectsList[x]->getType() == OE_OBJECT_CAMERA) {
+            output.append(OE_World::objectsList[x]->to_str());
             output.append("\n");
         }
     }
 
     CSL_WriterBase::indent = CSL_WriterBase::indent - 1;
     output.append(outputClosingTag("Scene"));
+    unlockMutex();
     return output;
 }

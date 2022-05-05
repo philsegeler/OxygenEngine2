@@ -7,7 +7,7 @@ std::vector<float> OE_RGBColor::to_arr() const {
     return {r, g, b};
 }
 
-OE_Light::OE_Light() {
+OE_Light::OE_Light() : OE_Object() {
 
     this->light_type = 0;
     this->fov        = 0.0f;
@@ -15,12 +15,6 @@ OE_Light::OE_Light() {
     this->intensity  = 0.0f;
 }
 
-OE_Light::OE_Light(const string& name) : OE_Object(name) {
-    this->light_type = 0;
-    this->fov        = 0.0f;
-    this->range      = 0.0f;
-    this->intensity  = 0.0f;
-}
 
 OE_Light::~OE_Light() {
 }
@@ -57,14 +51,14 @@ OE_OBJECT_TYPE OE_Light::getType() const {
 
 string OE_Light::to_str() const {
     string output = outputTypeTag(
-        "Light", {{"name", "\"" + OE_World::objectsList.id2name_[this->id] + "\""}, {"visible", convert((int)visible)}});
+        "Light", {{"name", "\"" + OE_World::objectsList.get_name(this->id) + "\""}, {"visible", convert((int)visible)}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
     output.append(outputList("current_state", this->current_state.to_arr()));
     output.append("\n");
 
-    output.append(outputVar("parent", "\"" + OE_World::objectsList.id2name_[this->parent] + "\""));
+    output.append(outputVar("parent", "\"" + OE_World::objectsList.get_name(this->parent) + "\""));
     output.append("\n");
 
     output.append(outputVar("parent_type", convert(this->parent_type)));
@@ -72,7 +66,7 @@ string OE_Light::to_str() const {
 
     vector<string> object_strs;
     for (const auto& x : this->objects) {
-        object_strs.push_back("\"" + OE_World::objectsList.id2name_[x] + "\"");
+        object_strs.push_back("\"" + OE_World::objectsList.get_name(x) + "\"");
     }
 
     if (object_strs.size() != 0) {

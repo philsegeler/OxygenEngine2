@@ -37,8 +37,8 @@ void OE_World::setup() {
 
         for (auto scene : OE_World::scenesList) {
 
-            for (auto obj : scene.p_->objects) {
-                if (OE_World::objectsList[obj].p_->getType() == OE_OBJECT_CAMERA) {
+            for (auto obj : scene->objects) {
+                if (OE_World::objectsList[obj]->getType() == OE_OBJECT_CAMERA) {
 
                     // create and store default viewport config
                     std::shared_ptr<OE_ViewportConfig> vp_config = std::make_shared<OE_ViewportConfig>();
@@ -46,7 +46,7 @@ void OE_World::setup() {
                     // add first found camera to default (0) layer
                     auto cam = OE_World::objectsList[obj];
                     vp_config->lockMutex();
-                    vp_config->addCamera(cam.id_, 0);
+                    vp_config->addCamera(cam.id(), 0);
                     vp_config->unlockMutex();
 
                     OE_World::viewportsList.force_append_now("default", vp_config);
@@ -64,27 +64,29 @@ void OE_World::setup() {
 
 string OE_World::to_str() const {
 
+    lockMutex();
     string output = outputTypeTag("World", {});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
     for (const auto& x : this->scenes) {
-        output.append(OE_World::scenesList[x].p_->to_str());
+        output.append(OE_World::scenesList[x]->to_str());
         output.append("\n");
     }
 
     for (const auto& x : this->viewports) {
-        output.append(OE_World::viewportsList[x].p_->to_str());
+        output.append(OE_World::viewportsList[x]->to_str());
         output.append("\n");
     }
 
-    output.append(outputVar("loaded_scene", "\"" + OE_World::scenesList.id2name_[this->loaded_scene] + "\""));
+    output.append(outputVar("loaded_scene", "\"" + OE_World::scenesList.get_name(this->loaded_scene) + "\""));
     output.append("\n");
 
-    output.append(outputVar("loaded_viewport", "\"" + OE_World::viewportsList.id2name_[this->loaded_viewport] + "\""));
+    output.append(outputVar("loaded_viewport", "\"" + OE_World::viewportsList.get_name(this->loaded_viewport) + "\""));
     output.append("\n");
 
     CSL_WriterBase::indent = CSL_WriterBase::indent - 1;
     output.append(outputClosingTag("World"));
+    unlockMutex();
     return output;
 }

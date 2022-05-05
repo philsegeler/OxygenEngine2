@@ -14,10 +14,9 @@ class OE_Texture : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
 
 public:
     static std::atomic<std::size_t> current_id;
-    std::size_t                     id;
+    const std::size_t               id;
 
     OE_Texture();
-    OE_Texture(const std::string&);
     ~OE_Texture();
 
     std::string to_str() const;

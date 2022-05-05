@@ -34,8 +34,8 @@ public:
 
     virtual ~OE_THREAD_SAFETY_OBJECT();
 
-    void lockMutex();
-    void unlockMutex();
+    void lockMutex() const;
+    void unlockMutex() const;
 
     bool changed;
     bool isStarted;

@@ -239,9 +239,7 @@ int oe::event_handler_t::handle_all_events() {
         ///  so that other threads target next events
         lockMutex();
 
-
-        std::vector<std::size_t> to_be_called_events;
-        to_be_called_events = this->events_list_.get_all_registered();
+        const std::vector<std::size_t> to_be_called_events = events_list_.registered();
         this->events_list_.reset_registered();
 
         for (std::size_t event_id : to_be_called_events) {
@@ -251,11 +249,19 @@ int oe::event_handler_t::handle_all_events() {
         for (std::size_t event_id : to_be_called_events) {
             call_ievent(event_id);
         }
+
+
         unlockMutex();
     }
 
     this->cleanup();
     return 0;
+}
+bool oe::event_handler_t::done() {
+    return done_;
+}
+void oe::event_handler_t::set_done(bool param) {
+    done_ = param;
 }
 
 void oe::event_handler_t::cleanup() {

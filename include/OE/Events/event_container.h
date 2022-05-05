@@ -26,6 +26,7 @@ namespace oe {
     public:
         friend class Registered;
         friend class Element;
+        friend class event_handler_t;
 
         event_container_t()
             : registered_(*this), deleted_(*this){
@@ -34,15 +35,6 @@ namespace oe {
 
         event_container_t(const event_container_t&) = delete;
 
-        ~event_container_t() {
-        }
-
-        std::size_t size() {
-
-            std::size_t output = this->elements_container_.size();
-
-            return output;
-        }
 
         //*******************************************/
         // interfacing class
@@ -85,6 +77,13 @@ namespace oe {
 
         //*******************************************/
         // methods
+
+        std::size_t size() {
+
+            std::size_t output = this->elements_container_.size();
+
+            return output;
+        }
 
         void extend(event_container_t<T>& other, bool override_names) {
 
@@ -162,8 +161,7 @@ namespace oe {
             }
             this->elements_container_[element->id] = element;
             this->id2name_container_[element->id]  = name;
-            this->registered_.add(element->id);
-            this->name2id_container_[name] = element->id;
+            this->name2id_container_[name]         = element->id;
         }
 
         std::string to_str() {
@@ -176,28 +174,6 @@ namespace oe {
             output.append("]");
 
             return output;
-        }
-
-        void reset_registered() {
-            this->registered_.clear();
-        }
-
-        void synchronize(bool clear_all) noexcept {
-
-
-
-            this->reset_registered();
-
-            for (auto x : deleted_.indices_) {
-                if (elements_container_.count(x) == 0) continue;
-                elements_container_.erase(x);
-                name2id_container_.erase(id2name_container_[x]);
-                id2name_container_.erase(x);
-            }
-
-            deleted_.clear();
-
-            if (clear_all) this->clear_internally();
         }
 
         Element operator[](const std::size_t& index) noexcept {
@@ -318,51 +294,51 @@ namespace oe {
         // Registered class for storing all element indices that registered the previous frame
 
         class Registered {
+            friend class event_container_t;
+
         public:
             // Registered(){}
             Registered(event_container_t<T>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
-                if ((db_.elements_container_.count(index) != 0) && (db_.deleted_.count(index) == 0)) indices_.push_back(index);
+                if ((db_.elements_container_.count(index) != 0) && (db_.deleted_.count(index) == 0))
+                    indices_container_.push_back(index);
             }
 
             void remove(const std::size_t& index) {
-                if (std::count(indices_.begin(), indices_.end(), index) != 0) {
-                    std::erase(indices_, index);
+                if (std::count(indices_container_.begin(), indices_container_.end(), index) != 0) {
+                    std::erase(indices_container_, index);
                 }
             }
 
             bool empty() {
-                return this->indices_.empty();
+                return this->indices_container_.empty();
             }
 
             void clear() {
-                this->indices_.clear();
+                this->indices_container_.clear();
             }
 
             typedef std::vector<std::size_t>::iterator vector_iter_t;
 
             vector_iter_t begin() {
-                return this->indices_.begin();
+                return this->indices_container_.begin();
             }
 
             vector_iter_t end() {
-                return this->indices_.end();
+                return this->indices_container_.end();
             }
 
+        private:
             event_container_t<T>&    db_;
-            std::vector<std::size_t> indices_;
+            std::vector<std::size_t> indices_container_;
         };
 
 
 
-        Registered& registered() {
-            return this->registered_;
-        }
-
-        const std::vector<std::size_t>& get_all_registered() {
-            return this->registered_.indices_;
+        const std::vector<std::size_t> registered() {
+            return this->registered_.indices_container_;
         }
 
         void register_event(const std::size_t& index) {
@@ -387,49 +363,36 @@ namespace oe {
             }
 
             void add(const std::size_t& index) {
-                indices_.insert(index);
+                indices_container_.insert(index);
                 if (db_.elements_container_.count(index) != 0) {
                     db_.registered_.remove(index);
                 }
             }
 
             void remove(const std::size_t& index) {
-                if (indices_.count(index) != 0) {
-                    indices_.erase(index);
+                if (indices_container_.count(index) != 0) {
+                    indices_container_.erase(index);
                 }
             }
 
             int count(const std::size_t& index) {
-                return this->indices_.count(index);
+                return this->indices_container_.count(index);
             }
 
             void clear() {
-                this->indices_.clear();
-            }
-
-            typedef std::set<std::size_t, std::greater<std::size_t>>::iterator set_iter_t;
-
-            set_iter_t begin() {
-                return this->indices_.begin();
-            }
-
-            set_iter_t end() {
-                return this->indices_.end();
+                this->indices_container_.clear();
             }
 
             event_container_t<T>&                            db_;
-            std::set<std::size_t, std::greater<std::size_t>> indices_;
+            std::set<std::size_t, std::greater<std::size_t>> indices_container_;
         };
 
-        Deleted& deleted() {
-            return this->deleted_;
+        const std::set<std::size_t, std::greater<std::size_t>> deleted() {
+            return this->deleted_.indices_container_;
         }
 
-        std::vector<std::size_t> get_all_deleted() {
-            return this->deleted_.indices_;
-        }
 
-    protected:
+    private:
         std::unordered_map<std::size_t, std::shared_ptr<T>> elements_container_;
         std::unordered_map<std::string, std::size_t>        name2id_container_;
 
@@ -451,6 +414,28 @@ namespace oe {
 
             name2id_container_.clear();
             id2name_container_.clear();
+        }
+
+        void reset_registered() {
+            this->registered_.clear();
+        }
+
+        void synchronize(bool clear_all) noexcept {
+
+
+
+            this->reset_registered();
+
+            for (auto x : deleted_.indices_container_) {
+                if (elements_container_.count(x) == 0) continue;
+                elements_container_.erase(x);
+                name2id_container_.erase(id2name_container_[x]);
+                id2name_container_.erase(x);
+            }
+
+            deleted_.clear();
+
+            if (clear_all) this->clear_internally();
         }
     };
 }; // namespace oe

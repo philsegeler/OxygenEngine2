@@ -33,11 +33,11 @@ OE_THREAD_SAFETY_OBJECT::~OE_THREAD_SAFETY_OBJECT() {
 
 
 
-void OE_THREAD_SAFETY_OBJECT::lockMutex() {
+void OE_THREAD_SAFETY_OBJECT::lockMutex() const {
     SDL_LockMutex(this->wmutex);
 }
 
-void OE_THREAD_SAFETY_OBJECT::unlockMutex() {
+void OE_THREAD_SAFETY_OBJECT::unlockMutex() const {
     SDL_UnlockMutex(wmutex);
 }
 

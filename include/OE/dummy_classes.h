@@ -58,6 +58,8 @@ namespace oe {
     };
 
     class winsys_base_t : public OE_THREAD_SAFETY_OBJECT {
+        friend class OE_TaskManager;
+
     public:
         winsys_base_t();
         virtual ~winsys_base_t();
@@ -77,6 +79,7 @@ namespace oe {
         WINSYS winsys_{WINSYS_NONE};
 
         // The global event handler is here and must be initialized in all sub classes
+        // YES this MUST be a public member, but i made sure one cannot fuck it up easily
         oe::event_handler_t event_handler_;
     };
 

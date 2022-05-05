@@ -6,16 +6,8 @@ using namespace std;
 
 std::atomic<std::size_t> OE_ViewportConfig::current_id(0);
 
-OE_ViewportConfig::OE_ViewportConfig() {
+OE_ViewportConfig::OE_ViewportConfig() : id(++OE_ViewportConfig::current_id) {
 
-    this->id = ++OE_ViewportConfig::current_id;
-    this->addLayer();
-}
-
-
-OE_ViewportConfig::OE_ViewportConfig(const string& name) {
-
-    this->id = ++OE_ViewportConfig::current_id;
     this->addLayer();
 }
 
@@ -121,8 +113,8 @@ bool OE_ViewportConfig::existsCameraLayer(std::size_t cam_id, std::size_t layer)
 }
 
 std::string OE_ViewportConfig::to_str() const {
-
-    string output = outputTypeTag("ViewportConfig", {{"name", "\"" + OE_World::viewportsList.id2name_[this->id] + "\""}});
+    lockMutex();
+    string output = outputTypeTag("ViewportConfig", {{"name", "\"" + OE_World::viewportsList.get_name(this->id) + "\""}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
@@ -131,7 +123,7 @@ std::string OE_ViewportConfig::to_str() const {
 
     vector<string> camera_strs;
     for (const auto& x : this->cameras) {
-        camera_strs.push_back("\"" + OE_World::objectsList.id2name_[x] + "\"");
+        camera_strs.push_back("\"" + OE_World::objectsList.get_name(x) + "\"");
     }
     output.append(outputList("cameras", camera_strs));
     output.append("\n");
@@ -147,5 +139,6 @@ std::string OE_ViewportConfig::to_str() const {
 
     CSL_WriterBase::indent = CSL_WriterBase::indent - 1;
     output.append(outputClosingTag("ViewportConfig"));
+    unlockMutex();
     return output;
 }

@@ -19,7 +19,7 @@ public:
     static std::unordered_map<std::size_t, std::string> id2name;
     static std::atomic<std::size_t>                     current_id;
     static OE_Name2ID                                   name2id;
-    std::size_t                                         id;
+    const std::size_t                                   id;
 
     OE_VertexGroup();
     OE_VertexGroup(const std::string&);

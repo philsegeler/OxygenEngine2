@@ -23,8 +23,8 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
         }
 
         for (auto obj : OE_World::objectsList) {
-            if (obj.p_->getType() == OE_OBJECT_MESH) {
-                auto mesh              = static_pointer_cast<OE_Mesh32>(obj.p_);
+            if (obj->getType() == OE_OBJECT_MESH) {
+                auto mesh              = static_pointer_cast<OE_Mesh32>(obj.pointer());
                 mesh->data->vbo_exists = false;
                 mesh->data->ibos_exist = false;
             }
@@ -43,60 +43,60 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
     // Update element data
 
     for (auto mat : OE_World::materialsList.changed()) {
-        this->handle_material_data(mat.id_, mat.p_);
+        this->handle_material_data(mat.id(), mat.pointer());
     }
 
     this->has_dir_lights_changed_ = false;
     this->has_pt_lights_changed_  = false;
 
     for (auto obj : OE_World::objectsList.changed()) {
-        if (obj.p_->getType() == OE_OBJECT_MESH) {
-            this->handle_mesh_data(obj.id_, static_pointer_cast<OE_Mesh32>(obj.p_));
+        if (obj->getType() == OE_OBJECT_MESH) {
+            this->handle_mesh_data(obj.id(), static_pointer_cast<OE_Mesh32>(obj.pointer()));
         }
-        else if (obj.p_->getType() == OE_OBJECT_LIGHT) {
-            this->handle_light_data(obj.id_, static_pointer_cast<OE_Light>(obj.p_));
+        else if (obj->getType() == OE_OBJECT_LIGHT) {
+            this->handle_light_data(obj.id(), static_pointer_cast<OE_Light>(obj.pointer()));
         }
     }
 
     for (auto obj : OE_World::objectsList.changed()) {
-        if (obj.p_->getType() == OE_OBJECT_CAMERA) {
-            this->handle_camera_data(obj.id_, static_pointer_cast<OE_Camera>(obj.p_));
-            camera_ids.push_back(obj.id_);
+        if (obj->getType() == OE_OBJECT_CAMERA) {
+            this->handle_camera_data(obj.id(), static_pointer_cast<OE_Camera>(obj.pointer()));
+            camera_ids.push_back(obj.id());
         }
     }
 
     for (auto sce : OE_World::scenesList.changed()) {
-        this->handle_scene_data(sce.id_, sce.p_);
+        this->handle_scene_data(sce.id(), sce.pointer());
     }
 
     for (auto vpc : OE_World::viewportsList.changed()) {
-        this->handle_viewport_data(vpc.id_, vpc.p_);
+        this->handle_viewport_data(vpc.id(), vpc.pointer());
         this->loaded_viewport_ = OE_Main->world->loaded_viewport;
     }
 
     // handle deleted elements (should look if the element exists first)
 
     for (auto mat : OE_World::materialsList.deleted()) {
-        if (this->materials_.count(mat.id_) == 1) {
-            this->deleted_materials_.insert(mat.id_);
+        if (this->materials_.count(mat) == 1) {
+            this->deleted_materials_.insert(mat);
         }
     }
 
     for (auto obj : OE_World::objectsList.deleted()) {
 
-        if (this->meshes_.count(obj.id_) == 1) {
-            this->deleted_meshes_.insert(obj.id_);
+        if (this->meshes_.count(obj) == 1) {
+            this->deleted_meshes_.insert(obj);
         }
-        else if (this->dir_lights_.count(obj.id_) == 1) {
-            this->dir_lights_.erase(obj.id_);
+        else if (this->dir_lights_.count(obj) == 1) {
+            this->dir_lights_.erase(obj);
             this->has_dir_lights_changed_ = true;
         }
-        else if (this->pt_lights_.count(obj.id_) == 1) {
-            this->pt_lights_.erase(obj.id_);
+        else if (this->pt_lights_.count(obj) == 1) {
+            this->pt_lights_.erase(obj);
             this->has_pt_lights_changed_ = true;
         }
-        else if (this->cameras_.count(obj.id_) == 1) {
-            this->deleted_cameras_.insert(obj.id_);
+        else if (this->cameras_.count(obj) == 1) {
+            this->deleted_cameras_.insert(obj);
         }
         else {
         }
@@ -104,15 +104,15 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
 
 
     for (auto sce : OE_World::scenesList.deleted()) {
-        if (this->scenes_.count(sce.id_) == 1) {
-            this->deleted_scenes_.insert(sce.id_);
+        if (this->scenes_.count(sce) == 1) {
+            this->deleted_scenes_.insert(sce);
         }
     }
 
     for (auto vpc : OE_World::viewportsList.deleted()) {
-        if (this->viewports_.count(vpc.id_) == 1) {
-            this->viewports_.erase(vpc.id_);
-            if (this->loaded_viewport_ == vpc.id_) {
+        if (this->viewports_.count(vpc) == 1) {
+            this->viewports_.erase(vpc);
+            if (this->loaded_viewport_ == vpc) {
                 this->loaded_viewport_ = 0; // needed for compatibility with older .csl with no viewportconfigs
             }
         }

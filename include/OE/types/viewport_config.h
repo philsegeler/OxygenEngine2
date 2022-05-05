@@ -14,11 +14,10 @@ class OE_ViewportConfig : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase 
 
 public:
     static std::atomic<std::size_t> current_id;
-    std::size_t                     id;
+    const std::size_t               id;
 
 
     OE_ViewportConfig();
-    OE_ViewportConfig(const std::string&);
 
     ~OE_ViewportConfig();
 

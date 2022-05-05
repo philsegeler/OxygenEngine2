@@ -23,9 +23,9 @@ public:
     static OE_Name2ID                                   name2id;
     std::size_t                                         id;
 
-    OE_UVMapData();
+    OE_UVMapData() = delete;
     OE_UVMapData(const std::size_t&, const std::string&);
-    ~OE_UVMapData();
+    OE_UVMapData(const OE_UVMapData& other);
 
     std::string to_str() const;
 

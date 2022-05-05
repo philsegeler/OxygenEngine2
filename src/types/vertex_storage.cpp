@@ -5,16 +5,14 @@ using namespace std;
 std::unordered_map<std::size_t, std::string> OE_UVMapData::id2name;
 OE_Name2ID                                   OE_UVMapData::name2id = OE_Name2ID(&OE_UVMapData::id2name);
 
-OE_UVMapData::OE_UVMapData() {
-}
-
-OE_UVMapData::OE_UVMapData(const size_t& ida, const string& name_a) {
-    this->id                        = ida;
+OE_UVMapData::OE_UVMapData(const size_t& ida, const string& name_a) : id(ida) {
     OE_UVMapData::id2name[this->id] = name_a;
 }
 
-OE_UVMapData::~OE_UVMapData() {
+OE_UVMapData::OE_UVMapData(const OE_UVMapData& other) : id(other.id) {
+    this->elements = other.elements;
 }
+
 
 std::string OE_UVMapData::to_str() const {
 
