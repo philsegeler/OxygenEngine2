@@ -60,7 +60,6 @@ namespace oe {
 
         oe::event_container_t<oe::event_t> events_list_;
 
-        std::vector<std::size_t>                     happened_events_;
         std::unordered_map<std::size_t, std::size_t> happened_events_counter_;
 
     private:

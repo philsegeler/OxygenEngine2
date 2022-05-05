@@ -241,16 +241,18 @@ int oe::event_handler_t::handle_all_events() {
         lockMutex();
 
 
-        this->happened_events_.clear();
-        this->happened_events_ = this->events_list_.get_all_registered();
-        for (std::size_t event_id : this->events_list_.registered()) {
+        std::vector<std::size_t> to_be_called_events;
+        to_be_called_events = this->events_list_.get_all_registered();
+        this->events_list_.reset_registered();
+
+        for (std::size_t event_id : to_be_called_events) {
             this->happened_events_counter_[event_id]++;
         }
-        this->events_list_.reset_registered();
-        unlockMutex();
 
-        for (auto a_event : happened_events_)
-            call_ievent(a_event);
+        for (std::size_t event_id : to_be_called_events) {
+            call_ievent(event_id);
+        }
+        unlockMutex();
     }
 
     this->cleanup();

@@ -364,11 +364,11 @@ namespace oe {
 
         Registered registered_;
 
-        Registered registered() {
+        Registered& registered() {
             return this->registered_;
         }
 
-        std::vector<std::size_t> get_all_registered() {
+        const std::vector<std::size_t>& get_all_registered() {
             return this->registered_.indices_;
         }
 
@@ -425,7 +425,7 @@ namespace oe {
 
         Deleted deleted_;
 
-        Deleted deleted() {
+        Deleted& deleted() {
             return this->deleted_;
         }
 
