@@ -4,41 +4,49 @@ using namespace std;
 
 int update_monkey_rot( oe::task, std::size_t event_id, string obj_name){
 
-    oe::change_object_local_pos(obj_name, oe::vec3(0.0f, 0.0f, -0.1f));
+    size_t obj_id = oe::get_object_id(obj_name);
+    oe::change_object_local_pos(obj_id, oe::vec3(0.0f, 0.0f, -0.1f));
     return 0;
 }
 
 int update_monkey_rot_neg( oe::task, std::size_t event_id){
 
-    oe::change_object_local_pos("Camera", oe::vec3(0.0f, 0.0f, 0.1f));
+    size_t camera_id = oe::get_object_id("Camera");
+    oe::change_object_local_pos(camera_id, oe::vec3(0.0f, 0.0f, 0.1f));
     return 0;
 }
 
 int update_monkey_rot_x( oe::task, std::size_t event_id){
 
-    oe::change_object_local_pos("Camera", oe::vec3(0.0f, 0.1f, 0.0f));
-    //oe::change_object_rot("Suzanne", oe::vec4(0.1f, 1.0f, 0.0f, 0.0f));
-    //oe::change_object_scale("Suzanne", oe::vec3(0.0f, 0.1f, 0.0f));
+    size_t camera_id = oe::get_object_id("Camera");
+    size_t suzanne_id = oe::get_object_id("Suzanne");
+    oe::change_object_local_pos(camera_id,  oe::vec3(0.0f, 0.1f, 0.0f));
+    //oe::change_object_rot(suzanne_id, oe::vec4(0.1f, 1.0f, 0.0f, 0.0f));
+    //oe::change_object_scale(suzanne_id, oe::vec3(0.0f, 0.1f, 0.0f));
     return 0;
 }
 
 int update_monkey_rot_neg_x( oe::task, std::size_t event_id){
 
-    oe::change_object_local_pos("Camera", oe::vec3(0.0f, -0.1f, 0.0f));
-    //oe::change_object_rot("Suzanne", oe::vec4(-0.1f, 1.0f, 0.0f, 0.0f));
-    //oe::change_object_scale("Suzanne", oe::vec3(0.0f, -0.1f, 0.0f));
+    size_t camera_id = oe::get_object_id("Camera");
+    size_t suzanne_id = oe::get_object_id("Suzanne");
+    oe::change_object_local_pos(camera_id, oe::vec3(0.0f, -0.1f, 0.0f));
+    //oe::change_object_rot(suzanne_id, oe::vec4(-0.1f, 1.0f, 0.0f, 0.0f));
+    //oe::change_object_scale(suzanne_id, oe::vec3(0.0f, -0.1f, 0.0f));
     return 0;
 }
 
 int update_monkey_rot_z( oe::task, std::size_t event_id){
 
-    oe::change_object_local_pos("Camera", oe::vec3(-0.1f, 0.0f, 0.0f));
+    size_t camera_id = oe::get_object_id("Camera");
+    oe::change_object_local_pos(camera_id, oe::vec3(-0.1f, 0.0f, 0.0f));
     return 0;
 }
 
 int update_monkey_rot_neg_z( oe::task, std::size_t event_id){
 
-    oe::change_object_local_pos("Camera", oe::vec3(0.1f, 0.0f, 0.0f));
+    size_t camera_id = oe::get_object_id("Camera");
+    oe::change_object_local_pos(camera_id, oe::vec3(0.1f, 0.0f, 0.0f));
     return 0;
 }
 
@@ -84,13 +92,15 @@ int renderer_toggle_bounding_boxes( oe::task, std::size_t event_id){
 }
 
 int test_task1(oe::task task, std::string obj_name){
-    
+
+    size_t obj_id = oe::get_object_id(obj_name);
+
     if (oe::is_mouse_moved() && oe::is_mouse_locked()){
         float x = (float)oe::get_delta_mouse_x()/160.0f;
         float y = (float)oe::get_delta_mouse_y()/160.0f;
        
-        oe::change_object_global_rot(obj_name, oe::vec4(-x, 0.0f, 0.0f, 1.0f));
-        oe::change_object_rot(obj_name, oe::vec4(-y, 1.0f, 0.0f, 0.0f));
+        oe::change_object_global_rot(obj_id, oe::vec4(-x, 0.0f, 0.0f, 1.0f));
+        oe::change_object_rot(obj_id, oe::vec4(-y, 1.0f, 0.0f, 0.0f));
     }
     
     //cout << " task1 " << endl;
@@ -103,8 +113,7 @@ int test_task0(oe::task task){
     std::map<int, int> empty_test_map;
     
     if (oe::is_key_just_pressed("keyboard-p")){
-        int a = empty_test_map.at(1);
-        cout << a << endl;
+        oe::create_event("keyboard-a");
     }
     
     

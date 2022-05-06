@@ -215,18 +215,11 @@ void oe::create_new_thread(std::string name) {
  */
 
 std::size_t oe::get_object_id(std::string name) {
-    OE_World::objectsList.lockMutex();
-    std::size_t output = OE_World::objectsList.get_id(name);
-    OE_World::objectsList.unlockMutex();
-    return output;
+    return OE_World::objectsList.get_id(name);
 }
 
 std::string oe::get_object_name(std::size_t id) {
-    OE_World::objectsList.lockMutex();
-    std::string output;
-    output = OE_World::objectsList.get_name(id);
-    OE_World::objectsList.unlockMutex();
-    return output;
+    return OE_World::objectsList.get_name(id);
 }
 
 std::set<std::size_t> oe::get_scene_objects(std::size_t id) {
@@ -265,50 +258,6 @@ OE_Quat oe::get_object_rot(std::size_t id) {
     OE_Quat output = OE_Quat();
 
     auto object = OE_World::objectsList[id];
-    if (object.is_valid()) {
-        object->lockMutex();
-        output = object->GetRot();
-        object->unlockMutex();
-    }
-    return output;
-}
-
-std::set<std::size_t> oe::get_scene_objects(std::string name) {
-
-    std::set<std::size_t> output;
-
-    auto scene = OE_World::scenesList[name];
-    if (scene.is_valid()) {
-        scene->lockMutex();
-        output = scene->objects;
-        scene->unlockMutex();
-    }
-    else {
-        // TODO output a warning
-    }
-    return output;
-}
-
-OE_Vec3 oe::get_object_pos(std::string name) {
-
-    OE_Vec3 output;
-
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        output[0] = object->current_state.pos_x;
-        output[1] = object->current_state.pos_y;
-        output[2] = object->current_state.pos_z;
-        object->unlockMutex();
-    }
-    return output;
-}
-
-OE_Quat oe::get_object_rot(std::string name) {
-
-    OE_Quat output;
-
-    auto object = OE_World::objectsList[name];
     if (object.is_valid()) {
         object->lockMutex();
         output = object->GetRot();
@@ -381,70 +330,6 @@ void oe::change_object_rot(std::size_t id, OE_Vec4 rot) {
     }
 }
 
-void oe::set_object_pos(std::string name, OE_Vec3 pos) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->current_state.pos_x = pos.x;
-        object->current_state.pos_y = pos.y;
-        object->current_state.pos_z = pos.z;
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
-void oe::set_object_rot(std::string name, OE_Quat rot) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->SetRot(rot);
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
-void oe::set_object_rot(std::string name, OE_Vec4 rot) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->SetRot(OE_QuatFromAxisAngle(rot[0], rot[1], rot[2], rot[3]));
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
-void oe::change_object_pos(std::string name, OE_Vec3 pos) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->current_state.pos_x = object->current_state.pos_x + pos.x;
-        object->current_state.pos_y = object->current_state.pos_y + pos.y;
-        object->current_state.pos_z = object->current_state.pos_z + pos.z;
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
-void oe::change_object_rot(std::string name, OE_Quat rot) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->SetRot(object->GetRot() * rot);
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
-void oe::change_object_rot(std::string name, OE_Vec4 rot) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->SetRot(object->GetRot() * OE_QuatFromAxisAngle(rot[0], rot[1], rot[2], rot[3]));
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
 void oe::change_object_global_rot(std::size_t id, OE_Quat rot) {
     auto object = OE_World::objectsList[id];
     if (object.is_valid()) {
@@ -465,42 +350,8 @@ void oe::change_object_global_rot(std::size_t id, OE_Vec4 rot) {
     }
 }
 
-void oe::change_object_global_rot(std::string name, OE_Quat rot) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->SetRot(rot * object->GetRot());
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
-void oe::change_object_global_rot(std::string name, OE_Vec4 rot) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->SetRot(OE_QuatFromAxisAngle(rot[0], rot[1], rot[2], rot[3]) * object->GetRot());
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
 void oe::change_object_local_pos(std::size_t id, OE_Vec3 pos) {
     auto object = OE_World::objectsList[id];
-    if (object.is_valid()) {
-        object->lockMutex();
-        OE_Mat3x3 rot_matrix        = object->GetModelMatrix();
-        auto      local_pos         = rot_matrix * pos;
-        object->current_state.pos_x = object->current_state.pos_x + local_pos.x;
-        object->current_state.pos_y = object->current_state.pos_y + local_pos.y;
-        object->current_state.pos_z = object->current_state.pos_z + local_pos.z;
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
-void oe::change_object_local_pos(std::string name, OE_Vec3 pos) {
-    auto object = OE_World::objectsList[name];
     if (object.is_valid()) {
         object->lockMutex();
         OE_Mat3x3 rot_matrix        = object->GetModelMatrix();
@@ -525,18 +376,6 @@ void oe::set_object_scale(std::size_t id, OE_Vec3 sca) {
     }
 }
 
-void oe::set_object_scale(std::string name, OE_Vec3 sca) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->current_state.sca_x = sca.x;
-        object->current_state.sca_y = sca.y;
-        object->current_state.sca_z = sca.z;
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
 void oe::change_object_scale(std::size_t id, OE_Vec3 sca) {
     auto object = OE_World::objectsList[id];
     if (object.is_valid()) {
@@ -548,19 +387,6 @@ void oe::change_object_scale(std::size_t id, OE_Vec3 sca) {
         object.flag_as_changed();
     }
 }
-
-void oe::change_object_scale(std::string name, OE_Vec3 sca) {
-    auto object = OE_World::objectsList[name];
-    if (object.is_valid()) {
-        object->lockMutex();
-        object->current_state.sca_x = object->current_state.sca_x + sca.x;
-        object->current_state.sca_y = object->current_state.sca_y + sca.y;
-        object->current_state.sca_z = object->current_state.sca_z + sca.z;
-        object->unlockMutex();
-        object.flag_as_changed();
-    }
-}
-
 
 /** API functions to control the renderer
  *  These should work for ANY renderer

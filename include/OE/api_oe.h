@@ -361,11 +361,6 @@ namespace oe {
     OE_Vec3               get_object_model_matrix(std::size_t);
     OE_Quat               get_object_rot(std::size_t);
 
-    std::set<std::size_t> get_scene_objects(std::string);
-    OE_Vec3               get_object_pos(std::string);
-    OE_Vec3               get_object_model_matrix(std::string);
-    OE_Quat               get_object_rot(std::string);
-
     void set_object_pos(std::size_t, OE_Vec3);
     void set_object_rot(std::size_t, OE_Quat);
     void set_object_rot(std::size_t, OE_Vec4);
@@ -374,27 +369,14 @@ namespace oe {
     void change_object_rot(std::size_t, OE_Quat);
     void change_object_rot(std::size_t, OE_Vec4);
 
-    void set_object_pos(std::string, OE_Vec3);
-    void set_object_rot(std::string, OE_Quat);
-    void set_object_rot(std::string, OE_Vec4);
-
-    void change_object_pos(std::string, OE_Vec3);
-    void change_object_rot(std::string, OE_Quat);
-    void change_object_rot(std::string, OE_Vec4);
-
     void change_object_global_rot(std::size_t, OE_Quat);
     void change_object_global_rot(std::size_t, OE_Vec4);
-    void change_object_global_rot(std::string, OE_Quat);
-    void change_object_global_rot(std::string, OE_Vec4);
 
     void change_object_local_pos(std::size_t, OE_Vec3);
-    void change_object_local_pos(std::string, OE_Vec3);
 
     void set_object_scale(std::size_t, OE_Vec3);
-    void set_object_scale(std::string, OE_Vec3);
 
     void change_object_scale(std::size_t, OE_Vec3);
-    void change_object_scale(std::string, OE_Vec3);
 
     /** API functions to control the renderer
      *  These should work for ANY renderer

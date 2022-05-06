@@ -79,7 +79,6 @@ namespace oe {
             return "Name: '" + data_ + "' is not a valid name for a custom event, because it starts with '" + prefix_ + "'";
         };
         std::string data_;
-        std::string name_;
         std::string prefix_;
     };
 
