@@ -101,3 +101,17 @@ oe::custom_event_t::custom_event_t() : oe::event_t() {
 }
 oe::custom_event_t::~custom_event_t() {
 }
+
+// physics
+oe::physics_event_t::physics_event_t() : oe::event_t() {
+    type_ = oe::PHYSICS_EVENT;
+}
+oe::physics_event_t::~physics_event_t() {
+}
+
+// network
+oe::network_event_t::network_event_t() : oe::event_t() {
+    type_ = oe::NETWORK_EVENT;
+}
+oe::network_event_t::~network_event_t() {
+}

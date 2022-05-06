@@ -6,7 +6,7 @@
 using namespace std;
 
 // This is where events' error handling is happening
-int oe::event_handler_t::call_ievent(size_t event_id) {
+int oe::event_handler_t::call_event(size_t event_id) {
 
     /// generic event management
     auto event = events_list_[event_id];

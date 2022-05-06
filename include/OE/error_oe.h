@@ -68,6 +68,21 @@ namespace oe {
         std::string data_;
     };
 
+    class invalid_event_name : public api_error {
+    public:
+        invalid_event_name(std::string arg, std::string prefix) {
+            name_   = "oe::invalid_event_name";
+            data_   = arg;
+            prefix_ = prefix;
+        }
+        std::string what() const throw() {
+            return "Name: '" + data_ + "' is not a valid name for a custom event, because it starts with '" + prefix_ + "'";
+        };
+        std::string data_;
+        std::string name_;
+        std::string prefix_;
+    };
+
     class invalid_task_name : public api_error {
     public:
         invalid_task_name(std::string task, std::string thread) {

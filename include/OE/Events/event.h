@@ -34,7 +34,7 @@ namespace oe {
         MOUSE_EVENT      = 2,
         GAMEPAD_EVENT    = 3,
         NETWORK_EVENT    = 4,
-        COLLISION_EVENT  = 5,
+        PHYSICS_EVENT    = 5,
         MOUSE_MOVE_EVENT = 6,
         EVENT_COMBO      = 7
     };
@@ -149,6 +149,30 @@ namespace oe {
     public:
         custom_event_t();
         ~custom_event_t();
+
+    protected:
+    };
+
+    /// class intended for physics events
+    class physics_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        physics_event_t();
+        ~physics_event_t();
+
+    protected:
+    };
+
+    /// class intended for network events
+    class network_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        network_event_t();
+        ~network_event_t();
 
     protected:
     };

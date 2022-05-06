@@ -20,19 +20,22 @@ namespace oe {
 
         // internal event functions
         void                         init();
-        std::shared_ptr<oe::event_t> get_ievent(const std::string&);
+        std::shared_ptr<oe::event_t> get_event(const std::string&);
 
         std::size_t create_user_event(const std::string&);
-        void        set_ievent_func(std::size_t, const oe::event_func_type);
-        void        set_ievent_func(const std::string&, const oe::event_func_type);
-        void        broadcast_ievent(std::size_t);
-        void        broadcast_ievent(const std::string&);
+        std::size_t create_physics_event(const std::string&);
+        std::size_t create_network_event(const std::string&);
 
-        void broadcast_ievent_wait(std::size_t, int); // TODO
-        void map_ievent(std::size_t, std::size_t);
-        void unmap_ievent(std::size_t, std::size_t);
-        int  call_ievent(std::size_t);
-        void destroy_ievent(std::size_t);
+        void set_event_func(std::size_t, const oe::event_func_type);
+        void set_event_func(const std::string&, const oe::event_func_type);
+        void broadcast_event(std::size_t);
+        void broadcast_event(const std::string&);
+
+        void broadcast_event_wait(std::size_t, int); // TODO
+        void map_event(std::size_t, std::size_t);
+        void unmap_event(std::size_t, std::size_t);
+        int  call_event(std::size_t);
+        void destroy_event(std::size_t);
 
         std::size_t get_event_id(const std::string&);
         std::string get_event_name(std::size_t);

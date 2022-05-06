@@ -83,7 +83,7 @@ void oe::remove_task(std::string task, std::string thread) {
 
 void oe::broadcast_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.broadcast_ievent(name);
+    OE_Main->window->event_handler_.broadcast_event(name);
 }
 std::size_t oe::create_event(std::string name) {
     OE_API_Helpers::checkIfInit();
@@ -92,7 +92,7 @@ std::size_t oe::create_event(std::string name) {
 
 void oe::broadcast_event(std::size_t id) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.broadcast_ievent(id);
+    OE_Main->window->event_handler_.broadcast_event(id);
 }
 
 std::size_t oe::get_event_id(std::string name) {
@@ -177,7 +177,7 @@ void oe::destroy_event(std::string name) {
     OE_API_Helpers::checkIfInit();
     OE_Main->window->event_handler_.lockMutex();
     size_t event_id = OE_Main->window->event_handler_.get_event_id(name);
-    OE_Main->window->event_handler_.destroy_ievent(event_id);
+    OE_Main->window->event_handler_.destroy_event(event_id);
     OE_Main->window->event_handler_.unlockMutex();
 }
 
@@ -191,14 +191,10 @@ bool oe::is_mouse_locked() {
 }
 
 void oe::mouse_lock() {
-
-    oe::create_event("mouse-lock");
-    oe::set_event_func("mouse-lock", &OE_API_Helpers::manage_mouse);
     oe::broadcast_event("mouse-lock");
 }
+
 void oe::mouse_unlock() {
-    oe::create_event("mouse-unlock");
-    oe::set_event_func("mouse-unlock", &OE_API_Helpers::manage_mouse);
     oe::broadcast_event("mouse-unlock");
 }
 

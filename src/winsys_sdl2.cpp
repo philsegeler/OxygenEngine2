@@ -308,7 +308,7 @@ oe::winsys_output OE_SDL_WindowSystem::update(oe::winsys_update_info update_info
 
         this->event_handler_.unlockMutex();
 
-        this->event_handler_.broadcast_ievent("mouse-motion");
+        this->event_handler_.broadcast_event("mouse-motion");
     }
 
     // This is needed to support things like OE_Finish()
@@ -382,7 +382,7 @@ bool OE_SDL_WindowSystem::update_events() {
         //  fetch mouse position, since this may be needed
         this->event_handler_.unlockMutex();
 
-        this->event_handler_.broadcast_ievent("mouse-wheel");
+        this->event_handler_.broadcast_event("mouse-wheel");
         break;
     }
 
