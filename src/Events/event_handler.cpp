@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int oe::template_event_func(OE_Task task, std::size_t event_id) {
+int oe::template_event_func(task_t task, std::size_t event_id) {
     // cout << oe::get_event_name(event_id) << endl;
     return 0;
 }
@@ -239,7 +239,7 @@ std::size_t oe::event_handler_t::get_event_counter(std::size_t event_id) {
     auto event = events_list_[event_id];
     if (event.is_valid()) {
         event->lockMutex();
-        output = event->task_.GetCounter();
+        output = event->task_.get_counter();
         event->unlockMutex();
     }
     unlockMutex();

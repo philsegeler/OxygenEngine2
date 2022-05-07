@@ -36,8 +36,6 @@ namespace oe {
     extern OE_TaskManager* OE_Main;
 
     // class typedefs
-
-    typedef OE_Task   task;
     typedef OE_Vec3   vec3;
     typedef OE_Vec4   vec4;
     typedef OE_Mat4x4 mat4x4;
@@ -282,7 +280,7 @@ namespace oe {
 
     //------------------------BLOCK-------------------------//
 
-    OE_Task get_task_info(std::string, std::string);
+    task_t get_task_info(std::string, std::string);
 
     void create_new_thread(std::string);
 

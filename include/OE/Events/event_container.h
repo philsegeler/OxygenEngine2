@@ -398,7 +398,6 @@ namespace oe {
 
         std::unordered_map<std::size_t, std::string> id2name_container_;
 
-
         Registered registered_;
 
         Deleted deleted_;
@@ -421,8 +420,6 @@ namespace oe {
         }
 
         void synchronize(bool clear_all) noexcept {
-
-
 
             this->reset_registered();
 

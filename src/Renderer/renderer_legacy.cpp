@@ -633,7 +633,7 @@ void NRE_RendererLegacy::updateLightGPUData() {
     }
 }
 
-bool NRE_RendererLegacy::update_multi_thread(OE_Task*, int) {
+bool NRE_RendererLegacy::update_multi_thread(oe::task_t*, int) {
     return false;
 }
 

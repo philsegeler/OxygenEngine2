@@ -18,13 +18,6 @@ extern std::atomic<bool> oe_threads_ready_to_start;
 
 class OE_TaskManager;
 
-
-/* this is a shortcut type definition
- * to make code clearer.
- * It stores an std::function that is executed as tasks in different threads
- */
-typedef std::function<int(OE_Task)> OE_METHOD;
-
 struct OE_ThreadData {
     /* This struct is passed to the update_thread function
      * It passes the task manager pointer and the thread name it runs on
@@ -43,7 +36,7 @@ struct OE_UnsyncThreadData {
 
 struct OE_ThreadStruct {
     /* this struct is used to store a thread. More specifically it stores:
-     * - the tasks to execute which are represented as an OE_Task
+     * - the tasks to execute which are represented as an oe::task_t
      * - the pointer methods to execute which represent an OE_METHOD
      * - a boolean to make the thread asynchronous (relic from 2016, not usable)
      */
@@ -53,12 +46,12 @@ struct OE_ThreadStruct {
 
 
     std::set<std::string>            task_names;
-    std::vector<OE_Task>             tasks;
+    std::vector<oe::task_t>          tasks;
     std::map<std::string, OE_METHOD> functions;
     // std::vector<unsigned int>   task_queue;
 
     // for new tasks to be run after the next frame
-    std::vector<OE_Task>             pending_tasks;
+    std::vector<oe::task_t>          pending_tasks;
     std::map<std::string, OE_METHOD> pending_functions;
 
     // for tasks to be removed
@@ -73,7 +66,7 @@ struct OE_ThreadStruct {
 
     int countar = 0;
 
-    OE_Task physics_task;
+    oe::task_t physics_task;
 };
 
 
@@ -119,7 +112,7 @@ public:
      * adds a function to the to-do list of the task manager
      * the first 2 arguments are mandatory and they are:
      * - the name given to the task to be accessed with
-     * - the function to be added which should return an integer and take an OE_Task as an argument
+     * - the function to be added which should return an integer and take an oe::task_t as an argument
      * the rest 2 are optional and they are
      * - priority (int) higher number => lower priority
      * - the name of the thread to be run, if omitted uses the default thread
@@ -129,8 +122,8 @@ public:
     void AddTask(std::string, const OE_METHOD, int, std::string);
     void AddTask(std::string, const OE_METHOD, std::string);
     // similar to do-task, but only executes the function once after certain time has passed
-    void    DoOnce(std::string, const OE_METHOD, int);
-    OE_Task GetTaskInfo(std::string, std::string);
+    void       DoOnce(std::string, const OE_METHOD, int);
+    oe::task_t GetTaskInfo(std::string, std::string);
 
 
     // Main functions
@@ -205,7 +198,7 @@ private:
     // those are implemented in OE_Error.cpp
     // in order to have all non-core-engine error handling at one place
     int tryRun_unsync_thread(OE_UnsyncThreadData*);
-    int tryRun_task(const std::string&, OE_Task&);
+    int tryRun_task(const std::string&, oe::task_t&);
 
     // ALL these return true if error is found so it terminates the engine
     bool tryRun_physics_updateMultiThread(const std::string&, const int&);

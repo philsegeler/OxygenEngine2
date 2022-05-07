@@ -31,7 +31,7 @@ int oe::event_t::internal_call() {
 
     if (!this->has_init_) {
 
-        this->task_     = OE_Task("event" + to_string(this->id), 0, 0, SDL_GetTicks());
+        this->task_     = task_t("event" + to_string(this->id), 0, 0, SDL_GetTicks());
         this->has_init_ = true;
     }
 

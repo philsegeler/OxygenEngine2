@@ -17,31 +17,31 @@ int oe::event_handler_t::call_event(size_t event_id) {
             event->call();
         } catch (oe::api_error& e) {
             std::string error_str = "[OE Error] '" + e.name_ + "' thrown in event: '" + this->get_event_name(event->id) +
-                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter()) + "\n";
+                                    "', event invocation counter: " + std::to_string(event->task_.get_counter()) + "\n";
             error_str += "\t" + e.what() + "\n";
             cout << error_str;
             OE_WriteToLog(error_str);
         } catch (csl::parser_error_t& e) {
             std::string error_str = "[CSL Error] '" + e.name_ + "' thrown in event: '" + this->get_event_name(event->id) +
-                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter()) + "\n";
+                                    "', event invocation counter: " + std::to_string(event->task_.get_counter()) + "\n";
             error_str += "\t" + e.what() + "\n";
             cout << error_str;
             OE_WriteToLog(error_str);
         } catch (csl::interpreter_error_t& e) {
             std::string error_str = "[CSL Error] '" + e.name_ + "' thrown in event: '" + this->get_event_name(event->id) +
-                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter()) + "\n";
+                                    "', event invocation counter: " + std::to_string(event->task_.get_counter()) + "\n";
             error_str += "\t" + e.what() + "\n";
             cout << error_str;
             OE_WriteToLog(error_str);
         } catch (std::exception& e) {
             std::string error_str = "[OE Error] std::exception variant thrown in event: '" + this->get_event_name(event->id) +
-                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter()) + "\n";
+                                    "', event invocation counter: " + std::to_string(event->task_.get_counter()) + "\n";
             error_str += "\t" + string(e.what()) + "\n";
             cout << error_str;
             OE_WriteToLog(error_str);
         } catch (...) {
             std::string error_str = "[OE Error] Exception thrown in event: '" + this->get_event_name(event->id) +
-                                    "', event invocation counter: " + std::to_string(event->task_.GetCounter());
+                                    "', event invocation counter: " + std::to_string(event->task_.get_counter());
             cout << error_str << endl;
             OE_WriteToLog(error_str + "\n");
         }
@@ -59,74 +59,78 @@ int OE_TaskManager::tryRun_unsync_thread(OE_UnsyncThreadData* actual_data) {
 
     int output = 1;
 
-    OE_Task unsync_task = OE_Task(actual_data->name, 0, 0, actual_data->taskMgr->getTicks());
+    oe::task_t unsync_task = oe::task_t(actual_data->name, 0, 0, actual_data->taskMgr->getTicks());
     try {
         output = actual_data->func(unsync_task);
     } catch (oe::api_error& e) {
-        std::string error_str = "[OE Error] '" + e.name_ + "' thrown in unsync thread: '" + unsync_task.GetName() + "'" + "\n";
+        std::string error_str = "[OE Error] '" + e.name_ + "' thrown in unsync thread: '" + unsync_task.get_name() + "'" + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (csl::parser_error_t& e) {
-        std::string error_str = "[CSL Error] '" + e.name_ + "' thrown in unsync thread: '" + unsync_task.GetName() + "'" + "\n";
+        std::string error_str =
+            "[CSL Error] '" + e.name_ + "' thrown in unsync thread: '" + unsync_task.get_name() + "'" + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (csl::interpreter_error_t& e) {
-        std::string error_str = "[CSL Error] '" + e.name_ + "' thrown in unsync thread: '" + unsync_task.GetName() + "'" + "\n";
+        std::string error_str =
+            "[CSL Error] '" + e.name_ + "' thrown in unsync thread: '" + unsync_task.get_name() + "'" + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (oe::networking_error& e) {
-        std::string error_str = "[SLC Error] '" + e.name_ + "' thrown in unsync thread: '" + unsync_task.GetName() + "'" + "\n";
+        std::string error_str =
+            "[SLC Error] '" + e.name_ + "' thrown in unsync thread: '" + unsync_task.get_name() + "'" + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (std::exception& e) {
         std::string error_str =
-            "[OE Error] std::exception variant thrown in unsync thread: '" + unsync_task.GetName() + "'" + "\n";
+            "[OE Error] std::exception variant thrown in unsync thread: '" + unsync_task.get_name() + "'" + "\n";
         error_str += "\t" + string(e.what()) + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (...) {
-        std::string error_str = "[OE Error] Exception thrown in unsync thread: '" + unsync_task.GetName() + "'";
+        std::string error_str = "[OE Error] Exception thrown in unsync thread: '" + unsync_task.get_name() + "'";
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     }
     return output;
 }
 
-int OE_TaskManager::tryRun_task(const std::string& name, OE_Task& task) {
+int OE_TaskManager::tryRun_task(const std::string& name, oe::task_t& task) {
 
     int output = 0;
 
     try {
-        if (this->threads[name].functions[task.name] != nullptr) output = this->threads[name].functions[task.name](task);
+        if (this->threads[name].functions[task.get_name()] != nullptr)
+            output = this->threads[name].functions[task.get_name()](task);
     } catch (oe::api_error& e) {
-        std::string error_str = "[OE Error] '" + e.name_ + "' thrown in task: '" + task.name + "', thread: '" + name;
-        error_str += "', invocation: " + std::to_string(task.counter) + "\n";
+        std::string error_str = "[OE Error] '" + e.name_ + "' thrown in task: '" + task.get_name() + "', thread: '" + name;
+        error_str += "', invocation: " + std::to_string(task.get_counter()) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
         output = 1;
     } catch (csl::parser_error_t& e) {
-        std::string error_str = "[CSL Error] '" + e.name_ + "' thrown in task: '" + task.name + "', thread: '" + name;
-        error_str += "', invocation: " + std::to_string(task.counter) + "\n";
+        std::string error_str = "[CSL Error] '" + e.name_ + "' thrown in task: '" + task.get_name() + "', thread: '" + name;
+        error_str += "', invocation: " + std::to_string(task.get_counter()) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
         output = 1;
     } catch (csl::interpreter_error_t& e) {
-        std::string error_str = "[CSL Error] '" + e.name_ + "' thrown in task: '" + task.name + "', thread: '" + name;
-        error_str += "', invocation: " + std::to_string(task.counter) + "\n";
+        std::string error_str = "[CSL Error] '" + e.name_ + "' thrown in task: '" + task.get_name() + "', thread: '" + name;
+        error_str += "', invocation: " + std::to_string(task.get_counter()) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
         output = 1;
     } catch (std::exception& e) {
         std::string error_str =
-            "[OE Error] '" + string(typeid(e).name()) + "' thrown in task: '" + task.name + "', thread: '" + name;
-        error_str += "', invocation: " + std::to_string(task.counter) + "\n";
+            "[OE Error] '" + string(typeid(e).name()) + "' thrown in task: '" + task.get_name() + "', thread: '" + name;
+        error_str += "', invocation: " + std::to_string(task.get_counter()) + "\n";
         error_str += "\t" + string(e.what()) + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
@@ -134,8 +138,8 @@ int OE_TaskManager::tryRun_task(const std::string& name, OE_Task& task) {
     } catch (...) {
         /// universal error handling. will catch any exception
         /// feel free to add specific handling for specific errors
-        string outputa = string("[OE Error] Exception thrown in task: '" + task.name + "', thread: '" + name);
-        outputa += "', invocation: " + std::to_string(task.counter);
+        string outputa = string("[OE Error] Exception thrown in task: '" + task.get_name() + "', thread: '" + name);
+        outputa += "', invocation: " + std::to_string(task.get_counter());
         cout << outputa << endl;
         OE_WriteToLog(outputa + "\n");
         output = 1;
@@ -152,14 +156,14 @@ bool OE_TaskManager::tryRun_physics_updateMultiThread(const std::string& name, c
     } catch (oe::api_error& e) {
         std::string error_str = "[HPE Error] '" + e.name_ + "' thrown in update_multi_thread of '" + this->physics->get_name() +
                                 "' in  thread: '" + name + "', thread_num: " + std::to_string(comp_threads_copy);
-        error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.counter) + "\n";
+        error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.get_counter()) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (oe::physics_error& e) {
         std::string error_str = "[HPE Error] '" + e.name_ + "' thrown in update_multi_thread of '" + this->physics->get_name() +
                                 "' in  thread: '" + name + "', thread_num: " + std::to_string(comp_threads_copy);
-        error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.counter) + "\n";
+        error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.get_counter()) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
@@ -167,7 +171,7 @@ bool OE_TaskManager::tryRun_physics_updateMultiThread(const std::string& name, c
         std::string error_str = "[HPE Error] '" + string(typeid(e).name()) + "' thrown in update_multi_thread of '" +
                                 this->physics->get_name() + "' in  thread: '" + name +
                                 "', thread_num: " + std::to_string(comp_threads_copy);
-        error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.counter) + "\n";
+        error_str += ", invocation: " + std::to_string(this->threads[name].physics_task.get_counter()) + "\n";
         error_str += "\t" + string(e.what()) + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
@@ -177,7 +181,7 @@ bool OE_TaskManager::tryRun_physics_updateMultiThread(const std::string& name, c
         auto   task    = this->threads[name].physics_task;
         string outputa = string("[HPE Error] Physics exception thrown in update_multi_thread of '" + this->physics->get_name() +
                                 "' in  thread: '" + name + "', thread_num: " + std::to_string(comp_threads_copy));
-        outputa += ", invocation: " + std::to_string(task.counter);
+        outputa += ", invocation: " + std::to_string(task.get_counter());
         cout << outputa << endl;
         OE_WriteToLog(outputa + "\n");
     }

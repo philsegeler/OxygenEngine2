@@ -3,77 +3,69 @@
 
 using namespace std;
 
-OE_Task::OE_Task() {
+std::atomic<std::size_t> oe::task_element_t::current_id(0);
+
+oe::task_t::task_t() {
 }
 
-OE_Task::OE_Task(string name, int priority, int delay, int ticksa) {
-    this->counter  = 0;
-    this->priority = priority;
-    this->delay    = delay;
-
-    this->name        = name;
-    this->delta_ticks = ticksa;
-    this->init_ticks  = ticksa;
-    this->ticks       = 0;
+oe::task_t::~task_t() {
 }
 
-OE_Task::OE_Task(string name, int countera, int priority, int init_ticks, int ticks) {
-    this->counter  = countera;
-    this->priority = priority;
-    this->delay    = 0;
+oe::task_t::task_t(string name, int priority, int delay, int ticksa) {
+    this->counter_  = 0;
+    this->priority_ = priority;
+    this->delay_    = delay;
 
-    this->name       = name;
-    this->ticks      = ticks;
-    this->init_ticks = init_ticks;
+    this->name_        = name;
+    this->delta_ticks_ = ticksa;
+    this->init_ticks_  = ticksa;
+    this->ticks_       = 0;
 }
 
-bool OE_Task::operator>(const OE_Task& other) const {
-    if (this->priority > other.priority) {
-        return true;
-    }
-    else if (this->priority < other.priority) {
-        return false;
-    }
-    else {
-        return this->name > other.name;
-    }
+oe::task_t::task_t(string name, int countera, int priority, int init_ticks, int ticks) {
+    this->counter_  = countera;
+    this->priority_ = priority;
+    this->delay_    = 0;
+
+    this->name_       = name;
+    this->ticks_      = ticks;
+    this->init_ticks_ = init_ticks;
 }
 
-bool OE_Task::operator==(const OE_Task& other) const {
+bool oe::task_t::operator>(const oe::task_t& other) const {
+    return std::tie(this->priority_, this->id) > std::tie(other.priority_, other.id);
+}
+
+bool oe::task_t::operator==(const oe::task_t& other) const {
     bool output = true;
-    output      = output && this->name == other.name;
-    output      = output && this->counter == other.counter;
+    output      = output && this->name_ == other.name_;
+    output      = output && this->counter_ == other.counter_;
     return output;
 }
 
 
-void OE_Task::update() {
-    this->counter += 1;
-    this->ticks       = SDL_GetTicks() - this->delta_ticks;
-    this->delta_ticks = SDL_GetTicks();
+void oe::task_t::update() {
+    this->counter_ += 1;
+    auto buffer        = SDL_GetTicks();
+    this->ticks_       = buffer - this->delta_ticks_;
+    this->delta_ticks_ = buffer;
 }
 
-int OE_Task::CONTINUE() {
-    return 0;
+int oe::task_t::get_counter() const {
+    return this->counter_;
 }
-int OE_Task::FINISHED() {
-    return 1;
-}
-int OE_Task::GetCounter() {
-    return this->counter;
-}
-int OE_Task::GetPriority() {
-    return this->priority;
+int oe::task_t::get_priority() const {
+    return this->priority_;
 }
 
-int OE_Task::GetTime() {
-    return SDL_GetTicks() - this->init_ticks;
+int oe::task_t::get_time() const {
+    return SDL_GetTicks() - this->init_ticks_;
 }
 
-int OE_Task::GetElapsedTime() {
-    return this->ticks;
+int oe::task_t::get_elapsed_time() const {
+    return this->ticks_;
 }
 
-string OE_Task::GetName() {
-    return this->name;
+string oe::task_t::get_name() const {
+    return this->name_;
 }
