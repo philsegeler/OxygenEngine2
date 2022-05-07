@@ -66,12 +66,12 @@ namespace csl {
         void interpret(std::string& input);
 
     private:
-        OE_SharedIndexMap<OE_Scene>          scene_list_;
-        OE_SharedIndexMap<OE_Object>         object_list_;
-        OE_SharedIndexMap<OE_Material>       material_list_;
-        OE_SharedIndexMap<OE_Texture>        texture_list_;
-        OE_SharedIndexMap<OE_TCM>            tcm_list_;
-        OE_SharedIndexMap<OE_ViewportConfig> viewport_list_;
+        oe::shared_index_map_t<OE_Scene>          scene_list_;
+        oe::shared_index_map_t<OE_Object>         object_list_;
+        oe::shared_index_map_t<OE_Material>       material_list_;
+        oe::shared_index_map_t<OE_Texture>        texture_list_;
+        oe::shared_index_map_t<OE_TCM>            tcm_list_;
+        oe::shared_index_map_t<OE_ViewportConfig> viewport_list_;
 
 
         world_ptr    process_world(const element&);

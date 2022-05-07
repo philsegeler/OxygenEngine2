@@ -5,12 +5,12 @@
 
 using namespace std;
 
-OE_SharedIndexMap<OE_Scene>          OE_World::scenesList    = OE_SharedIndexMap<OE_Scene>();
-OE_SharedIndexMap<OE_Object>         OE_World::objectsList   = OE_SharedIndexMap<OE_Object>();
-OE_SharedIndexMap<OE_Material>       OE_World::materialsList = OE_SharedIndexMap<OE_Material>();
-OE_SharedIndexMap<OE_Texture>        OE_World::texturesList  = OE_SharedIndexMap<OE_Texture>();
-OE_SharedIndexMap<OE_TCM>            OE_World::tcmsList      = OE_SharedIndexMap<OE_TCM>();
-OE_SharedIndexMap<OE_ViewportConfig> OE_World::viewportsList = OE_SharedIndexMap<OE_ViewportConfig>();
+oe::shared_index_map_t<OE_Scene>          OE_World::scenesList    = oe::shared_index_map_t<OE_Scene>();
+oe::shared_index_map_t<OE_Object>         OE_World::objectsList   = oe::shared_index_map_t<OE_Object>();
+oe::shared_index_map_t<OE_Material>       OE_World::materialsList = oe::shared_index_map_t<OE_Material>();
+oe::shared_index_map_t<OE_Texture>        OE_World::texturesList  = oe::shared_index_map_t<OE_Texture>();
+oe::shared_index_map_t<OE_TCM>            OE_World::tcmsList      = oe::shared_index_map_t<OE_TCM>();
+oe::shared_index_map_t<OE_ViewportConfig> OE_World::viewportsList = oe::shared_index_map_t<OE_ViewportConfig>();
 
 OE_World::OE_World() {
 

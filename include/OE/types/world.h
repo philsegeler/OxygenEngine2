@@ -11,12 +11,12 @@ class OE_World : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
     friend class NRE_Renderer;
 
 public:
-    static OE_SharedIndexMap<OE_Scene>          scenesList;
-    static OE_SharedIndexMap<OE_Object>         objectsList;
-    static OE_SharedIndexMap<OE_Material>       materialsList;
-    static OE_SharedIndexMap<OE_Texture>        texturesList;
-    static OE_SharedIndexMap<OE_TCM>            tcmsList;
-    static OE_SharedIndexMap<OE_ViewportConfig> viewportsList;
+    static oe::shared_index_map_t<OE_Scene>          scenesList;
+    static oe::shared_index_map_t<OE_Object>         objectsList;
+    static oe::shared_index_map_t<OE_Material>       materialsList;
+    static oe::shared_index_map_t<OE_Texture>        texturesList;
+    static oe::shared_index_map_t<OE_TCM>            tcmsList;
+    static oe::shared_index_map_t<OE_ViewportConfig> viewportsList;
 
 
 
