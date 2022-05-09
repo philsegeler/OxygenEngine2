@@ -16,7 +16,7 @@
  * individual events. Stores ids and names. Only stores one name per element and one id per element.
  * The difference between this and oe::shared_index_map is that
  *  - No pending elements, elements are added directly
- *  - Changed is renamed to Registered and an event can come more than once
+ *  - Changed is renamed to registered_t and an event can come more than once
  *  - No mutexes, this is totally thread-unsafe, but it is guarded by the event handler mutex
  */
 
@@ -24,7 +24,7 @@ namespace oe {
     template <typename T>
     class event_container_t : public OE_THREAD_SAFETY_OBJECT {
     public:
-        friend class Registered;
+        friend class registered_t;
         friend class Element;
         friend class event_handler_t;
 
@@ -103,26 +103,14 @@ namespace oe {
         }
 
         // TODO: Add referemce count
-        int count(std::size_t index) {
-            int output = 0;
-
-            if (this->elements_container_.count(index) == 1) {
-                output = 1;
-            }
-
-            return output;
+        bool count(std::size_t index) {
+            return this->elements_container_.contains(index);
         }
 
 
         // TODO: Add referemce count
-        int count(const std::string& name) {
-            int output = 0;
-
-            if (this->name2id_container_.count(name) == 1) {
-                output = 1;
-            }
-
-            return output;
+        bool count(const std::string& name) {
+            return this->name2id_container_.contains(name);
         }
 
         std::string get_name(const std::size_t& index) {
@@ -291,14 +279,14 @@ namespace oe {
         }
 
         //*******************************************/
-        // Registered class for storing all element indices that registered the previous frame
+        // registered_t class for storing all element indices that registered the previous frame
 
-        class Registered {
+        class registered_t {
             friend class event_container_t;
 
         public:
-            // Registered(){}
-            Registered(event_container_t<T>& inputa) : db_(inputa) {
+            // registered_t(){}
+            registered_t(event_container_t<T>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
@@ -354,12 +342,12 @@ namespace oe {
         }
 
         //*******************************************/
-        // Deleted class for storing all element indices that registered the previous frame
+        // deleted_t class for storing all element indices that registered the previous frame
 
-        class Deleted {
+        class deleted_t {
         public:
-            // Deleted(){}
-            Deleted(event_container_t<T>& inputa) : db_(inputa) {
+            // deleted_t(){}
+            deleted_t(event_container_t<T>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
@@ -398,9 +386,9 @@ namespace oe {
 
         std::unordered_map<std::size_t, std::string> id2name_container_;
 
-        Registered registered_;
+        registered_t registered_;
 
-        Deleted deleted_;
+        deleted_t deleted_;
 
 
         void clear_internally() {

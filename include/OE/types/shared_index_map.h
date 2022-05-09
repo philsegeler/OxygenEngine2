@@ -16,54 +16,31 @@
 /** New General class intended to optimize and properly parallelize accesing of
  * individual meshes/materials/etc. Stores ids and names. Only stores one name per element and one id per element.
  * Supports input iterators. Everything apart from iterators is 100% thread-safe.
- * [Enhancement TODO for Andreas]: Add a custom container in place of std::set in Changed/Deleted
+ * [Enhancement TODO for Andreas]: Add a custom container in place of std::set in changed_t/deleted_t
  */
 
 class OE_TaskManager;
 
 namespace oe {
 
-    enum class index_map_type { sorted, unsorted };
+    enum class index_map_sort_type { greater_than, less_than, unsorted };
 
-
-    // Base class; Overload for unsorted
-    template <typename T, index_map_type IndexMapType>
-    class shared_index_map_base_t {};
-
-    // Base class; Overload for sorted
+    // Base Element class. Only contains element
     template <typename T>
-    class shared_index_map_base_t<T, index_map_type::sorted> {
-    protected:
-        std::set<T> m_set;
-    };
-
-
-
-    template <typename T, index_map_type IndexMapType = index_map_type::unsorted>
-    class shared_index_map_t : public shared_index_map_base_t<T, IndexMapType>, public OE_THREAD_SAFETY_OBJECT {
-
-        constexpr static bool is_sorted = (IndexMapType == index_map_type::sorted);
-
+    class shared_index_map_base_element_t {
     public:
-        friend class Changed;
-        friend class Element;
-        friend class ::OE_TaskManager;
-
-        shared_index_map_t() : changed_(*this), deleted_(*this){};
-
-        shared_index_map_t(const shared_index_map_t&) = delete;
-
+        virtual ~shared_index_map_base_element_t() {
+        }
 
         //*******************************************/
         // interfacing class
 
-        class Element {
-            friend class shared_index_map_t;
+        class element_t {
 
         public:
-            Element() {
+            element_t() {
             }
-            Element(shared_index_map_t<T>* db, std::size_t index, std::shared_ptr<T> element) : p_(element), db_(db) {
+            element_t(shared_index_map_base_element_t<T>* db, std::shared_ptr<T> element) : p_(element), db_(db) {
             }
 
             auto operator->() {
@@ -75,7 +52,10 @@ namespace oe {
             }
 
             std::size_t id() {
-                return p_->id;
+                if (p_ == nullptr)
+                    return 0;
+                else
+                    return p_->id;
             }
 
             void flag_as_changed() {
@@ -91,9 +71,131 @@ namespace oe {
             }
 
         private:
-            std::shared_ptr<T>     p_{nullptr};
-            shared_index_map_t<T>* db_;
+            std::shared_ptr<T>                  p_{nullptr};
+            shared_index_map_base_element_t<T>* db_;
         };
+
+    protected:
+        virtual void        change(std::size_t)   = 0;
+        virtual std::string get_name(std::size_t) = 0;
+    };
+
+    // Base class; Overload for sorted
+    template <typename T, index_map_sort_type IndexMapType>
+    class shared_index_map_base_t : public shared_index_map_base_element_t<T> {
+    public:
+        shared_index_map_base_t() : sorted_(this) {
+        }
+
+        class sorted_t {
+        public:
+            using element_t = typename shared_index_map_base_element_t<T>::element_t;
+
+            sorted_t(shared_index_map_base_element_t<T>* db) : db_(db) {
+                if constexpr (IndexMapType == index_map_sort_type::greater_than) {
+                    auto lambda_cmp = [](std::shared_ptr<T> a, std::shared_ptr<T> b) { return *a > *b; };
+                    set_ =
+                        std::set<std::shared_ptr<T>, std::function<bool(std::shared_ptr<T>, std::shared_ptr<T>)>>(lambda_cmp);
+                }
+                else {
+                    auto lambda_cmp = [](std::shared_ptr<T> a, std::shared_ptr<T> b) { return *a < *b; };
+                    set_ =
+                        std::set<std::shared_ptr<T>, std::function<bool(std::shared_ptr<T>, std::shared_ptr<T>)>>(lambda_cmp);
+                }
+            }
+
+            void add(std::shared_ptr<T> element) {
+                set_.insert(element);
+            }
+
+            void remove(std::shared_ptr<T> element) {
+                if (set_.contains(element)) set_.erase(element);
+            }
+
+            void clear() {
+                set_.clear();
+            }
+
+            class sorted_iter_t {
+            public:
+                using iterator_category = std::input_iterator_tag;
+                using difference_type   = int;
+
+                typedef std::set<std::size_t, std::greater<std::size_t>>::iterator set_iter_t;
+
+                sorted_iter_t(set_iter_t beginning, shared_index_map_base_element_t<T>* db) : iter(beginning), db_(db) {
+                }
+
+                sorted_iter_t& operator++() {
+                    iter++;
+                    return *this;
+                }
+                sorted_iter_t operator++(int) {
+                    sorted_iter_t tmp = *this;
+                    ++(*this);
+                    return tmp;
+                }
+
+                // This needs robust error handling in multiple threads
+                element_t operator*() {
+                    return element_t(db_, *iter);
+                }
+
+                friend bool operator==(const sorted_iter_t& a, const sorted_iter_t b) {
+                    return a.iter == b.iter;
+                };
+                friend bool operator!=(const sorted_iter_t& a, const sorted_iter_t& b) {
+                    return a.iter != b.iter;
+                };
+
+            private:
+                set_iter_t                          iter;
+                shared_index_map_base_element_t<T>* db_;
+            };
+
+            sorted_iter_t begin() const {
+                return sorted_iter_t(this.set_.begin(), db_);
+            }
+
+            sorted_iter_t end() const {
+                return sorted_iter_t(this.set_.end(), db_);
+            }
+
+        private:
+            std::set<std::shared_ptr<T>, std::function<bool(std::shared_ptr<T>, std::shared_ptr<T>)>> set_;
+            shared_index_map_base_element_t<T>*                                                       db_;
+        };
+
+        const sorted_t& sorted() {
+            return sorted_;
+        }
+
+    protected:
+        sorted_t sorted_;
+    };
+
+    // Base class; Overload for unsorted
+    template <typename T>
+    class shared_index_map_base_t<T, index_map_sort_type::unsorted> : public shared_index_map_base_element_t<T> {
+    protected:
+    };
+
+
+
+    template <typename T, index_map_sort_type IndexMapType = index_map_sort_type::unsorted>
+    class shared_index_map_t : public shared_index_map_base_t<T, IndexMapType>, public OE_THREAD_SAFETY_OBJECT {
+
+        constexpr static bool is_sorted = (IndexMapType != index_map_sort_type::unsorted);
+
+    public:
+        using element_t = typename shared_index_map_base_element_t<T>::element_t;
+
+        friend class ::OE_TaskManager;
+
+        shared_index_map_t() : changed_(*this), deleted_(*this){};
+
+        shared_index_map_t(const shared_index_map_t&) = delete;
+
 
         //*******************************************/
         // methods
@@ -112,12 +214,12 @@ namespace oe {
 
             if (!override_names) {
                 for (auto x : other) {
-                    this->appendUNSAFE(x.get_name(), x.p_);
+                    this->appendUNSAFE(x.get_name(), x.pointer());
                 }
             }
             else {
                 for (auto x : other) {
-                    this->force_appendUNSAFE(x.get_name(), x.p_);
+                    this->force_appendUNSAFE(x.get_name(), x.pointer());
                 }
             }
 
@@ -125,10 +227,10 @@ namespace oe {
         }
 
         // TODO: Add referemce count
-        int count(std::size_t index) {
-            int output = 0;
+        bool contains(std::size_t index) {
+            bool output = 0;
             lockMutex();
-            if (this->elements_container_.count(index) == 1) {
+            if (this->elements_container_.contains(index)) {
                 output = 1;
             }
             unlockMutex();
@@ -136,9 +238,9 @@ namespace oe {
         }
 
         bool is_pending(std::size_t index) {
-            int output = 0;
+            bool output = 0;
             lockMutex();
-            if (this->pending_elements_container_.count(index) == 1) {
+            if (this->pending_elements_container_.contains(index)) {
                 output = 1;
             }
             unlockMutex();
@@ -146,18 +248,19 @@ namespace oe {
         }
 
         // TODO: Add referemce count
-        int count(const std::string& name) {
-            int output = 0;
+        bool contains(const std::string& name) {
+            bool output = 0;
             lockMutex();
-            if (this->name2id_container_.count(name) == 1) {
+            if (this->name2id_container_.contains(name)) {
                 output = 1;
             }
             unlockMutex();
             return output;
         }
 
+        // VERY slow, do not recommend
         bool is_pending(const std::string& name) {
-            int output = 0;
+            bool output = 0;
             lockMutex();
             for (auto x : this->pending_id2name_container_) {
                 if (x.second == name) {
@@ -169,7 +272,7 @@ namespace oe {
             return output;
         }
 
-        std::string get_name(const std::size_t& index) {
+        std::string get_name(std::size_t index) {
             std::string output = "";
             lockMutex();
             if (id2name_container_.contains(index)) output = id2name_container_[index];
@@ -226,15 +329,15 @@ namespace oe {
             return output;
         }
 
-        Element operator[](const std::size_t& index) noexcept {
+        element_t operator[](const std::size_t& index) noexcept {
 
-            auto output = Element();
+            auto output = element_t();
 
             lockMutex();
             if (elements_container_.count(index) != 0)
-                output = Element(this, index, elements_container_[index]);
+                output = element_t(this, elements_container_[index]);
             else
-                output = Element(this, index, nullptr);
+                output = element_t(this, nullptr);
             unlockMutex();
 
             if (!output.is_valid()) {
@@ -245,17 +348,17 @@ namespace oe {
             return output;
         }
 
-        Element operator[](const std::string& name) noexcept {
+        element_t operator[](const std::string& name) noexcept {
 
-            auto output = Element();
+            auto output = element_t();
 
             lockMutex();
             if (this->name2id_container_.contains(name)) {
                 size_t elem_id = name2id_container_[name];
-                output         = Element(this, elem_id, elements_container_[elem_id]);
+                output         = element_t(this, elements_container_[elem_id]);
             }
             else
-                output = Element(this, 0, nullptr);
+                output = element_t(this, 0, nullptr);
             unlockMutex();
 
             if (!output.is_valid()) {
@@ -265,7 +368,7 @@ namespace oe {
             return output;
         }
 
-        Element at(const std::size_t& index) {
+        element_t at(const std::size_t& index) {
 
             auto output = this[0][index];
 
@@ -276,7 +379,7 @@ namespace oe {
             return output;
         }
 
-        Element at(const std::string& name) {
+        element_t at(const std::string& name) {
 
             auto output = this[0][name];
 
@@ -317,7 +420,7 @@ namespace oe {
                 return tmp;
             }
 
-            Element operator*() {
+            element_t operator*() {
                 return db_[(*iter).first];
             }
 
@@ -342,12 +445,12 @@ namespace oe {
         }
 
         //*******************************************/
-        // Changed class for storing all element indices that changed the previous frame
+        // changed_t class for storing all element indices that changed the previous frame
 
-        class Changed {
+        class changed_t {
         public:
-            // Changed(){}
-            Changed(shared_index_map_t<T>& inputa) : db_(inputa) {
+            // changed_t(){}
+            changed_t(shared_index_map_t<T>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
@@ -366,36 +469,36 @@ namespace oe {
             }
 
             //*******************************************/
-            // Changed iterator for getting only the objects that changed
-            class ChangedIter {
+            // changed_t iterator for getting only the objects that changed
+            class changed_iter_t {
             public:
                 typedef std::set<std::size_t, std::greater<std::size_t>>::iterator set_iter_t;
 
                 using iterator_category = std::input_iterator_tag;
                 using difference_type   = int;
 
-                ChangedIter(shared_index_map_t<T>& db, set_iter_t beginning) : iter(beginning), db_(db) {
+                changed_iter_t(shared_index_map_t<T>& db, set_iter_t beginning) : iter(beginning), db_(db) {
                 }
 
-                ChangedIter& operator++() {
+                changed_iter_t& operator++() {
                     iter++;
                     return *this;
                 }
-                ChangedIter operator++(int) {
-                    ChangedIter tmp = *this;
+                changed_iter_t operator++(int) {
+                    changed_iter_t tmp = *this;
                     ++(*this);
                     return tmp;
                 }
 
                 // This needs robust error handling in multiple threads
-                Element operator*() {
+                element_t operator*() {
                     return db_[*iter];
                 }
 
-                friend bool operator==(const ChangedIter& a, const ChangedIter& b) {
+                friend bool operator==(const changed_iter_t& a, const changed_iter_t& b) {
                     return a.iter == b.iter;
                 };
-                friend bool operator!=(const ChangedIter& a, const ChangedIter& b) {
+                friend bool operator!=(const changed_iter_t& a, const changed_iter_t& b) {
                     return a.iter != b.iter;
                 };
 
@@ -404,12 +507,12 @@ namespace oe {
                 shared_index_map_t<T>& db_;
             };
 
-            ChangedIter begin() const {
-                return ChangedIter(this->db_, this->indices_container_.begin());
+            changed_iter_t begin() const {
+                return changed_iter_t(this->db_, this->indices_container_.begin());
             }
 
-            ChangedIter end() const {
-                return ChangedIter(this->db_, this->indices_container_.end());
+            changed_iter_t end() const {
+                return changed_iter_t(this->db_, this->indices_container_.end());
             }
 
         private:
@@ -417,19 +520,19 @@ namespace oe {
             std::set<std::size_t, std::greater<std::size_t>> indices_container_;
         };
 
-        const Changed& changed() {
+        const changed_t& changed() {
             return this->changed_;
         }
 
         //*******************************************/
-        // Deleted class for storing all element indices that changed the previous frame
+        // deleted_t class for storing all element indices that changed the previous frame
 
-        class Deleted {
+        class deleted_t {
             friend class shared_index_map_t;
 
         public:
-            // Deleted(){}
-            Deleted(shared_index_map_t<T>& inputa) : db_(inputa) {
+            // deleted_t(){}
+            deleted_t(shared_index_map_t<T>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
@@ -471,10 +574,10 @@ namespace oe {
         std::unordered_map<std::size_t, std::string> id2name_container_;
         std::unordered_map<std::string, std::size_t> name2id_container_;
 
-        Changed changed_;
-        Deleted deleted_;
+        changed_t changed_;
+        deleted_t deleted_;
 
-        void change(const std::size_t& index) {
+        void change(std::size_t index) {
             lockMutex();
             this->changed_.add(index);
             unlockMutex();
@@ -490,6 +593,10 @@ namespace oe {
 
             name2id_container_.clear();
             id2name_container_.clear();
+
+            if constexpr (is_sorted) {
+                this->sorted_.clear();
+            }
         }
 
         void reset_changed() {
@@ -504,6 +611,9 @@ namespace oe {
 
             for (auto x : deleted_.indices_container_) {
                 if (elements_container_.count(x) == 0) continue;
+                if constexpr (is_sorted) {
+                    this->sorted_.remove(elements_container_[x]);
+                }
                 elements_container_.erase(x);
                 name2id_container_.erase(id2name_container_[x]);
                 id2name_container_.erase(x);
@@ -524,24 +634,33 @@ namespace oe {
                 if (name2id_container_.contains(pending_id2name_container_[x.first])) {
                     changed_.remove(this->name2id_container_[pending_id2name_container_[x.first]]);
                     deleted_.add(this->name2id_container_[pending_id2name_container_[x.first]]);
+                    if constexpr (is_sorted) {
+                        this->sorted_.remove(x.second);
+                    }
                     this->elements_container_.erase(this->name2id_container_[pending_id2name_container_[x.first]]);
                     this->id2name_container_.erase(this->name2id_container_[pending_id2name_container_[x.first]]);
                 }
 
                 // std::cout << "Pending element: " << x.first << " " << pending_id2name_container_[x.first] << (x.second ==
                 // nullptr) << std::endl;
-                elements_container_[x.first]                            = x.second;
+                elements_container_[x.first] = x.second;
+                if constexpr (is_sorted) {
+                    this->sorted_.add(x.second);
+                }
                 id2name_container_[x.first]                             = pending_id2name_container_[x.first];
                 name2id_container_[pending_id2name_container_[x.first]] = x.first;
                 changed_.add(x.first);
             }
             pending_elements_container_.clear();
             pending_id2name_container_.clear();
+            if constexpr (is_sorted) {
+                this->sorted_.clear();
+            }
             unlockMutex();
         }
 
         void appendUNSAFE(const std::string& name, std::shared_ptr<T> element) {
-            if ((this->count(element->id) == 0) && (this->pending_elements_container_.count(element->id) == 0)) {
+            if ((!this->contains(element->id)) && (this->pending_elements_container_.count(element->id) == 0)) {
                 this->pending_elements_container_[element->id] = element;
                 this->pending_id2name_container_[element->id]  = name;
             }
@@ -557,6 +676,9 @@ namespace oe {
                 this->elements_container_[element->id] = element;
                 this->id2name_container_[element->id]  = name;
                 this->name2id_container_[name]         = element->id;
+                if constexpr (is_sorted) {
+                    this->sorted_.add(element);
+                }
             }
             else {
                 OE_Warn("Element with ID: '" + std::to_string(element->id) + "' and name: '" + name +
@@ -572,6 +694,9 @@ namespace oe {
         void force_appendUNSAFE_now(const std::string& name, std::shared_ptr<T> element) {
             if (name2id_container_.contains(name)) {
                 size_t prev_id = this->name2id_container_[name];
+                if constexpr (is_sorted) {
+                    this->sorted_.remove(this->elements_container_[prev_id]);
+                }
                 this->elements_container_.erase(prev_id);
                 this->id2name_container_.erase(prev_id);
                 name2id_container_.erase(name);
@@ -582,6 +707,9 @@ namespace oe {
             this->id2name_container_[element->id]  = name;
             this->changed_.add(element->id);
             this->name2id_container_[name] = element->id;
+            if constexpr (is_sorted) {
+                this->sorted_.add(element);
+            }
         }
     };
 }; // namespace oe
