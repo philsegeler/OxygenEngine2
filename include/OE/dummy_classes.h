@@ -122,7 +122,7 @@ namespace oe {
         // last bool is true if the renderer has been restarted. This is useful so as to fetch all the data again
         virtual bool update_data(renderer_update_info, winsys_output, bool);
 
-        virtual bool update_multi_thread(task_t*, int); // stub for now
+        virtual bool update_multi_thread(const task_info_t, int); // stub for now
         virtual void destroy();
 
         void              set_world(std::shared_ptr<OE_World>);
@@ -158,7 +158,7 @@ namespace oe {
         virtual bool init(physics_init_info);
 
         virtual void update_info(physics_update_info) noexcept;
-        virtual bool update_multi_thread(task_t*, int);
+        virtual bool update_multi_thread(const task_info_t, int);
         virtual void destroy();
 
         void              set_world(std::shared_ptr<OE_World>);
@@ -184,7 +184,7 @@ namespace oe {
         virtual ~networking_base_t();
 
         virtual void init(networking_init_info);
-        virtual int  execute(task_t);
+        virtual int  execute(const task_info_t);
         virtual void destroy();
 
         const std::string get_name();

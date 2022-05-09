@@ -4,7 +4,11 @@
 #include <OE/types/libs_oe.h>
 using namespace std;
 
-// bool oe::event_t::finished = false;
+int oe::template_event_func(const task_info_t task, std::size_t event_id) {
+    // cout << oe::get_event_name(event_id) << endl;
+    return 0;
+}
+
 std::atomic<size_t> oe::event_t::current_id(0);
 
 oe::event_t::event_t() : id(++oe::event_t::current_id) {
@@ -31,7 +35,9 @@ int oe::event_t::internal_call() {
 
     if (!this->has_init_) {
 
-        this->task_     = task_t("event" + to_string(this->id), 0, 0, SDL_GetTicks());
+        this->task_ = task_info_t(0, 0, SDL_GetTicks());
+        this->task_.set_type_task(task_type::EVENT);
+        this->task_.set_event_or_task_id(this->id);
         this->has_init_ = true;
     }
 

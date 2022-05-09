@@ -682,9 +682,6 @@ void NRE_Renderer::updateLightGPUData() {
     nre::gpu::set_uniform_buf_data(this->pt_light_ubo, pt_light_data, 0);
 }
 
-bool NRE_Renderer::update_multi_thread(oe::task_t*, int) {
-    return false;
-}
 
 void NRE_Renderer::destroy() {
 

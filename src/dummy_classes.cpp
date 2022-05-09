@@ -57,7 +57,7 @@ bool oe::renderer_base_t::update_data(oe::renderer_update_info update_info, oe::
     return true;
 }
 
-bool oe::renderer_base_t::update_multi_thread(oe::task_t*, int) {
+bool oe::renderer_base_t::update_multi_thread(const oe::task_info_t, int) {
     return true;
 }
 
@@ -90,7 +90,7 @@ void oe::physics_base_t::update_info(oe::physics_update_info params) noexcept {
     // update the parameters in one place
 }
 
-bool oe::physics_base_t::update_multi_thread(oe::task_t* task, int thread_num) {
+bool oe::physics_base_t::update_multi_thread(const oe::task_info_t task, int thread_num) {
     // throw 5;
     return true;
 }
@@ -117,7 +117,7 @@ oe::networking_base_t::~networking_base_t() {
 void oe::networking_base_t::init(networking_init_info params) {
 }
 
-int oe::networking_base_t::execute(oe::task_t) {
+int oe::networking_base_t::execute(const oe::task_info_t) {
 
     // int a =0;
     while (!done_) {

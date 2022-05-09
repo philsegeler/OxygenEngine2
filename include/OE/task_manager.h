@@ -11,7 +11,7 @@
 
 
 #ifdef __EMSCRIPTEN__
-// these variables controls when the other threads start in a web environment
+// these variables control when the other threads start in a web environment
 // because webassembly/javascript do not allow threads to be created on the fly
 extern std::atomic<bool> oe_threads_ready_to_start;
 #endif
@@ -66,7 +66,7 @@ struct OE_ThreadStruct {
 
     int countar = 0;
 
-    oe::task_t physics_task;
+    oe::task_info_t physics_task;
 };
 
 

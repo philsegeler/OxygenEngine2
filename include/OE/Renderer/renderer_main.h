@@ -15,7 +15,6 @@ public:
     // last bool is true if the renderer has been restarted. This is useful so as to fetch all the data again
     bool update_data(oe::renderer_update_info, oe::winsys_output, bool);
 
-    bool update_multi_thread(oe::task_t*, int);
     void destroy();
 
 private:

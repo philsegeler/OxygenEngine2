@@ -6,7 +6,7 @@ using namespace oe;
 using namespace OE_API_Helpers;
 using namespace std;
 
-int OE_API_Helpers::load_world(oe::task_t task, string filename) {
+int OE_API_Helpers::load_world(const oe::task_info_t task, string filename) {
 
     csl::interpret_file(filename);
 
@@ -15,7 +15,7 @@ int OE_API_Helpers::load_world(oe::task_t task, string filename) {
     return 0;
 }
 
-int OE_API_Helpers::manage_mouse(oe::task_t task, std::size_t event_id) {
+int OE_API_Helpers::manage_mouse(const oe::task_info_t task, std::size_t event_id) {
 
     if (oe::get_event_name(event_id) == "mouse-lock") {
         OE_Main->window->lock_mouse();

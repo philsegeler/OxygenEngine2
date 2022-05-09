@@ -39,9 +39,9 @@ namespace oe {
         EVENT_COMBO      = 7
     };
 
-    int template_event_func(task_t, std::size_t);
+    int template_event_func(const task_info_t, std::size_t);
 
-    typedef std::function<int(task_t, std::size_t)> event_func_type;
+    typedef std::function<int(const task_info_t, std::size_t)> event_func_type;
 
     /* general event type */
     class event_t : public OE_THREAD_SAFETY_OBJECT {
@@ -68,7 +68,7 @@ namespace oe {
         event_type      type_;
         event_func_type func_{&template_event_func};
 
-        task_t task_;
+        task_info_t task_;
 
         bool                            has_init_{false};
         std::unordered_set<std::size_t> sub_events_;

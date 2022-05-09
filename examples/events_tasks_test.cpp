@@ -1,6 +1,6 @@
 #include <OE/api_oe.h>
 
-int move_camera(oe::task_t task, std::string obj_name){
+int move_camera(const oe::task_info_t task, std::string obj_name){
 
     size_t obj_id = oe::get_object_id(obj_name);
     if (oe::is_mouse_moved() && oe::is_mouse_locked()){
@@ -14,7 +14,7 @@ int move_camera(oe::task_t task, std::string obj_name){
     return 0;
 }
 
-int toggle_mouse_locked_state( oe::task_t, std::size_t event_id){
+int toggle_mouse_locked_state(const oe::task_info_t, std::size_t event_id){
 
     if (oe::is_mouse_locked()){
         oe::mouse_unlock();
@@ -27,7 +27,7 @@ int toggle_mouse_locked_state( oe::task_t, std::size_t event_id){
 std::unordered_map<std::string, int> dummy_list;
 std::unordered_set<std::size_t> event_ids;
 
-int broadcast_all_events_test(oe::task_t task){
+int broadcast_all_events_test(const oe::task_info_t task){
 
     for (std::size_t event_id : event_ids){
         oe::broadcast_event(event_id);
@@ -36,13 +36,13 @@ int broadcast_all_events_test(oe::task_t task){
     return 0;
 }
 
-int test_event_func(oe::task_t, std::size_t event_id){
+int test_event_func(const oe::task_info_t, std::size_t event_id){
 
     dummy_list[oe::get_event_name(event_id)]++;
     return 0;
 }
 
-int OnloadVerySimple(oe::task_t load_event_task, std::size_t event_id){
+int OnloadVerySimple(const oe::task_info_t load_event_task, std::size_t event_id){
 
 
     // Movement tasks/events

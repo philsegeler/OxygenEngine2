@@ -181,7 +181,8 @@ namespace oe {
     };
 
 
-
+    //*************************************************************************************/
+    // Final class
     template <typename T, index_map_sort_type IndexMapType = index_map_sort_type::unsorted>
     class shared_index_map_t : public shared_index_map_base_t<T, IndexMapType>, public OE_THREAD_SAFETY_OBJECT {
 

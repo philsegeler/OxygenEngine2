@@ -31,11 +31,6 @@ extern "C" int oxygen_engine_update_thread(void* data) {
     // execute all functions which are bind to that thread
     OE_ThreadData* actual_data = static_cast<OE_ThreadData*>(data);
 
-    // cout << "this is actual data " << actual_data << " " << OE_Main << endl;
-    //  update physics task
-    OE_Main->threads[actual_data->name].physics_task =
-        oe::task_t(actual_data->name + "-physics", 0, 0, OE_ThreadData::taskMgr->getTicks());
-
     OE_Main->updateThread(actual_data->name);
 
     delete actual_data;
@@ -395,6 +390,11 @@ void OE_TaskManager::Destroy() {
  * ***********************/
 
 void OE_TaskManager::updateThread(const string name) {
+
+    //  update physics task
+    this->threads[name].physics_task = oe::task_info_t(0, 0, this->getTicks());
+    this->threads[name].physics_task.set_type_task(oe::task_type::PHYSICS);
+
     // obtain the queue in which the tasks are executed if the task queue if changed
 
     while (!done_) {

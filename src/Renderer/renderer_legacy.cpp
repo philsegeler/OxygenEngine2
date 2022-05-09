@@ -633,10 +633,6 @@ void NRE_RendererLegacy::updateLightGPUData() {
     }
 }
 
-bool NRE_RendererLegacy::update_multi_thread(oe::task_t*, int) {
-    return false;
-}
-
 void NRE_RendererLegacy::destroy() {
 
     this->setup_bbox_prog   = false;

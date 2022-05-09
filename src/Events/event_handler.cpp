@@ -4,11 +4,6 @@
 
 using namespace std;
 
-int oe::template_event_func(task_t task, std::size_t event_id) {
-    // cout << oe::get_event_name(event_id) << endl;
-    return 0;
-}
-
 oe::event_handler_t::event_handler_t() {
     done_ = false;
 }

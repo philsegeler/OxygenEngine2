@@ -2,21 +2,21 @@
 
 using namespace std;
 
-int update_monkey_rot(oe::task_t, std::size_t event_id, string obj_name){
+int update_monkey_rot(const oe::task_info_t, std::size_t event_id, string obj_name){
 
     size_t obj_id = oe::get_object_id(obj_name);
     oe::change_object_local_pos(obj_id, oe::vec3(0.0f, 0.0f, -0.1f));
     return 0;
 }
 
-int update_monkey_rot_neg(oe::task_t, std::size_t event_id){
+int update_monkey_rot_neg(const oe::task_info_t, std::size_t event_id){
 
     size_t camera_id = oe::get_object_id("Camera");
     oe::change_object_local_pos(camera_id, oe::vec3(0.0f, 0.0f, 0.1f));
     return 0;
 }
 
-int update_monkey_rot_x(oe::task_t, std::size_t event_id){
+int update_monkey_rot_x(const oe::task_info_t, std::size_t event_id){
 
     size_t camera_id = oe::get_object_id("Camera");
     //size_t suzanne_id = oe::get_object_id("Suzanne");
@@ -26,7 +26,7 @@ int update_monkey_rot_x(oe::task_t, std::size_t event_id){
     return 0;
 }
 
-int update_monkey_rot_neg_x( oe::task_t, std::size_t event_id){
+int update_monkey_rot_neg_x(const oe::task_info_t, std::size_t event_id){
 
     size_t camera_id = oe::get_object_id("Camera");
     //size_t suzanne_id = oe::get_object_id("Suzanne");
@@ -36,21 +36,21 @@ int update_monkey_rot_neg_x( oe::task_t, std::size_t event_id){
     return 0;
 }
 
-int update_monkey_rot_z(oe::task_t, std::size_t event_id){
+int update_monkey_rot_z(const oe::task_info_t, std::size_t event_id){
 
     size_t camera_id = oe::get_object_id("Camera");
     oe::change_object_local_pos(camera_id, oe::vec3(-0.1f, 0.0f, 0.0f));
     return 0;
 }
 
-int update_monkey_rot_neg_z(oe::task_t, std::size_t event_id){
+int update_monkey_rot_neg_z(const oe::task_info_t, std::size_t event_id){
 
     size_t camera_id = oe::get_object_id("Camera");
     oe::change_object_local_pos(camera_id, oe::vec3(0.1f, 0.0f, 0.0f));
     return 0;
 }
 
-int toggle_mouse_locked_state(oe::task_t, std::size_t event_id){
+int toggle_mouse_locked_state(const oe::task_info_t, std::size_t event_id){
 
     if (oe::is_mouse_locked()){
         oe::mouse_unlock();
@@ -60,13 +60,13 @@ int toggle_mouse_locked_state(oe::task_t, std::size_t event_id){
     return 0;
 }
 
-int renderer_toggle_bounding_spheres( oe::task_t, std::size_t event_id){
+int renderer_toggle_bounding_spheres(const oe::task_info_t, std::size_t event_id){
     
     oe::toggle_bounding_spheres_rendering();
     return 0;
 }
 
-int set_renderer_mode_normals( oe::task_t, std::size_t event_id){
+int set_renderer_mode_normals(const oe::task_info_t, std::size_t event_id){
     
     if (oe::get_shading_mode() == oe::RENDERER_REGULAR_SHADING)
         oe::set_shading_mode(oe::RENDERER_NORMALS_SHADING);
@@ -75,23 +75,23 @@ int set_renderer_mode_normals( oe::task_t, std::size_t event_id){
     return 0;
 }
 
-int load_object_handler(oe::task_t, std::size_t);
+int load_object_handler(const oe::task_info_t, std::size_t);
 
-int renderer_toggle_wireframe( oe::task_t, std::size_t event_id){
+int renderer_toggle_wireframe(const oe::task_info_t, std::size_t event_id){
     
     oe::toggle_wireframe_rendering();
     //oe::toggle_render_HDR();
     return 0;
 }
 
-int renderer_toggle_bounding_boxes( oe::task_t, std::size_t event_id){
+int renderer_toggle_bounding_boxes(const oe::task_info_t, std::size_t event_id){
     
     oe::toggle_bounding_boxes_rendering();
     //throw 5;
     return 0;
 }
 
-int test_task1(oe::task_t task, std::string obj_name){
+int test_task1(const oe::task_info_t task, std::string obj_name){
 
     size_t obj_id = oe::get_object_id(obj_name);
 
@@ -107,7 +107,7 @@ int test_task1(oe::task_t task, std::string obj_name){
     return 0;
 }
 
-int test_task0(oe::task_t task){
+int test_task0(const oe::task_info_t task){
     
     //cout << " task0";
     std::map<int, int> empty_test_map;
@@ -120,7 +120,7 @@ int test_task0(oe::task_t task){
     return 0;
 }
 
-int test_task2(oe::task_t task){
+int test_task2(const oe::task_info_t task){
     
     //cout << " task2";
     
@@ -130,7 +130,7 @@ int test_task2(oe::task_t task){
     return 0;
 }
 
-int test_task3(oe::task_t task){
+int test_task3(const oe::task_info_t task){
 
     //cout << " task3";
     if (oe::is_key_just_pressed("keyboard-1")){
@@ -152,13 +152,13 @@ int test_task3(oe::task_t task){
     return 0;
 }
 
-int toggle_debug_mode(oe::task_t task, std::size_t event_id){
+int toggle_debug_mode(const oe::task_info_t task, std::size_t event_id){
     oe::toggle_renderer_sanity_checks();
     oe::toggle_render_z_prepass();
     return 0;
 }
 
-int load_object_handler(oe::task_t load_event_task, std::size_t event_id){
+int load_object_handler(const oe::task_info_t load_event_task, std::size_t event_id){
     cout << "SUCCESSFULLY loaded '" << oe::get_event_name(event_id) << "'" << endl;
     
     oe::set_event_func("keyboard-w", &update_monkey_rot, "Camera");

@@ -5,9 +5,9 @@
 
 namespace OE_API_Helpers {
 
-    int load_world(oe::task_t, std::string);
+    int load_world(const oe::task_info_t, std::string);
 
-    int manage_mouse(oe::task_t, std::size_t);
+    int manage_mouse(const oe::task_info_t, std::size_t);
 
     void checkIfInit();
 }; // namespace OE_API_Helpers
