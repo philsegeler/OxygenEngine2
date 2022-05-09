@@ -55,7 +55,10 @@ namespace oe {
             }
 
             std::size_t id() {
-                return p_->id;
+                if (p_ == nullptr)
+                    return 0;
+                else
+                    return p_->id;
             }
 
             void flag_as_registered() {
@@ -103,13 +106,13 @@ namespace oe {
         }
 
         // TODO: Add referemce count
-        bool count(std::size_t index) {
+        bool contains(std::size_t index) {
             return this->elements_container_.contains(index);
         }
 
 
         // TODO: Add referemce count
-        bool count(const std::string& name) {
+        bool contains(const std::string& name) {
             return this->name2id_container_.contains(name);
         }
 
@@ -128,7 +131,7 @@ namespace oe {
         }
 
         void append(const std::string& name, std::shared_ptr<T> element) {
-            if ((this->count(element->id) == 0)) {
+            if ((this->contains(element->id) == 0) and not this->name2id_container_.contains(name)) {
                 this->elements_container_[element->id] = element;
                 this->id2name_container_[element->id]  = name;
                 this->name2id_container_[name]         = element->id;

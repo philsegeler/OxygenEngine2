@@ -154,6 +154,18 @@ namespace oe {
     };
 
     /// class intended for physics events
+    class renderer_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        renderer_event_t()  = default;
+        ~renderer_event_t() = default;
+
+    protected:
+    };
+
+    /// class intended for physics events
     class physics_event_t : public event_t {
         friend class event_handler_t;
         friend class input_event_handler_t;

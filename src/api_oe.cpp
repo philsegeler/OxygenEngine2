@@ -89,7 +89,18 @@ std::size_t oe::create_event(std::string name) {
     OE_API_Helpers::checkIfInit();
     return OE_Main->window->event_handler_.create_user_event(name);
 }
-
+std::size_t oe::create_internal_physics_event(std::string name) {
+    OE_API_Helpers::checkIfInit();
+    return OE_Main->window->event_handler_.create_physics_event(name);
+}
+std::size_t oe::create_internal_renderer_event(std::string name) {
+    OE_API_Helpers::checkIfInit();
+    return OE_Main->window->event_handler_.create_renderer_event(name);
+}
+std::size_t oe::create_internal_network_event(std::string name) {
+    OE_API_Helpers::checkIfInit();
+    return OE_Main->window->event_handler_.create_network_event(name);
+}
 void oe::broadcast_event(std::size_t id) {
     OE_API_Helpers::checkIfInit();
     OE_Main->window->event_handler_.broadcast_event(id);

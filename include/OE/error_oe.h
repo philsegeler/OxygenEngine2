@@ -82,6 +82,48 @@ namespace oe {
         std::string prefix_;
     };
 
+    class invalid_physics_event_name : public api_error {
+    public:
+        invalid_physics_event_name(std::string arg, std::string prefix) {
+            name_   = "oe::invalid_physics_event_name";
+            data_   = arg;
+            prefix_ = prefix;
+        }
+        std::string what() const throw() {
+            return "Name: '" + data_ + "' is not a valid name for a physics event, because it starts with '" + prefix_ + "'";
+        };
+        std::string data_;
+        std::string prefix_;
+    };
+
+    class invalid_network_event_name : public api_error {
+    public:
+        invalid_network_event_name(std::string arg, std::string prefix) {
+            name_   = "oe::invalid_network_event_name";
+            data_   = arg;
+            prefix_ = prefix;
+        }
+        std::string what() const throw() {
+            return "Name: '" + data_ + "' is not a valid name for a network event, because it starts with '" + prefix_ + "'";
+        };
+        std::string data_;
+        std::string prefix_;
+    };
+
+    class invalid_renderer_event_name : public api_error {
+    public:
+        invalid_renderer_event_name(std::string arg, std::string prefix) {
+            name_   = "oe::invalid_renderer_event_name";
+            data_   = arg;
+            prefix_ = prefix;
+        }
+        std::string what() const throw() {
+            return "Name: '" + data_ + "' is not a valid name for a network event, because it starts with '" + prefix_ + "'";
+        };
+        std::string data_;
+        std::string prefix_;
+    };
+
     class invalid_task_name : public api_error {
     public:
         invalid_task_name(std::string task, std::string thread) {

@@ -72,7 +72,7 @@ std::size_t oe::event_handler_t::create_user_event(const string& event_name) {
         if (event_name.starts_with(prefix)) throw oe::invalid_event_name(event_name, prefix);
     }
     lockMutex();
-    if (events_list_.count(event_name) == 0) {
+    if (not events_list_.contains(event_name)) {
         events_list_.append(event_name, event);
         happened_events_counter_[event->id] = 0;
     }
@@ -85,8 +85,12 @@ std::size_t oe::event_handler_t::create_physics_event(const string& event_name) 
     std::shared_ptr<oe::physics_event_t> event    = std::make_shared<oe::physics_event_t>();
     std::size_t                          event_id = event->id;
 
+    if (not event_name.starts_with("physics-")) {
+        throw oe::invalid_physics_event_name(event_name, event_name);
+    }
+
     lockMutex();
-    if (events_list_.count(event_name) == 0) {
+    if (not events_list_.contains(event_name)) {
         events_list_.append(event_name, event);
         happened_events_counter_[event->id] = 0;
     }
@@ -99,8 +103,30 @@ std::size_t oe::event_handler_t::create_network_event(const string& event_name) 
     std::shared_ptr<oe::network_event_t> event    = std::make_shared<oe::network_event_t>();
     std::size_t                          event_id = event->id;
 
+    if (not event_name.starts_with("network-")) {
+        throw oe::invalid_network_event_name(event_name, event_name);
+    }
+
     lockMutex();
-    if (events_list_.count(event_name) == 0) {
+    if (not events_list_.contains(event_name)) {
+        events_list_.append(event_name, event);
+        happened_events_counter_[event->id] = 0;
+    }
+    unlockMutex();
+    return event_id;
+}
+
+std::size_t oe::event_handler_t::create_renderer_event(const string& event_name) {
+
+    std::shared_ptr<oe::renderer_event_t> event    = std::make_shared<oe::renderer_event_t>();
+    std::size_t                           event_id = event->id;
+
+    if (not event_name.starts_with("renderer-")) {
+        throw oe::invalid_renderer_event_name(event_name, event_name);
+    }
+
+    lockMutex();
+    if (not events_list_.contains(event_name)) {
         events_list_.append(event_name, event);
         happened_events_counter_[event->id] = 0;
     }
@@ -111,7 +137,7 @@ std::size_t oe::event_handler_t::create_network_event(const string& event_name) 
 void oe::event_handler_t::destroy_event(size_t event_id) {
     lockMutex();
 
-    if (this->events_list_.count(event_id) != 0) {
+    if (this->events_list_.contains(event_id)) {
         events_list_.remove(events_list_[event_id].id());
     }
     else {
@@ -149,7 +175,7 @@ void oe::event_handler_t::set_event_func(const string& event_name, const oe::eve
 
 void oe::event_handler_t::map_event(size_t upper, size_t target) {
     lockMutex();
-    if (this->events_list_.count(target) != 0) {
+    if (this->events_list_.contains(target)) {
         this->events_list_[target]->sub_events_.insert(upper);
     }
     else {
@@ -223,7 +249,7 @@ void oe::event_handler_t::broadcast_event_wait(size_t event_id, int milliseconds
 std::size_t oe::event_handler_t::get_event_activations(std::size_t event_id) {
     size_t output = 0;
     lockMutex();
-    if (this->events_list_.count(event_id) == 1) {
+    if (this->events_list_.contains(event_id)) {
         output = this->happened_events_counter_[event_id];
     }
     else {

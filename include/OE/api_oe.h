@@ -214,6 +214,9 @@ namespace oe {
     void        broadcast_event(std::string);
     void        broadcast_event(std::size_t);
     std::size_t create_event(std::string);
+    std::size_t create_internal_physics_event(std::string);
+    std::size_t create_internal_renderer_event(std::string);
+    std::size_t create_internal_network_event(std::string);
     std::size_t get_event_id(std::string);
     std::string get_event_name(std::size_t);
 

@@ -25,6 +25,7 @@ namespace oe {
         std::size_t create_user_event(const std::string&);
         std::size_t create_physics_event(const std::string&);
         std::size_t create_network_event(const std::string&);
+        std::size_t create_renderer_event(const std::string&);
 
         void set_event_func(std::size_t, const oe::event_func_type);
         void set_event_func(const std::string&, const oe::event_func_type);
