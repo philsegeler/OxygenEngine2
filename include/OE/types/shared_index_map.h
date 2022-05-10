@@ -688,6 +688,7 @@ namespace oe {
                 if constexpr (is_sorted) {
                     this->sorted_.add(element);
                 }
+                this->changed_.add(element->id);
             }
             else {
                 OE_Warn("Element with ID: '" + std::to_string(element->id) + "' and name: '" + name +
