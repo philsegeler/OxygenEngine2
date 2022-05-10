@@ -28,6 +28,8 @@ namespace oe {
     // Base Element class. Only contains element
     template <typename T>
     class shared_index_map_base_element_t {
+        friend class element_t;
+
     public:
         virtual ~shared_index_map_base_element_t() {
         }
@@ -121,7 +123,9 @@ namespace oe {
                 using iterator_category = std::input_iterator_tag;
                 using difference_type   = int;
 
-                typedef std::set<std::size_t, std::greater<std::size_t>>::iterator set_iter_t;
+                typedef
+                    typename std::set<std::shared_ptr<T>, std::function<bool(std::shared_ptr<T>, std::shared_ptr<T>)>>::iterator
+                        set_iter_t;
 
                 sorted_iter_t(set_iter_t beginning, shared_index_map_base_element_t<T>* db) : iter(beginning), db_(db) {
                 }
@@ -154,11 +158,11 @@ namespace oe {
             };
 
             sorted_iter_t begin() const {
-                return sorted_iter_t(this.set_.begin(), db_);
+                return sorted_iter_t(this->set_.begin(), db_);
             }
 
             sorted_iter_t end() const {
-                return sorted_iter_t(this.set_.end(), db_);
+                return sorted_iter_t(this->set_.end(), db_);
             }
 
         private:
@@ -188,10 +192,12 @@ namespace oe {
 
         constexpr static bool is_sorted = (IndexMapType != index_map_sort_type::unsorted);
 
+        friend class ::OE_TaskManager;
+        friend class changed_t;
+        friend class deleted_t;
+
     public:
         using element_t = typename shared_index_map_base_element_t<T>::element_t;
-
-        friend class ::OE_TaskManager;
 
         shared_index_map_t() : changed_(*this), deleted_(*this){};
 
@@ -359,7 +365,7 @@ namespace oe {
                 output         = element_t(this, elements_container_[elem_id]);
             }
             else
-                output = element_t(this, 0, nullptr);
+                output = element_t(this, nullptr);
             unlockMutex();
 
             if (!output.is_valid()) {
@@ -408,7 +414,7 @@ namespace oe {
             using iterator_category = std::input_iterator_tag;
             using difference_type   = int;
 
-            Iterator(shared_index_map_t<T>& db, map_iter_t beginning) : iter(beginning), db_(db) {
+            Iterator(shared_index_map_t<T, IndexMapType>& db, map_iter_t beginning) : iter(beginning), db_(db) {
             }
 
             Iterator& operator++() {
@@ -433,8 +439,8 @@ namespace oe {
             };
 
         private:
-            map_iter_t             iter;
-            shared_index_map_t<T>& db_{nullptr};
+            map_iter_t                           iter;
+            shared_index_map_t<T, IndexMapType>& db_{nullptr};
         };
 
         Iterator begin() {
@@ -451,16 +457,16 @@ namespace oe {
         class changed_t {
         public:
             // changed_t(){}
-            changed_t(shared_index_map_t<T>& inputa) : db_(inputa) {
+            changed_t(shared_index_map_t<T, IndexMapType>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
-                if ((db_.elements_container_.count(index) != 0) && (db_.deleted_.count(index) == 0))
+                if ((db_.elements_container_.contains(index)) and (not db_.deleted_.contains(index)))
                     indices_container_.insert(index);
             }
 
             void remove(const std::size_t& index) {
-                if (indices_container_.count(index) != 0) {
+                if (indices_container_.contains(index)) {
                     indices_container_.erase(index);
                 }
             }
@@ -504,8 +510,8 @@ namespace oe {
                 };
 
             protected:
-                set_iter_t             iter;
-                shared_index_map_t<T>& db_;
+                set_iter_t                           iter;
+                shared_index_map_t<T, IndexMapType>& db_;
             };
 
             changed_iter_t begin() const {
@@ -517,7 +523,7 @@ namespace oe {
             }
 
         private:
-            shared_index_map_t<T>&                           db_;
+            shared_index_map_t<T, IndexMapType>&             db_;
             std::set<std::size_t, std::greater<std::size_t>> indices_container_;
         };
 
@@ -533,7 +539,7 @@ namespace oe {
 
         public:
             // deleted_t(){}
-            deleted_t(shared_index_map_t<T>& inputa) : db_(inputa) {
+            deleted_t(shared_index_map_t<T, IndexMapType>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
@@ -551,12 +557,16 @@ namespace oe {
                 return this->indices_container_.count(index);
             }
 
+            bool contains(std::size_t index) const {
+                return this->indices_container_.contains(index);
+            }
+
             void clear() {
                 this->indices_container_.clear();
             }
 
         private:
-            shared_index_map_t<T>&                           db_;
+            shared_index_map_t<T, IndexMapType>&             db_;
             std::set<std::size_t, std::greater<std::size_t>> indices_container_;
         };
 
@@ -633,13 +643,14 @@ namespace oe {
                 // That means that the old element should be deleted.
                 // There can never be two elements with the same name
                 if (name2id_container_.contains(pending_id2name_container_[x.first])) {
-                    changed_.remove(this->name2id_container_[pending_id2name_container_[x.first]]);
-                    deleted_.add(this->name2id_container_[pending_id2name_container_[x.first]]);
+                    std::size_t existing_id = this->name2id_container_[pending_id2name_container_[x.first]];
+                    changed_.remove(existing_id);
+                    deleted_.add(existing_id);
                     if constexpr (is_sorted) {
-                        this->sorted_.remove(x.second);
+                        this->sorted_.remove(this->elements_container_[existing_id]);
                     }
-                    this->elements_container_.erase(this->name2id_container_[pending_id2name_container_[x.first]]);
-                    this->id2name_container_.erase(this->name2id_container_[pending_id2name_container_[x.first]]);
+                    this->elements_container_.erase(existing_id);
+                    this->id2name_container_.erase(existing_id);
                 }
 
                 // std::cout << "Pending element: " << x.first << " " << pending_id2name_container_[x.first] << (x.second ==
@@ -654,9 +665,6 @@ namespace oe {
             }
             pending_elements_container_.clear();
             pending_id2name_container_.clear();
-            if constexpr (is_sorted) {
-                this->sorted_.clear();
-            }
             unlockMutex();
         }
 

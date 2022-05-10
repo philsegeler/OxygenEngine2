@@ -25,11 +25,11 @@ struct OE_ThreadData {
      * without any fuss in another thread
      */
     static OE_TaskManager* taskMgr;
-    std::string            name;
+    std::size_t            thread_id{0};
 };
 
 struct OE_UnsyncThreadData {
-    OE_METHOD       func;
+    oe::method_type func;
     OE_TaskManager* taskMgr;
     std::string     name;
 };
@@ -37,32 +37,14 @@ struct OE_UnsyncThreadData {
 struct OE_ThreadStruct {
     /* this struct is used to store a thread. More specifically it stores:
      * - the tasks to execute which are represented as an oe::task_t
-     * - the pointer methods to execute which represent an OE_METHOD
+     * - the pointer methods to execute which represent an oe::method_type
      * - a boolean to make the thread asynchronous (relic from 2016, not usable)
      */
-
+    static std::atomic<std::size_t> current_id;
+    const std::size_t               id;
     OE_ThreadStruct();
-    virtual ~OE_ThreadStruct();
 
-
-    std::set<std::string>            task_names;
-    std::vector<oe::task_t>          tasks;
-    std::map<std::string, OE_METHOD> functions;
-    // std::vector<unsigned int>   task_queue;
-
-    // for new tasks to be run after the next frame
-    std::vector<oe::task_t>          pending_tasks;
-    std::map<std::string, OE_METHOD> pending_functions;
-
-    // for tasks to be removed
-    std::queue<std::string> to_be_removed;
-
-    void updateTaskList();
-
-    std::string name;
-    bool        synchronize, changed;
-    bool        flushed          = false;
-    bool        rendering_thread = false;
+    oe::shared_index_map_t<oe::task_t, oe::index_map_sort_type::greater_than> tasks_;
 
     int countar = 0;
 
@@ -117,20 +99,20 @@ public:
      * - priority (int) higher number => lower priority
      * - the name of the thread to be run, if omitted uses the default thread
      */
-    void AddTask(std::string, const OE_METHOD);
-    void AddTask(std::string, const OE_METHOD, int);
-    void AddTask(std::string, const OE_METHOD, int, std::string);
-    void AddTask(std::string, const OE_METHOD, std::string);
+    void AddTask(std::string, const oe::method_type);
+    void AddTask(std::string, const oe::method_type, int);
+    void AddTask(std::string, const oe::method_type, int, std::string);
+    void AddTask(std::string, const oe::method_type, std::string);
     // similar to do-task, but only executes the function once after certain time has passed
-    void       DoOnce(std::string, const OE_METHOD, int);
-    oe::task_t GetTaskInfo(std::string, std::string);
+    void            DoOnce(std::string, const oe::method_type, int);
+    oe::task_info_t get_task_info(std::string, std::string);
 
 
     // Main functions
     int  Init(std::string, int, int, bool, oe::renderer_init_info, oe::winsys_init_info, oe::physics_init_info,
               oe::networking_init_info);
     void CreateNewThread(std::string);
-    void CreateUnsyncThread(std::string, const OE_METHOD);
+    void CreateUnsyncThread(std::string, const oe::method_type);
     void Step();
     void Start();
     void Destroy();
@@ -140,8 +122,6 @@ public:
     void RemoveTask(std::string);
     void RemoveTask(std::string, std::string);
 
-    void updateThread(const std::string);
-
     bool is_done();
 
     void                      set_pending_world(std::shared_ptr<OE_World>);
@@ -150,6 +130,8 @@ public:
     void force_restart_renderer();
 
 private:
+    // variables
+
     bool              renderer_init_errors{false};
     std::atomic<bool> restart_renderer{false};
     bool              physics_init_errors{false};
@@ -160,20 +142,27 @@ private:
 
     std::shared_ptr<OE_World> pending_world{nullptr}; // for loading a world
 
-    // stores threads by their name
-    std::map<std::string, struct OE_ThreadStruct> threads   = {};
-    std::map<std::string, SDL_Thread*>            threadIDs = {};
+    oe::shared_index_map_t<OE_ThreadStruct>      threads;
+    std::unordered_map<std::size_t, SDL_Thread*> threadIDs = {};
 
-    // stores threads which should not be synchronized
-    // std::map<std::string, struct OE_ThreadStruct>  unsync_threads = {};
-    std::map<std::string, SDL_Thread*> unsync_threadIDs          = {};
-    std::set<std::string>              finished_unsync_threadIDs = {};
-
-    std::map<std::string, std::string> active_tasks = {};
+    // stores threads which should not be synchronized.
+    // Overkill to make it shared_index_map, since the elements are never accessed directly
+    std::unordered_map<std::string, SDL_Thread*> unsync_threadIDs          = {};
+    std::unordered_set<std::string>              finished_unsync_threadIDs = {};
 
     // very important variable
     std::atomic<bool> done_;
     bool              errors_on_init{false};
+
+    int completed_threads{0};
+    int started_threads{0};
+    int physics_threads{0};
+
+    int countar{0};
+
+    // private methods
+
+    void update_thread(std::size_t);
 
     void removeFinishedUnsyncThreads();
 
@@ -181,27 +170,22 @@ private:
     unsigned int framerate;
     unsigned int current_framerate;
 
-    int completed_threads;
-    int started_threads{0};
-    int physics_threads{0};
 
-    int countar{0};
 
     void syncBeginFrame();
     void syncEndFrame();
 
     void updateWorld();
-    void runThreadTasks(const std::string&);
-    void sortThreadTasks(const std::string&);
+    void runThreadTasks(std::size_t);
 
     // error handling functions
     // those are implemented in OE_Error.cpp
     // in order to have all non-core-engine error handling at one place
-    int tryRun_unsync_thread(OE_UnsyncThreadData*);
-    int tryRun_task(const std::string&, oe::task_t&);
+    int             tryRun_unsync_thread(OE_UnsyncThreadData*);
+    oe::task_action tryRun_task(std::size_t, std::shared_ptr<oe::task_t>);
 
     // ALL these return true if error is found so it terminates the engine
-    bool tryRun_physics_updateMultiThread(const std::string&, const int&);
+    bool tryRun_physics_updateMultiThread(std::size_t, const int&);
     bool tryRun_renderer_updateSingleThread();
     bool tryRun_renderer_updateData();
     bool tryRun_winsys_update();

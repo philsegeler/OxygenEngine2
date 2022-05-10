@@ -116,8 +116,7 @@ oe::networking_base_t::~networking_base_t() {
 
 void oe::networking_base_t::init(networking_init_info params) {
 }
-
-int oe::networking_base_t::execute(const oe::task_info_t) {
+oe::task_action oe::networking_base_t::execute(const oe::task_info_t) {
 
     // int a =0;
     while (!done_) {
@@ -127,7 +126,7 @@ int oe::networking_base_t::execute(const oe::task_info_t) {
         // cout << "OE_Networking is running" << ++a << endl;
         oe::pause(10);
     }
-    return 0;
+    return oe::task_action::discard;
 }
 void oe::networking_base_t::destroy() {
     done_ = true;

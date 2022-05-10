@@ -39,9 +39,7 @@ namespace oe {
         EVENT_COMBO      = 7
     };
 
-    int template_event_func(const task_info_t, std::size_t);
-
-    typedef std::function<int(const task_info_t, std::size_t)> event_func_type;
+    task_action template_event_func(const task_info_t);
 
     /* general event type */
     class event_t : public OE_THREAD_SAFETY_OBJECT {
@@ -52,21 +50,21 @@ namespace oe {
         // static bool finished;
         event_t();
         virtual ~event_t();
-        virtual int call();
+        virtual task_action call();
 
         static std::atomic<std::size_t> current_id;
         const std::size_t               id;
 
     protected:
         // internal_call() is implemented in OE_Error.cpp
-        int internal_call();
+        task_action internal_call();
 
-        void set_func(const event_func_type);
+        void set_func(const method_type);
 
         std::atomic<bool> active_{false};
 
-        event_type      type_;
-        event_func_type func_{&template_event_func};
+        event_type  type_;
+        method_type func_{&template_event_func};
 
         task_info_t task_;
 
@@ -87,7 +85,7 @@ namespace oe {
     public:
         keyboard_event_t();
         ~keyboard_event_t();
-        int call();
+        task_action call();
 
     private:
         uint8_t     keystate_;
@@ -103,7 +101,7 @@ namespace oe {
     public:
         mouse_event_t();
         ~mouse_event_t();
-        int call();
+        task_action call();
 
     private:
         uint8_t     keystate_;
@@ -119,7 +117,7 @@ namespace oe {
     public:
         mouse_move_event_t();
         ~mouse_move_event_t();
-        int call();
+        task_action call();
     };
 
     /// class intended to store gamepad events (3 for each mouse buttons 1-5 and mouse position)
@@ -130,7 +128,7 @@ namespace oe {
     public:
         gamepad_event_t();
         ~gamepad_event_t();
-        int call();
+        task_action call();
 
     private:
         uint8_t     keystate_;

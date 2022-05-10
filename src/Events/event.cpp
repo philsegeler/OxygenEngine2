@@ -4,9 +4,9 @@
 #include <OE/types/libs_oe.h>
 using namespace std;
 
-int oe::template_event_func(const task_info_t task, std::size_t event_id) {
+oe::task_action oe::template_event_func(const task_info_t task) {
     // cout << oe::get_event_name(event_id) << endl;
-    return 0;
+    return oe::task_action::keep;
 }
 
 std::atomic<size_t> oe::event_t::current_id(0);
@@ -17,19 +17,18 @@ oe::event_t::event_t() : id(++oe::event_t::current_id) {
 oe::event_t::~event_t() {
 }
 
-void oe::event_t::set_func(const oe::event_func_type a_func) {
+void oe::event_t::set_func(const oe::method_type a_func) {
     lockMutex();
     func_   = a_func;
     active_ = true;
     unlockMutex();
 }
-
-int oe::event_t::call() {
+oe::task_action oe::event_t::call() {
 
     return internal_call();
 }
 
-int oe::event_t::internal_call() {
+oe::task_action oe::event_t::internal_call() {
     /***************************/
     /// generic handling
 
@@ -43,8 +42,8 @@ int oe::event_t::internal_call() {
 
     task_.update();
     // only call the function if the event has been given a function other than the default
-    if (active_) func_(task_, id);
-    return 0;
+    if (active_) return func_(task_);
+    return oe::task_action::keep;
     /**************************/
 }
 
@@ -57,7 +56,7 @@ oe::keyboard_event_t::keyboard_event_t() : oe::event_t() {
 oe::keyboard_event_t::~keyboard_event_t() {
 }
 
-int oe::keyboard_event_t::call() {
+oe::task_action oe::keyboard_event_t::call() {
 
     return internal_call();
 }
@@ -70,7 +69,7 @@ oe::mouse_event_t::mouse_event_t() : oe::event_t() {
 oe::mouse_event_t::~mouse_event_t() {
 }
 
-int oe::mouse_event_t::call() {
+oe::task_action oe::mouse_event_t::call() {
 
     return internal_call();
 }
@@ -82,7 +81,7 @@ oe::mouse_move_event_t::mouse_move_event_t() : oe::event_t() {
 oe::mouse_move_event_t::~mouse_move_event_t() {
 }
 
-int oe::mouse_move_event_t::call() {
+oe::task_action oe::mouse_move_event_t::call() {
 
     return internal_call();
 }
@@ -96,7 +95,7 @@ oe::gamepad_event_t::gamepad_event_t() : oe::event_t() {
 oe::gamepad_event_t::~gamepad_event_t() {
 }
 
-int oe::gamepad_event_t::call() {
+oe::task_action oe::gamepad_event_t::call() {
 
     return internal_call();
 }

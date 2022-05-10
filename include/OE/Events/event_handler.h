@@ -27,16 +27,16 @@ namespace oe {
         std::size_t create_network_event(const std::string&);
         std::size_t create_renderer_event(const std::string&);
 
-        void set_event_func(std::size_t, const oe::event_func_type);
-        void set_event_func(const std::string&, const oe::event_func_type);
+        void set_event_func(std::size_t, const oe::method_type);
+        void set_event_func(const std::string&, const oe::method_type);
         void broadcast_event(std::size_t);
         void broadcast_event(const std::string&);
 
-        void broadcast_event_wait(std::size_t, int); // TODO
-        void map_event(std::size_t, std::size_t);
-        void unmap_event(std::size_t, std::size_t);
-        int  call_event(std::size_t);
-        void destroy_event(std::size_t);
+        void        broadcast_event_wait(std::size_t, int); // TODO
+        void        map_event(std::size_t, std::size_t);
+        void        unmap_event(std::size_t, std::size_t);
+        task_action call_event(std::size_t);
+        void        destroy_event(std::size_t);
 
         std::size_t get_event_id(const std::string&);
         std::string get_event_name(std::size_t);

@@ -42,10 +42,6 @@ namespace oe {
     typedef OE_Quat   quat;
     typedef OE_Mat3x3 mat3x3;
 
-    // enum typedefs
-
-    typedef OE_METHOD method_type;
-
     //------------------------BLOCK-------------------------//
     // API functions to be executed before the engine runs
     namespace preinit {
@@ -224,8 +220,7 @@ namespace oe {
     void set_event_func(std::string name, T func, Args... arguments) {
 
         assert(OE_Main != nullptr);
-        oe::event_func_type func_copy =
-            std::bind(func, std::placeholders::_1, std::placeholders::_2, std::forward<Args...>(arguments...));
+        oe::method_type func_copy = std::bind(func, std::placeholders::_1, std::forward<Args...>(arguments...));
         OE_Main->window->event_handler_.set_event_func(name, func_copy);
     }
 
@@ -233,7 +228,7 @@ namespace oe {
     void set_event_func(std::string name, T func) {
 
         assert(OE_Main != nullptr);
-        oe::event_func_type func_copy = std::bind(func, std::placeholders::_1, std::placeholders::_2);
+        oe::method_type func_copy = std::bind(func, std::placeholders::_1);
         OE_Main->window->event_handler_.set_event_func(name, func_copy);
     }
 
@@ -241,8 +236,7 @@ namespace oe {
     void set_event_method(std::string name, T func, A instance, Args... arguments) {
 
         assert(OE_Main != nullptr);
-        oe::event_func_type func_copy =
-            std::bind(func, instance, std::placeholders::_1, std::placeholders::_2, std::forward<Args...>(arguments...));
+        oe::method_type func_copy = std::bind(func, instance, std::placeholders::_1, std::forward<Args...>(arguments...));
         OE_Main->window->event_handler_.set_event_func(name, func_copy);
     }
 
@@ -250,7 +244,7 @@ namespace oe {
     void set_event_method(std::string name, T func, A instance) {
 
         assert(OE_Main != nullptr);
-        oe::event_func_type func_copy = std::bind(func, instance, std::placeholders::_1, std::placeholders::_2);
+        oe::method_type func_copy = std::bind(func, instance, std::placeholders::_1);
         OE_Main->window->event_handler_.set_event_func(name, func_copy);
     }
 
@@ -283,7 +277,7 @@ namespace oe {
 
     //------------------------BLOCK-------------------------//
 
-    task_t get_task_info(std::string, std::string);
+    task_info_t get_task_info(std::string, std::string);
 
     void create_new_thread(std::string);
 

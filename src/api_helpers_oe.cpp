@@ -6,24 +6,24 @@ using namespace oe;
 using namespace OE_API_Helpers;
 using namespace std;
 
-int OE_API_Helpers::load_world(const oe::task_info_t task, string filename) {
+oe::task_action OE_API_Helpers::load_world(const oe::task_info_t task, string filename) {
 
     csl::interpret_file(filename);
 
     oe::broadcast_event("loaded-" + filename);
 
-    return 0;
+    return oe::task_action::discard;
 }
 
-int OE_API_Helpers::manage_mouse(const oe::task_info_t task, std::size_t event_id) {
+oe::task_action OE_API_Helpers::manage_mouse(const oe::task_info_t task) {
 
-    if (oe::get_event_name(event_id) == "mouse-lock") {
+    if (oe::get_event_name(task.get_id()) == "mouse-lock") {
         OE_Main->window->lock_mouse();
     }
-    else if (oe::get_event_name(event_id) == "mouse-unlock") {
+    else if (oe::get_event_name(task.get_id()) == "mouse-unlock") {
         OE_Main->window->unlock_mouse();
     }
-    return 0;
+    return oe::task_action::keep;
 }
 
 void OE_API_Helpers::checkIfInit() {

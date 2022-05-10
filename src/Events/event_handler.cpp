@@ -142,7 +142,7 @@ void oe::event_handler_t::destroy_event(size_t event_id) {
     unlockMutex();
     // return output;
 }
-void oe::event_handler_t::set_event_func(size_t event_id, const oe::event_func_type func) {
+void oe::event_handler_t::set_event_func(size_t event_id, const oe::method_type func) {
     lockMutex();
     auto event = events_list_[event_id];
     if (event.is_valid()) {
@@ -154,7 +154,7 @@ void oe::event_handler_t::set_event_func(size_t event_id, const oe::event_func_t
 
     unlockMutex();
 }
-void oe::event_handler_t::set_event_func(const string& event_name, const oe::event_func_type func) {
+void oe::event_handler_t::set_event_func(const string& event_name, const oe::method_type func) {
     lockMutex();
     auto event = events_list_[event_name];
     if (event.is_valid()) {

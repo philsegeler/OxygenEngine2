@@ -183,9 +183,9 @@ namespace oe {
         networking_base_t(std::string);
         virtual ~networking_base_t();
 
-        virtual void init(networking_init_info);
-        virtual int  execute(const task_info_t);
-        virtual void destroy();
+        virtual void        init(networking_init_info);
+        virtual task_action execute(const task_info_t);
+        virtual void        destroy();
 
         const std::string get_name();
 

@@ -210,9 +210,9 @@ void oe::mouse_unlock() {
 }
 
 //------------------------BLOCK-------------------------//
-oe::task_t oe::get_task_info(std::string thread, std::string task) {
+oe::task_info_t oe::get_task_info(std::string thread, std::string task) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->GetTaskInfo(thread, task);
+    return OE_Main->get_task_info(thread, task);
 }
 
 void oe::create_new_thread(std::string name) {
