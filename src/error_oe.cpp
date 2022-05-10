@@ -58,12 +58,11 @@ oe::task_action oe::event_handler_t::call_event(size_t event_id) {
 // error handling functions
 int OE_TaskManager::try_run_unsync_thread(OE_UnsyncThreadData* actual_data) {
 
-    int output = 1;
-
     oe::task_info_t unsync_task = oe::task_info_t(0, 0, actual_data->taskMgr->getTicks());
     unsync_task.set_type_task(oe::task_type::UNSYNC);
     try {
-        output = actual_data->func(unsync_task);
+        actual_data->func(unsync_task);
+        return 0;
     } catch (oe::api_error& e) {
         std::string error_str = "[OE Error] '" + e.name_ + "' thrown in unsync thread: '" + actual_data->name + "'" + "\n";
         error_str += "\t" + e.what() + "\n";
@@ -94,7 +93,7 @@ int OE_TaskManager::try_run_unsync_thread(OE_UnsyncThreadData* actual_data) {
         cout << error_str << endl;
         OE_WriteToLog(error_str + "\n");
     }
-    return output;
+    return 1;
 }
 
 oe::task_action OE_TaskManager::try_run_task(std::size_t thread_id, std::shared_ptr<oe::task_t> task) {

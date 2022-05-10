@@ -9,9 +9,9 @@ class OE_TaskManager;
 
 namespace oe {
 
-    enum task_type { EVENT, REGULAR, UNSYNC, PHYSICS };
+    enum class task_type { EVENT, REGULAR, UNSYNC, PHYSICS };
 
-    enum task_action { keep, discard };
+    enum class task_action { keep, discard };
 
 
     /// This class is used as a const argument to all functions passed to the engine
