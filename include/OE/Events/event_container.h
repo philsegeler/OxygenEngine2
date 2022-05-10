@@ -25,7 +25,7 @@ namespace oe {
     class event_container_t : public OE_THREAD_SAFETY_OBJECT {
     public:
         friend class registered_t;
-        friend class Element;
+        friend class element_t;
         friend class event_handler_t;
 
         event_container_t()
@@ -39,11 +39,11 @@ namespace oe {
         //*******************************************/
         // interfacing class
 
-        class Element {
+        class element_t {
         public:
-            Element() {
+            element_t() {
             }
-            Element(event_container_t<T>* db, std::size_t index, std::shared_ptr<T> element) : p_(element), db_(db) {
+            element_t(event_container_t<T>* db, std::shared_ptr<T> element) : p_(element), db_(db) {
             }
 
             auto operator->() {
@@ -137,7 +137,7 @@ namespace oe {
                 this->name2id_container_[name]         = element->id;
             }
             else {
-                OE_Warn("Element with ID: '" + std::to_string(element->id) + "' and name: '" + name +
+                OE_Warn("element_t with ID: '" + std::to_string(element->id) + "' and name: '" + name +
                         "' already exists in SharedIndexMap<" + typeid(T).name() + ">.");
             }
         }
@@ -167,46 +167,46 @@ namespace oe {
             return output;
         }
 
-        Element operator[](const std::size_t& index) noexcept {
+        element_t operator[](const std::size_t& index) noexcept {
 
-            auto output = Element();
+            auto output = element_t();
 
 
             if (elements_container_.contains(index))
-                output = Element(this, index, elements_container_[index]);
+                output = element_t(this, elements_container_[index]);
             else
-                output = Element(this, index, nullptr);
+                output = element_t(this, nullptr);
 
 
             if (!output.is_valid()) {
-                OE_Warn("Element with ID: '" + std::to_string(output.id()) + "' does not exist in SharedIndexMap<" +
+                OE_Warn("element_t with ID: '" + std::to_string(output.id()) + "' does not exist in SharedIndexMap<" +
                         typeid(T).name() + ">.");
             }
 
             return output;
         }
 
-        Element operator[](const std::string& name) noexcept {
+        element_t operator[](const std::string& name) noexcept {
 
-            auto output = Element();
+            auto output = element_t();
 
 
             if (this->name2id_container_.contains(name)) {
                 size_t elem_id = name2id_container_[name];
-                output         = Element(this, elem_id, elements_container_[elem_id]);
+                output         = element_t(this, elements_container_[elem_id]);
             }
             else
-                output = Element(this, 0, nullptr);
+                output = element_t(this, nullptr);
 
 
             if (!output.is_valid()) {
-                OE_Warn("Element with name: '" + name + "' does not exist in SharedIndexMap<" + typeid(T).name() + ">.");
+                OE_Warn("element_t with name: '" + name + "' does not exist in SharedIndexMap<" + typeid(T).name() + ">.");
             }
 
             return output;
         }
 
-        Element at(const std::size_t& index) {
+        element_t at(const std::size_t& index) {
 
             auto output = this[0][index];
 
@@ -217,7 +217,7 @@ namespace oe {
             return output;
         }
 
-        Element at(const std::string& name) {
+        element_t at(const std::string& name) {
 
             auto output = this[0][name];
 
@@ -257,8 +257,8 @@ namespace oe {
                 return tmp;
             }
 
-            Element operator*() {
-                return db_[(*iter).first];
+            element_t operator*() {
+                return element_t(&db_, (*iter).second);
             }
 
             friend bool operator==(const Iterator& a, const Iterator& b) {

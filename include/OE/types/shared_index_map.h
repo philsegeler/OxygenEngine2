@@ -414,7 +414,7 @@ namespace oe {
             using iterator_category = std::input_iterator_tag;
             using difference_type   = int;
 
-            Iterator(shared_index_map_t<T, IndexMapType>& db, map_iter_t beginning) : iter(beginning), db_(db) {
+            Iterator(shared_index_map_t<T, IndexMapType>* db, map_iter_t beginning) : iter(beginning), db_(db) {
             }
 
             Iterator& operator++() {
@@ -428,7 +428,7 @@ namespace oe {
             }
 
             element_t operator*() {
-                return db_[(*iter).first];
+                return element_t(db_, (*iter).second);
             }
 
             friend bool operator==(const Iterator& a, const Iterator& b) {
@@ -440,15 +440,15 @@ namespace oe {
 
         private:
             map_iter_t                           iter;
-            shared_index_map_t<T, IndexMapType>& db_{nullptr};
+            shared_index_map_t<T, IndexMapType>* db_{nullptr};
         };
 
         Iterator begin() {
-            return Iterator(*this, this->elements_container_.begin());
+            return Iterator(this, this->elements_container_.begin());
         }
 
         Iterator end() {
-            return Iterator(*this, this->elements_container_.end());
+            return Iterator(this, this->elements_container_.end());
         }
 
         //*******************************************/
