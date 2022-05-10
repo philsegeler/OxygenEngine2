@@ -35,20 +35,16 @@ struct OE_UnsyncThreadData {
 };
 
 struct OE_ThreadStruct {
-    /* this struct is used to store a thread. More specifically it stores:
-     * - the tasks to execute which are represented as an oe::task_t
-     * - the pointer methods to execute which represent an oe::method_type
-     * - a boolean to make the thread asynchronous (relic from 2016, not usable)
+    /* this struct is used to store a thread. More specifically it stores
+     * the tasks to execute which are represented as an oe::task_t
      */
     static std::atomic<std::size_t> current_id;
     const std::size_t               id;
     OE_ThreadStruct();
 
     oe::shared_index_map_t<oe::task_t, oe::index_map_sort_type::greater_than> tasks_;
-
-    int countar = 0;
-
-    oe::task_info_t physics_task;
+    int                                                                       countar = 0;
+    oe::task_info_t                                                           physics_task;
 };
 
 
@@ -66,8 +62,8 @@ class OE_TaskManager : public OE_MutexCondition {
     friend int oxygen_engine_update_thread(void*);
 
 public:
-    OE_TaskManager();
-    ~OE_TaskManager();
+    /**********************************/
+    // public member variables
 
     OE_THREAD_SAFETY_OBJECT  renderer_mutex;
     oe::renderer_base_t*     renderer{nullptr};
@@ -88,13 +84,17 @@ public:
     oe::networking_base_t*   network{nullptr};
     oe::networking_init_info network_init_info;
 
-    unsigned int GetFrameRate();
-    void         SetFrameRate(unsigned int);
+    /**********************************/
+    // public methods
+    OE_TaskManager();
+
+    unsigned int get_frame_rate();
+    void         set_frame_rate(unsigned int);
     /**
      * adds a function to the to-do list of the task manager
      * the first 2 arguments are mandatory and they are:
      * - the name given to the task to be accessed with
-     * - the function to be added which should return an integer and take an oe::task_t as an argument
+     * - the function to be added which should conform to the oe::method_type format specified in task.h
      * the rest 2 are optional and they are
      * - priority (int) higher number => lower priority
      * - the name of the thread to be run, if omitted uses the default thread
@@ -130,7 +130,10 @@ public:
     void force_restart_renderer();
 
 private:
-    // variables
+    /**********************************/
+    // private variables
+    unsigned int framerate;
+    unsigned int current_framerate;
 
     bool              renderer_init_errors{false};
     std::atomic<bool> restart_renderer{false};
@@ -139,9 +142,9 @@ private:
     bool              network_init_errors{false};
 
     std::shared_ptr<OE_World> world{nullptr};
-
     std::shared_ptr<OE_World> pending_world{nullptr}; // for loading a world
 
+    // synchronized threads
     oe::shared_index_map_t<OE_ThreadStruct>      threads;
     std::unordered_map<std::size_t, SDL_Thread*> threadIDs = {};
 
@@ -160,40 +163,39 @@ private:
 
     int countar{0};
 
+    /**********************************/
     // private methods
 
     void update_thread(std::size_t);
-
-    void removeFinishedUnsyncThreads();
-
-    int          getReadyThreads();
-    unsigned int framerate;
-    unsigned int current_framerate;
+    void update_task_list(std::size_t);
 
 
+    void remove_finished_unsync_threads();
 
-    void syncBeginFrame();
-    void syncEndFrame();
+    int get_ready_threads();
 
-    void updateWorld();
-    void runThreadTasks(std::size_t);
+    void sync_begin_frame();
+    void sync_end_frame();
+
+    void update_world();
+    void run_thread_tasks(std::size_t);
 
     // error handling functions
     // those are implemented in OE_Error.cpp
     // in order to have all non-core-engine error handling at one place
-    int             tryRun_unsync_thread(OE_UnsyncThreadData*);
-    oe::task_action tryRun_task(std::size_t, std::shared_ptr<oe::task_t>);
+    int             try_run_unsync_thread(OE_UnsyncThreadData*);
+    oe::task_action try_run_task(std::size_t, std::shared_ptr<oe::task_t>);
 
     // ALL these return true if error is found so it terminates the engine
-    bool tryRun_physics_updateMultiThread(std::size_t, const int&);
-    bool tryRun_renderer_updateSingleThread();
-    bool tryRun_renderer_updateData();
-    bool tryRun_winsys_update();
+    bool try_run_physics_update_multi_thread(std::size_t, const int&);
+    bool try_run_renderer_update_single_thread();
+    bool try_run_renderer_update_data();
+    bool try_run_winsys_update();
 
-    bool tryRun_winsys_init(int, int, std::string, bool, oe::winsys_init_info);
-    bool tryRun_physics_init(oe::physics_init_info);
-    bool tryRun_renderer_init(oe::renderer_init_info);
-    bool tryRun_network_init(oe::networking_init_info);
+    bool try_run_winsys_init(int, int, std::string, bool, oe::winsys_init_info);
+    bool try_run_physics_init(oe::physics_init_info);
+    bool try_run_renderer_init(oe::renderer_init_info);
+    bool try_run_network_init(oe::networking_init_info);
 };
 
 #endif

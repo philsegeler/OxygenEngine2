@@ -107,3 +107,13 @@ oe::task_type oe::task_info_t::get_type_task() const {
 std::size_t oe::task_info_t::get_id() const {
     return event_or_task_id_;
 }
+
+bool oe::task_info_t::is_event() const {
+    return this->type_ == oe::task_type::EVENT;
+}
+bool oe::task_info_t::is_regular() const {
+    return this->type_ == oe::task_type::REGULAR;
+}
+bool oe::task_info_t::is_unsync() const {
+    return this->type_ == oe::task_type::UNSYNC;
+}

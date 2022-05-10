@@ -56,7 +56,7 @@ oe::task_action oe::event_handler_t::call_event(size_t event_id) {
 }
 
 // error handling functions
-int OE_TaskManager::tryRun_unsync_thread(OE_UnsyncThreadData* actual_data) {
+int OE_TaskManager::try_run_unsync_thread(OE_UnsyncThreadData* actual_data) {
 
     int output = 1;
 
@@ -97,7 +97,7 @@ int OE_TaskManager::tryRun_unsync_thread(OE_UnsyncThreadData* actual_data) {
     return output;
 }
 
-oe::task_action OE_TaskManager::tryRun_task(std::size_t thread_id, std::shared_ptr<oe::task_t> task) {
+oe::task_action OE_TaskManager::try_run_task(std::size_t thread_id, std::shared_ptr<oe::task_t> task) {
 
     try {
         return task->execute(thread_id);
@@ -146,7 +146,7 @@ oe::task_action OE_TaskManager::tryRun_task(std::size_t thread_id, std::shared_p
     return oe::task_action::discard;
 }
 
-bool OE_TaskManager::tryRun_physics_updateMultiThread(std::size_t thread_id, const int& comp_threads_copy) {
+bool OE_TaskManager::try_run_physics_update_multi_thread(std::size_t thread_id, const int& comp_threads_copy) {
 
 
     try {
@@ -190,7 +190,7 @@ bool OE_TaskManager::tryRun_physics_updateMultiThread(std::size_t thread_id, con
     return true;
 }
 
-bool OE_TaskManager::tryRun_renderer_updateSingleThread() {
+bool OE_TaskManager::try_run_renderer_update_single_thread() {
 
     this->renderer_mutex.lockMutex();
     auto renderer_info_copy = this->renderer_info;
@@ -226,7 +226,7 @@ bool OE_TaskManager::tryRun_renderer_updateSingleThread() {
     return true;
 }
 
-bool OE_TaskManager::tryRun_renderer_updateData() {
+bool OE_TaskManager::try_run_renderer_update_data() {
 
     this->renderer_mutex.lockMutex();
     auto renderer_info_copy = this->renderer_info;
@@ -262,7 +262,7 @@ bool OE_TaskManager::tryRun_renderer_updateData() {
     return true;
 }
 
-bool OE_TaskManager::tryRun_winsys_update() {
+bool OE_TaskManager::try_run_winsys_update() {
 
     this->window_mutex.lockMutex();
     auto winsys_info = this->window_info;
@@ -292,7 +292,7 @@ bool OE_TaskManager::tryRun_winsys_update() {
     return true;
 }
 
-bool OE_TaskManager::tryRun_winsys_init(int x, int y, std::string titlea, bool fullscreen, oe::winsys_init_info params) {
+bool OE_TaskManager::try_run_winsys_init(int x, int y, std::string titlea, bool fullscreen, oe::winsys_init_info params) {
 
     this->window_init_info           = params;
     this->window_info.res_x          = x;
@@ -322,7 +322,7 @@ bool OE_TaskManager::tryRun_winsys_init(int x, int y, std::string titlea, bool f
     return true;
 }
 
-bool OE_TaskManager::tryRun_physics_init(oe::physics_init_info params) {
+bool OE_TaskManager::try_run_physics_init(oe::physics_init_info params) {
 
     try {
         this->physics_init_info = params;
@@ -349,7 +349,7 @@ bool OE_TaskManager::tryRun_physics_init(oe::physics_init_info params) {
     return true;
 }
 
-bool OE_TaskManager::tryRun_renderer_init(oe::renderer_init_info params) {
+bool OE_TaskManager::try_run_renderer_init(oe::renderer_init_info params) {
 
     try {
         this->renderer_init_info = params;
@@ -376,7 +376,7 @@ bool OE_TaskManager::tryRun_renderer_init(oe::renderer_init_info params) {
     return true;
 }
 
-bool OE_TaskManager::tryRun_network_init(oe::networking_init_info params) {
+bool OE_TaskManager::try_run_network_init(oe::networking_init_info params) {
     try {
         this->network_init_info = params;
         this->network->init(params);

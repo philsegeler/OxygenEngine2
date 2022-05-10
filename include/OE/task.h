@@ -13,6 +13,8 @@ namespace oe {
 
     enum task_action { keep, discard };
 
+
+    /// This class is used as a const argument to all functions passed to the engine
     class task_info_t {
         friend class ::OE_TaskManager;
         friend struct OE_ThreadStruct;
@@ -30,6 +32,9 @@ namespace oe {
         std::size_t get_id() const;
         std::size_t get_thread_id() const;
         task_type   get_type_task() const;
+        bool        is_event() const;
+        bool        is_regular() const;
+        bool        is_unsync() const;
 
     protected:
         void set_thread_id(std::size_t);
@@ -51,13 +56,11 @@ namespace oe {
         bool is_event_task_set_{false};
     };
 
-    /* this is a shortcut type definition
-     * to make code clearer.
-     * It stores an std::function that is executed as tasks in different threads
-     */
-
+    /// This is the main function type that is accepted all over the engine for tasks/events etc.
     typedef std::function<task_action(const oe::task_info_t)> method_type;
 
+
+    /// This class is used for storing regular tasks running on synchronized threads on a shared_index_map
     class task_t : public task_info_t {
 
         friend class ::OE_TaskManager;
