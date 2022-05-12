@@ -24,7 +24,7 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
 
         for (auto obj : OE_World::objectsList) {
             if (obj->getType() == OE_OBJECT_MESH) {
-                auto mesh              = static_pointer_cast<OE_Mesh32>(obj.pointer());
+                auto mesh              = static_pointer_cast<OE_Mesh32>(obj.get_pointer());
                 mesh->data->vbo_exists = false;
                 mesh->data->ibos_exist = false;
             }
@@ -43,7 +43,7 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
     // Update element data
 
     for (auto mat : OE_World::materialsList.changed()) {
-        this->handle_material_data(mat.id(), mat.pointer());
+        this->handle_material_data(mat.get_id(), mat.get_pointer());
     }
 
     this->has_dir_lights_changed_ = false;
@@ -51,26 +51,26 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
 
     for (auto obj : OE_World::objectsList.changed()) {
         if (obj->getType() == OE_OBJECT_MESH) {
-            this->handle_mesh_data(obj.id(), static_pointer_cast<OE_Mesh32>(obj.pointer()));
+            this->handle_mesh_data(obj.get_id(), static_pointer_cast<OE_Mesh32>(obj.get_pointer()));
         }
         else if (obj->getType() == OE_OBJECT_LIGHT) {
-            this->handle_light_data(obj.id(), static_pointer_cast<OE_Light>(obj.pointer()));
+            this->handle_light_data(obj.get_id(), static_pointer_cast<OE_Light>(obj.get_pointer()));
         }
     }
 
     for (auto obj : OE_World::objectsList.changed()) {
         if (obj->getType() == OE_OBJECT_CAMERA) {
-            this->handle_camera_data(obj.id(), static_pointer_cast<OE_Camera>(obj.pointer()));
-            camera_ids.push_back(obj.id());
+            this->handle_camera_data(obj.get_id(), static_pointer_cast<OE_Camera>(obj.get_pointer()));
+            camera_ids.push_back(obj.get_id());
         }
     }
 
     for (auto sce : OE_World::scenesList.changed()) {
-        this->handle_scene_data(sce.id(), sce.pointer());
+        this->handle_scene_data(sce.get_id(), sce.get_pointer());
     }
 
     for (auto vpc : OE_World::viewportsList.changed()) {
-        this->handle_viewport_data(vpc.id(), vpc.pointer());
+        this->handle_viewport_data(vpc.get_id(), vpc.get_pointer());
         this->loaded_viewport_ = OE_Main->get_world()->loaded_viewport;
     }
 

@@ -46,7 +46,7 @@ void OE_World::setup() {
                     // add first found camera to default (0) layer
                     auto cam = OE_World::objectsList[obj];
                     vp_config->lockMutex();
-                    vp_config->addCamera(cam.id(), 0);
+                    vp_config->addCamera(cam.get_id(), 0);
                     vp_config->unlockMutex();
 
                     OE_World::viewportsList.force_append_now("default", vp_config);

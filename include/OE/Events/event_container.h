@@ -46,31 +46,31 @@ namespace oe {
             element_t(event_container_t<T>* db, std::shared_ptr<T> element) : p_(element), db_(db) {
             }
 
-            auto operator->() {
+            auto operator->() const {
                 return p_.operator->();
             }
 
-            std::shared_ptr<T> pointer() {
+            std::shared_ptr<T> get_pointer() const {
                 return p_;
             }
 
-            std::size_t id() {
+            std::size_t get_id() const {
                 if (p_ == nullptr)
                     return 0;
                 else
                     return p_->id;
             }
 
-            void flag_as_registered() {
-                db_->register_event(this->id());
+            void flag_as_registered() const {
+                db_->register_event(this->get_id());
             }
 
-            bool is_valid() {
+            bool is_valid() const {
                 return p_ != nullptr;
             }
 
-            std::string get_name() {
-                return db_->get_name(p_->id);
+            std::string get_name() const {
+                return db_->get_name(this->get_id());
             }
 
         private:
@@ -167,7 +167,7 @@ namespace oe {
             return output;
         }
 
-        element_t operator[](const std::size_t& index) noexcept {
+        const element_t operator[](const std::size_t& index) noexcept {
 
             auto output = element_t();
 
@@ -179,14 +179,14 @@ namespace oe {
 
 
             if (!output.is_valid()) {
-                OE_Warn("element_t with ID: '" + std::to_string(output.id()) + "' does not exist in SharedIndexMap<" +
+                OE_Warn("element_t with ID: '" + std::to_string(index) + "' does not exist in SharedIndexMap<" +
                         typeid(T).name() + ">.");
             }
 
             return output;
         }
 
-        element_t operator[](const std::string& name) noexcept {
+        const element_t operator[](const std::string& name) noexcept {
 
             auto output = element_t();
 
@@ -206,7 +206,7 @@ namespace oe {
             return output;
         }
 
-        element_t at(const std::size_t& index) {
+        const element_t at(const std::size_t& index) {
 
             auto output = this[0][index];
 
@@ -217,7 +217,7 @@ namespace oe {
             return output;
         }
 
-        element_t at(const std::string& name) {
+        const element_t at(const std::string& name) {
 
             auto output = this[0][name];
 
@@ -236,35 +236,42 @@ namespace oe {
         //*******************************************/
         // Regular iterator for interfacing ALL elements
 
-        class Iterator {
+        class iterator_t {
         public:
             typedef typename std::unordered_map<std::size_t, std::shared_ptr<T>>::iterator map_iter_t;
             typedef typename std::pair<std::size_t, std::shared_ptr<T>>                    map_iter_element_t;
 
             using iterator_category = std::input_iterator_tag;
-            using difference_type   = int;
+            using difference_type   = std::ptrdiff_t;
+            using value_type        = element_t;
+            using reference         = value_type&;
+            using pointer           = value_type*;
 
-            Iterator(event_container_t<T>& db, map_iter_t beginning) : iter(beginning), db_(db) {
+            iterator_t(event_container_t<T>& db, map_iter_t beginning) : iter(beginning), db_(db) {
             }
 
-            Iterator& operator++() {
+            iterator_t& operator++() {
                 iter++;
                 return *this;
             }
-            Iterator operator++(int) {
-                Iterator tmp = *this;
+            iterator_t operator++(int) {
+                iterator_t tmp = *this;
                 ++(*this);
                 return tmp;
             }
 
-            element_t operator*() {
+            const element_t operator*() {
                 return element_t(&db_, (*iter).second);
             }
 
-            friend bool operator==(const Iterator& a, const Iterator& b) {
+            const element_t* operator->() const {
+                return &element_t(db_, (*iter).second);
+            }
+
+            friend bool operator==(const iterator_t& a, const iterator_t& b) {
                 return a.iter == b.iter;
             };
-            friend bool operator!=(const Iterator& a, const Iterator& b) {
+            friend bool operator!=(const iterator_t& a, const iterator_t& b) {
                 return a.iter != b.iter;
             };
 
@@ -273,12 +280,12 @@ namespace oe {
             event_container_t<T>& db_{nullptr};
         };
 
-        Iterator begin() {
-            return Iterator(*this, this->elements_container_.begin());
+        iterator_t begin() {
+            return iterator_t(*this, this->elements_container_.begin());
         }
 
-        Iterator end() {
-            return Iterator(*this, this->elements_container_.end());
+        iterator_t end() {
+            return iterator_t(*this, this->elements_container_.end());
         }
 
         //*******************************************/

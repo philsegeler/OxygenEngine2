@@ -104,13 +104,13 @@ void oe::event_handler_t::update_input() {
     for (auto key_event_elem : this->events_list_) {
         if (key_event_elem->type_ == KEYBOARD_EVENT) {
 
-            auto key_event = static_cast<oe::keyboard_event_t*>(key_event_elem.pointer().get());
+            auto key_event = static_cast<oe::keyboard_event_t*>(key_event_elem.get_pointer().get());
             if (key_event->keystate_ == oe::BUTTON_JUST_PRESS) {
                 key_event->keystate_ += 1;
             }
             else if (key_event->keystate_ == oe::BUTTON_PRESS) {
                 if (key_event->is_main_event_) {
-                    this->broadcast_event(key_event_elem.id());
+                    this->broadcast_event(key_event_elem.get_id());
                 }
             }
             else if (key_event->keystate_ == oe::BUTTON_JUST_RELEASE) {
@@ -121,13 +121,13 @@ void oe::event_handler_t::update_input() {
             }
         }
         else if (key_event_elem->type_ == MOUSE_EVENT) {
-            auto key_event = static_cast<oe::mouse_event_t*>(key_event_elem.pointer().get());
+            auto key_event = static_cast<oe::mouse_event_t*>(key_event_elem.get_pointer().get());
             if (key_event->keystate_ == oe::BUTTON_JUST_PRESS) {
                 key_event->keystate_ += 1;
             }
             else if (key_event->keystate_ == oe::BUTTON_PRESS) {
                 if (key_event->is_main_event_) {
-                    this->broadcast_event(key_event_elem.id());
+                    this->broadcast_event(key_event_elem.get_id());
                 }
             }
             else if (key_event->keystate_ == oe::BUTTON_JUST_RELEASE) {

@@ -25,10 +25,10 @@ namespace oe {
         task_info_t() = default;
         task_info_t(int, int, int);
 
-        int         get_counter() const;
-        int         get_priority() const;
-        int         get_time() const;
-        int         get_elapsed_time() const;
+        std::size_t get_counter() const;
+        std::size_t get_priority() const;
+        std::size_t get_time() const;
+        std::size_t get_elapsed_time() const;
         std::size_t get_id() const;
         std::size_t get_thread_id() const;
         task_type   get_type_task() const;
@@ -45,7 +45,7 @@ namespace oe {
 
         task_type   type_{task_type::REGULAR};
         std::size_t counter_{0};
-        uint32_t    priority_{0};
+        std::size_t priority_{0};
         std::size_t delay_{0};
         std::size_t delta_ticks_{0};
         std::size_t init_ticks_{0};

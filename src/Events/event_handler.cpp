@@ -11,7 +11,7 @@ void oe::event_handler_t::init() {
     auto internal_events = this->input_handler_.create_events();
     for (auto x : internal_events) {
         this->events_list_.append(x.first, x.second);
-        this->happened_events_counter_[events_list_[x.first].id()] = 0;
+        this->happened_events_counter_[events_list_[x.first].get_id()] = 0;
     }
     this->done_ = false;
 }
@@ -31,7 +31,7 @@ std::shared_ptr<oe::event_t> oe::event_handler_t::get_event(const string& event_
         throw oe::invalid_event(event_name);
     }
     unlockMutex();
-    return event_elem.pointer();
+    return event_elem.get_pointer();
 }
 
 std::string oe::event_handler_t::get_event_name(std::size_t id) {
@@ -133,7 +133,7 @@ void oe::event_handler_t::destroy_event(size_t event_id) {
     lockMutex();
 
     if (this->events_list_.contains(event_id)) {
-        events_list_.remove(events_list_[event_id].id());
+        events_list_.remove(events_list_[event_id].get_id());
     }
     else {
         // TODO: Warning

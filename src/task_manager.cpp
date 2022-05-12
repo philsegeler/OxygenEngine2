@@ -170,7 +170,7 @@ void OE_TaskManager::CreateNewThread(string thread_name) {
     lockMutex();
 
     this->threads.append_now(thread_name, std::shared_ptr<OE_ThreadStruct>(new OE_ThreadStruct()));
-    size_t thread_id       = this->threads[thread_name].id();
+    size_t thread_id       = this->threads[thread_name].get_id();
     OE_ThreadData::taskMgr = this;
     OE_ThreadData* data    = new OE_ThreadData();
     data->thread_id        = thread_id;
@@ -577,9 +577,9 @@ void OE_TaskManager::run_thread_tasks(std::size_t thread_id) {
 
         task_elem->update();
         // call the task
-        oe::task_action output = this->try_run_task(thread_id, task_elem.pointer());
+        oe::task_action output = this->try_run_task(thread_id, task_elem.get_pointer());
         if (output == oe::task_action::discard) {
-            obsolete_tasks.insert(task_elem.id());
+            obsolete_tasks.insert(task_elem.get_id());
         }
     }
 

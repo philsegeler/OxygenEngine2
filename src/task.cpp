@@ -82,14 +82,14 @@ void oe::task_info_t::update() {
     this->delta_ticks_ = buffer;
 }
 
-int oe::task_info_t::get_counter() const {
+std::size_t oe::task_info_t::get_counter() const {
     return this->counter_;
 }
-int oe::task_info_t::get_priority() const {
+std::size_t oe::task_info_t::get_priority() const {
     return this->priority_;
 }
 
-int oe::task_info_t::get_time() const {
+std::size_t oe::task_info_t::get_time() const {
     return SDL_GetTicks() - this->init_ticks_;
 }
 
@@ -97,7 +97,7 @@ std::size_t oe::task_info_t::get_thread_id() const {
     return thread_id_;
 }
 
-int oe::task_info_t::get_elapsed_time() const {
+std::size_t oe::task_info_t::get_elapsed_time() const {
     return this->ticks_;
 }
 

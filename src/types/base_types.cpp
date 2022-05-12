@@ -115,19 +115,19 @@ std::string CSL_WriterBase::outputTypeTag(const std::string& name, const std::ma
     return output;
 }
 
-OE_Name2ID_Container::OE_Name2ID_Container() {
+OE_Name2ID_ContainerDeprecated::OE_Name2ID_ContainerDeprecated() {
 }
-OE_Name2ID_Container::~OE_Name2ID_Container() {
+OE_Name2ID_ContainerDeprecated::~OE_Name2ID_ContainerDeprecated() {
 }
-OE_Name2ID_Container::OE_Name2ID_Container(std::unordered_map<std::size_t, std::string>* arg) {
+OE_Name2ID_ContainerDeprecated::OE_Name2ID_ContainerDeprecated(std::unordered_map<std::size_t, std::string>* arg) {
     this->id2name = arg;
 }
 
-std::size_t OE_Name2ID_Container::operator[](std::string name) {
+std::size_t OE_Name2ID_ContainerDeprecated::operator[](std::string name) {
     return this->operator()(name);
 }
 
-std::size_t OE_Name2ID_Container::operator()(std::string name) {
+std::size_t OE_Name2ID_ContainerDeprecated::operator()(std::string name) {
     for (const auto& x : *id2name) {
         if (x.second == name) {
             return x.first;

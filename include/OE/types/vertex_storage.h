@@ -20,7 +20,7 @@ class OE_UVMapData : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
 
 public:
     static std::unordered_map<std::size_t, std::string> id2name;
-    static OE_Name2ID_Container                         name2id;
+    static OE_Name2ID_ContainerDeprecated               name2id;
     std::size_t                                         id;
 
     OE_UVMapData() = delete;

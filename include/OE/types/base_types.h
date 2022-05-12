@@ -101,19 +101,21 @@ public:
     static std::string outputTypeTag(const std::string&, const std::map<std::string, std::string>&);
 };
 
+/// DEPRECATED: This class is deprecated. It will be replaced by a shared_index_map_t in the future
+/// There are just a few places where it is needed like OE_UVMapData and OE_VertexGroup
 /** General class to optimize fetching an id from a name in a map
  * and fetching a name from an id
  * It is only supposed to be static.
  */
-class OE_Name2ID_Container : public OE_THREAD_SAFETY_OBJECT {
+class OE_Name2ID_ContainerDeprecated : public OE_THREAD_SAFETY_OBJECT {
 
     friend class CSL_Interpreter;
 
 public:
-    OE_Name2ID_Container();
-    OE_Name2ID_Container(std::unordered_map<std::size_t, std::string>*);
+    OE_Name2ID_ContainerDeprecated();
+    OE_Name2ID_ContainerDeprecated(std::unordered_map<std::size_t, std::string>*);
 
-    ~OE_Name2ID_Container();
+    ~OE_Name2ID_ContainerDeprecated();
     std::size_t operator[](std::string name);
     std::size_t operator()(std::string name);
 

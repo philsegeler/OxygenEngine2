@@ -5,9 +5,9 @@
 
 using namespace std;
 
-std::atomic<std::size_t>      OE_VertexGroup::current_id(0);
-unordered_map<size_t, string> OE_VertexGroup::id2name;
-OE_Name2ID_Container          OE_VertexGroup::name2id = OE_Name2ID_Container(&OE_VertexGroup::id2name);
+std::atomic<std::size_t>       OE_VertexGroup::current_id(0);
+unordered_map<size_t, string>  OE_VertexGroup::id2name;
+OE_Name2ID_ContainerDeprecated OE_VertexGroup::name2id = OE_Name2ID_ContainerDeprecated(&OE_VertexGroup::id2name);
 
 OE_VertexGroup::OE_VertexGroup() : id(++OE_VertexGroup::current_id) {
 

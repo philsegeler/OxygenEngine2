@@ -3,7 +3,7 @@
 using namespace std;
 
 std::unordered_map<std::size_t, std::string> OE_UVMapData::id2name;
-OE_Name2ID_Container                         OE_UVMapData::name2id = OE_Name2ID_Container(&OE_UVMapData::id2name);
+OE_Name2ID_ContainerDeprecated               OE_UVMapData::name2id = OE_Name2ID_ContainerDeprecated(&OE_UVMapData::id2name);
 
 OE_UVMapData::OE_UVMapData(const size_t& ida, const string& name_a) : id(ida) {
     OE_UVMapData::id2name[this->id] = name_a;
