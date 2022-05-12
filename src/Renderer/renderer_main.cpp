@@ -4,7 +4,7 @@
 
 using namespace std;
 
-NRE_Renderer::NRE_Renderer() {
+NRE_Renderer::NRE_Renderer() : renderer_base_t(false, "renderer_main") {
 }
 
 NRE_Renderer::~NRE_Renderer() {
@@ -148,7 +148,6 @@ void NRE_Renderer::initLightUBOProgramFBO() {
 
 bool NRE_Renderer::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
                                bool has_renderer_restarted) {
-    assert(this->world != nullptr);
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
 
@@ -682,9 +681,6 @@ void NRE_Renderer::updateLightGPUData() {
     nre::gpu::set_uniform_buf_data(this->pt_light_ubo, pt_light_data, 0);
 }
 
-bool NRE_Renderer::update_multi_thread(OE_Task*, int) {
-    return false;
-}
 
 void NRE_Renderer::destroy() {
 

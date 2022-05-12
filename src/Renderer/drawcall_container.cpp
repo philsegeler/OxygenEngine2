@@ -64,6 +64,10 @@ void NRE_DrawCallContainer::update() {
     this->pending_rengroups_.clear();
 }
 
+const std::set<NRE_RenderGroup> NRE_DrawCallContainer::deleted() {
+    return to_be_deleted_;
+}
+
 void NRE_DrawCallContainer::cleanupPrograms() {
     for (auto ren_group : to_be_deleted_) {
         this->data_.erase(ren_group);

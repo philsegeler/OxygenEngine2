@@ -18,6 +18,7 @@ src = ['src/Renderer/glad.c',
        'src/api_oe.cpp',
        'src/math_oe.cpp',
        'src/dummy_classes.cpp',
+       'src/global_variables.cpp',
        'src/task_manager.cpp',
        'src/task.cpp',
        'src/error_oe.cpp',
@@ -52,7 +53,6 @@ internal_inc = include_directories('./include')
 cmake = import('cmake')
 sub_proj = cmake.subproject('ctre')
 ctre_dep = sub_proj.dependency('ctre')
-ctre_inc = sub_proj.include_directories('ctre')
 
 glm_dep = dependency('glm')
 
@@ -63,17 +63,18 @@ glm_dep = dependency('glm')
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
     sdl2_dep = dependency('sdl2')
     dl_dep = dependency('dl', required : false)
-    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep, dl_dep, glm_dep], include_directories : [internal_inc, ctre_inc])
+    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [sdl2_dep, dl_dep, glm_dep, ctre_dep], include_directories : [internal_inc])
 else
     thread_dep = dependency('threads')
-    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [thread_dep, glm_dep], include_directories : [internal_inc, ctre_inc])
+    oe_lib = static_library('OxygenEngine', sources : src, dependencies : [thread_dep, glm_dep, ctre_dep], include_directories : [internal_inc])
 endif
 
-oe_dep = declare_dependency(link_with : oe_lib, include_directories : [internal_inc, ctre_inc])
+oe_dep = declare_dependency(link_with : oe_lib, include_directories : [internal_inc])
 
 if meson.get_compiler('c', native : false).get_id() != 'emscripten'
     executable('CSL_Test', sources : 'examples/csl_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
-    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')
+    executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
+    executable('EventsTasksTest', sources : 'examples/events_tasks_test.cpp', dependencies : [oe_dep, glm_dep], win_subsystem: 'windows')
 else
     #executable('CSL_Test', sources : 'esamples/csl_main_test.cpp', dependencies : [oe_dep, ctre_dep], win_subsystem: 'windows')
     executable('OE_Test', sources : 'examples/oe_main_test.cpp', dependencies : [oe_dep, glm_dep, ctre_dep], win_subsystem: 'windows')

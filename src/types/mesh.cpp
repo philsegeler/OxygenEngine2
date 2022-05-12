@@ -1,13 +1,14 @@
+#include <OE/global_variables.h>
 #include <OE/math_oe.h>
 #include <OE/types/mesh.h>
-#include <OE/types/world.h>
 
 
 using namespace std;
 
 
 OE_Mesh32::OE_Mesh32(uint32_t num_of_vertices, uint32_t num_of_normals, uint32_t num_of_triangles, uint32_t num_of_uvs,
-                     uint32_t max_uv_num) {
+                     uint32_t max_uv_num)
+    : OE_Object() {
 
     this->physics_data = nullptr;
     this->data =
@@ -91,11 +92,11 @@ OE_OBJECT_TYPE OE_Mesh32::getType() const {
 std::string OE_Mesh32::to_str() const {
 
     string output = "";
-    // vector<string> output_list;
-    // output_list.reserve(9+ this->textureCM_IDs.size() + this->data->vertices.uvmaps.size() + this->data->triangles.size() +
+    // vector<string> outputList;
+    // outputList.reserve(9+ this->textureCM_IDs.size() + this->data->vertices.uvmaps.size() + this->data->triangles.size() +
     // this->data.triangle_groups.size()+1);
-
-    output.append(outputTypeTag("Mesh", {{"name", "\"" + OE_World::objectsList.id2name_[this->id] + "\""},
+    lockMutex();
+    output.append(outputTypeTag("Mesh", {{"name", "\"" + oe::objects_list.get_name(this->id) + "\""},
                                          {"visible", convert((int)visible)},
                                          {"num_uvs", convert(data->vertices.uvmaps.size())},
                                          {"isDynamic", convert((int)this->data->isDynamic)}}));
@@ -105,7 +106,7 @@ std::string OE_Mesh32::to_str() const {
     output.append(outputList("current_state", this->current_state.to_arr()));
     output.append("\n");
 
-    output.append(outputVar("parent", "\"" + OE_World::objectsList.id2name_[this->parent] + "\""));
+    output.append(outputVar("parent", "\"" + oe::objects_list.get_name(this->parent) + "\""));
     output.append("\n");
 
     output.append(outputVar("parent_type", convert(this->parent_type)));
@@ -126,7 +127,7 @@ std::string OE_Mesh32::to_str() const {
     output.append(outputList("normals", this->data->vertices.normals));
     vector<string> tcm_strs;
     for (const auto& x : this->textureCM_IDs) {
-        tcm_strs.push_back("\"" + OE_World::tcmsList.id2name_[x] + "\"");
+        tcm_strs.push_back("\"" + oe::tcms_list.get_name(x) + "\"");
     }
     if (tcm_strs.size() != 0) {
         output.append(outputList("textureCM_IDs", tcm_strs));
@@ -149,6 +150,7 @@ std::string OE_Mesh32::to_str() const {
 
     CSL_WriterBase::indent = CSL_WriterBase::indent - 1;
     output.append(outputClosingTag("Mesh"));
-    // return CSL_Join("\n", output_list);
+    unlockMutex();
+    // return CSL_Join("\n", outputList);
     return output;
 }

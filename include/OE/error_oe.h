@@ -24,7 +24,9 @@ namespace oe {
         }
         std::string what() const throw() {
             return "Calling API function: '" + data_ + "' is forbidden after ALREADY having called 'oe::init(...)'.";
-        };
+        }
+
+    private:
         std::string data_;
     };
 
@@ -37,7 +39,9 @@ namespace oe {
         }
         std::string what() const throw() {
             return "ID: '" + id_ + "' is not a valid ID for an element of '" + data_ + "'.";
-        };
+        }
+
+    private:
         std::string data_;
         std::string id_;
     };
@@ -51,7 +55,9 @@ namespace oe {
         }
         std::string what() const throw() {
             return "Name: '" + name_ + "' is not a valid name for an element of '" + data_ + "'.";
-        };
+        }
+
+    private:
         std::string data_;
         std::string name_;
     };
@@ -64,8 +70,74 @@ namespace oe {
         }
         std::string what() const throw() {
             return "Event: '" + data_ + "' does not exist.";
-        };
+        }
+
+    private:
         std::string data_;
+    };
+
+    class invalid_event_name : public api_error {
+    public:
+        invalid_event_name(std::string arg, std::string prefix) {
+            name_   = "oe::invalid_event_name";
+            data_   = arg;
+            prefix_ = prefix;
+        }
+        std::string what() const throw() {
+            return "Name: '" + data_ + "' is not a valid name for a custom event, because it starts with '" + prefix_ + "'";
+        }
+
+    private:
+        std::string data_;
+        std::string prefix_;
+    };
+
+    class invalid_physics_event_name : public api_error {
+    public:
+        invalid_physics_event_name(std::string arg, std::string prefix) {
+            name_   = "oe::invalid_physics_event_name";
+            data_   = arg;
+            prefix_ = prefix;
+        }
+        std::string what() const throw() {
+            return "Name: '" + data_ + "' is not a valid name for a physics event, because it starts with '" + prefix_ + "'";
+        }
+
+    private:
+        std::string data_;
+        std::string prefix_;
+    };
+
+    class invalid_network_event_name : public api_error {
+    public:
+        invalid_network_event_name(std::string arg, std::string prefix) {
+            name_   = "oe::invalid_network_event_name";
+            data_   = arg;
+            prefix_ = prefix;
+        }
+        std::string what() const throw() {
+            return "Name: '" + data_ + "' is not a valid name for a network event, because it starts with '" + prefix_ + "'";
+        }
+
+    private:
+        std::string data_;
+        std::string prefix_;
+    };
+
+    class invalid_renderer_event_name : public api_error {
+    public:
+        invalid_renderer_event_name(std::string arg, std::string prefix) {
+            name_   = "oe::invalid_renderer_event_name";
+            data_   = arg;
+            prefix_ = prefix;
+        }
+        std::string what() const throw() {
+            return "Name: '" + data_ + "' is not a valid name for a network event, because it starts with '" + prefix_ + "'";
+        }
+
+    private:
+        std::string data_;
+        std::string prefix_;
     };
 
     class invalid_task_name : public api_error {
@@ -77,7 +149,9 @@ namespace oe {
         }
         std::string what() const throw() {
             return "Task: '" + task_ + "' does not exist in thread: '" + thread_ + "'.";
-        };
+        }
+
+    private:
         std::string task_;
         std::string thread_;
     };
@@ -91,6 +165,8 @@ namespace oe {
         std::string what() const throw() {
             return "Thread: '" + data_ + "' does not exist.";
         };
+
+    private:
         std::string data_;
     };
 
@@ -103,6 +179,8 @@ namespace oe {
         std::string what() const throw() {
             return data_;
         };
+
+    private:
         std::string data_;
     };
 

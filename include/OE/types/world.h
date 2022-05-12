@@ -2,7 +2,6 @@
 #define OE_WORLD_H
 
 #include <OE/types/scene.h>
-#include <OE/types/shared_index_map.h>
 #include <OE/types/viewport_config.h>
 
 class OE_World : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
@@ -11,21 +10,14 @@ class OE_World : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
     friend class NRE_Renderer;
 
 public:
-    static OE_SharedIndexMap<OE_Scene>          scenesList;
-    static OE_SharedIndexMap<OE_Object>         objectsList;
-    static OE_SharedIndexMap<OE_Material>       materialsList;
-    static OE_SharedIndexMap<OE_Texture>        texturesList;
-    static OE_SharedIndexMap<OE_TCM>            tcmsList;
-    static OE_SharedIndexMap<OE_ViewportConfig> viewportsList;
-
-
-
     OE_World();
     ~OE_World();
 
     void setup();
 
     std::string to_str() const;
+
+    std::size_t get_loaded_viewport();
 
     // protected:
 

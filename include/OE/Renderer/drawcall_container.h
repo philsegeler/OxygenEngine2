@@ -12,9 +12,7 @@ public:
     NRE_DrawCallContainer();
     ~NRE_DrawCallContainer();
 
-    std::set<NRE_RenderGroup> data_;
-    std::set<NRE_RenderGroup> pending_rengroups_;
-    std::set<NRE_RenderGroup> to_be_deleted_;
+
 
     class Iterator {
     public:
@@ -51,6 +49,13 @@ public:
     void removeMaterial(std::size_t);
     void removeMesh(std::size_t);
     void removeVertexGroup(std::size_t, std::size_t);
+
+    const std::set<NRE_RenderGroup> deleted();
+
+private:
+    std::set<NRE_RenderGroup> data_;
+    std::set<NRE_RenderGroup> pending_rengroups_;
+    std::set<NRE_RenderGroup> to_be_deleted_;
 };
 
 

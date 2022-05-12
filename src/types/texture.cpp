@@ -1,39 +1,26 @@
+#include <OE/global_variables.h>
 #include <OE/types/camera.h>
 #include <OE/types/texture.h>
-#include <OE/types/world.h>
 
 using namespace std;
 
 
 std::atomic<std::size_t> OE_Texture::current_id(0);
 
-OE_Texture::OE_Texture() {
+OE_Texture::OE_Texture() : id(++OE_Texture::current_id) {
 
     this->source      = 0;
     this->path        = "";
     this->camera      = 0;
     this->custom_data = nullptr;
-
-    this->id = ++OE_Texture::current_id;
-}
-
-
-OE_Texture::OE_Texture(const string& name) {
-
-    this->source      = 0;
-    this->path        = "";
-    this->camera      = 0;
-    this->custom_data = nullptr;
-
-    this->id = ++OE_Texture::current_id;
 }
 
 OE_Texture::~OE_Texture() {
 }
 
 string OE_Texture::to_str() const {
-
-    string output = outputTypeTag("Texture", {{"name", "\"" + OE_World::texturesList.id2name_[this->id] + "\""}});
+    lockMutex();
+    string output = outputTypeTag("Texture", {{"name", "\"" + oe::textures_list.get_name(this->id) + "\""}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
@@ -48,11 +35,12 @@ string OE_Texture::to_str() const {
         output.append("\n");
     }
     else {
-        output.append(outputVar("camera", "\"" + OE_World::objectsList.id2name_[this->camera] + "\""));
+        output.append(outputVar("camera", "\"" + oe::objects_list.get_name(this->camera) + "\""));
         output.append("\n");
     }
 
     CSL_WriterBase::indent = CSL_WriterBase::indent - 1;
     output.append(outputClosingTag("Texture"));
+    unlockMutex();
     return output;
 }

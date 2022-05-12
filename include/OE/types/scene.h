@@ -18,10 +18,9 @@ class OE_Scene : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
 
 public:
     static std::atomic<std::size_t> current_id;
-    std::size_t                     id;
+    const std::size_t               id;
 
     OE_Scene();
-    OE_Scene(const std::string&);
     ~OE_Scene();
 
     std::string to_str() const;

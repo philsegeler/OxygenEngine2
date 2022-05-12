@@ -4,7 +4,7 @@
 
 using namespace std;
 
-NRE_RendererLegacy::NRE_RendererLegacy() {
+NRE_RendererLegacy::NRE_RendererLegacy() : renderer_base_t(false, "renderer_legacy") {
 }
 
 NRE_RendererLegacy::~NRE_RendererLegacy() {
@@ -118,7 +118,6 @@ void NRE_RendererLegacy::initGPUSphere() {
 
 bool NRE_RendererLegacy::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
                                      bool has_renderer_restarted) {
-    assert(this->world != nullptr);
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
 
@@ -290,6 +289,8 @@ bool NRE_RendererLegacy::update_single_thread(oe::renderer_update_info update_in
     nre::gpu::set_texture_slot(this->colortexture, 0);
 
     nre::gpu::draw(this->gamma_cor_prog, this->vao_fullscreen_quad);
+
+    nre::gpu::discard_framebuffer(this->framebuffer);
     return true;
 }
 
@@ -629,10 +630,6 @@ void NRE_RendererLegacy::updateLightGPUData() {
     for (int i = 0; i < 16 * (255 - count); i++) {
         pt_light_data.push_back(0.0f);
     }
-}
-
-bool NRE_RendererLegacy::update_multi_thread(OE_Task*, int) {
-    return false;
 }
 
 void NRE_RendererLegacy::destroy() {

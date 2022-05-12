@@ -14,261 +14,199 @@
 
 /** New General class based on oe::shared_index_map_t intended to optimize and properly parallelize accesing of
  * individual events. Stores ids and names. Only stores one name per element and one id per element.
- * Supports input iterators. Everything apart from iterators is 100% thread-safe.
  * The difference between this and oe::shared_index_map is that
  *  - No pending elements, elements are added directly
- *  - Registered is renamed to Registered and an event can come more than once
+ *  - Changed is renamed to registered_t and an event can come more than once
+ *  - No mutexes, this is totally thread-unsafe, but it is guarded by the event handler mutex
  */
 
 namespace oe {
     template <typename T>
     class event_container_t : public OE_THREAD_SAFETY_OBJECT {
-    protected:
-        std::unordered_map<std::size_t, std::shared_ptr<T>> elements_;
-        std::set<std::string>                               names_;
-
-        void register_event(const std::size_t& index) {
-            lockMutex();
-            this->registered_.add(index);
-            unlockMutex();
-        }
-
-        void clear_internally() {
-
-            for (auto x : elements_) {
-                this->deleted_.add(x.first);
-            }
-            elements_.clear();
-            registered_.clear();
-
-            names_.clear();
-            id2name_.clear();
-        }
-
     public:
-        std::unordered_map<std::size_t, std::string> id2name_;
-        OE_Name2ID                                   name2id;
+        friend class registered_t;
+        friend class element_t;
+        friend class event_handler_t;
 
-        friend class Registered;
-        friend class Element;
+        event_container_t()
+            : registered_(*this), deleted_(*this){
 
-        event_container_t() : registered_(*this), deleted_(*this) {
-            lockMutex();
-            this->name2id = OE_Name2ID(&this->id2name_);
-            unlockMutex();
-        };
+                                  };
 
         event_container_t(const event_container_t&) = delete;
 
-        ~event_container_t() {
-        }
-
-        std::size_t size() {
-            lockMutex();
-            std::size_t output = this->elements_.size();
-            unlockMutex();
-            return output;
-        }
 
         //*******************************************/
         // interfacing class
 
-        class Element {
+        class element_t {
         public:
-            Element() {
+            element_t() {
             }
-            Element(event_container_t<T>* db, std::size_t index, std::shared_ptr<T> element)
-                : id_(index), p_(element), db_(db) {
-            }
-
-            std::size_t        id_{0};
-            std::shared_ptr<T> p_{nullptr};
-
-            void flag_as_registered() {
-                db_->register_event(this->id_);
+            element_t(event_container_t<T>* db, std::shared_ptr<T> element) : p_(element), db_(db) {
             }
 
-            bool is_valid() {
+            auto operator->() const {
+                return p_.operator->();
+            }
+
+            std::shared_ptr<T> get_pointer() const {
+                return p_;
+            }
+
+            std::size_t get_id() const {
+                if (p_ == nullptr)
+                    return 0;
+                else
+                    return p_->id;
+            }
+
+            void flag_as_registered() const {
+                db_->register_event(this->get_id());
+            }
+
+            bool is_valid() const {
                 return p_ != nullptr;
             }
 
-            std::string get_name() {
-                return db_->get_name(id_);
+            std::string get_name() const {
+                return db_->get_name(this->get_id());
             }
 
-        protected:
+        private:
+            std::shared_ptr<T>    p_{nullptr};
             event_container_t<T>* db_;
         };
 
         //*******************************************/
         // methods
 
+        std::size_t size() {
+
+            std::size_t output = this->elements_container_.size();
+
+            return output;
+        }
+
         void extend(event_container_t<T>& other, bool override_names) {
-            lockMutex();
+
 
             other.synchronize(false);
 
             if (!override_names) {
                 for (auto x : other) {
-                    this->appendUNSAFE(x.get_name(), x.p_);
+                    this->append(x.get_name(), x.p_);
                 }
             }
             else {
                 for (auto x : other) {
-                    this->force_appendUNSAFE(x.get_name(), x.p_);
+                    this->force_append(x.get_name(), x.p_);
                 }
             }
-
-            unlockMutex();
         }
 
         // TODO: Add referemce count
-        int count(std::size_t index) {
-            int output = 0;
-            lockMutex();
-            if (this->elements_.count(index) == 1) {
-                output = 1;
-            }
-            unlockMutex();
-            return output;
+        bool contains(std::size_t index) {
+            return this->elements_container_.contains(index);
         }
 
 
         // TODO: Add referemce count
-        int count(const std::string& name) {
-            int output = 0;
-            lockMutex();
-            if (this->names_.count(name) == 1) {
-                output = 1;
-            }
-            unlockMutex();
-            return output;
+        bool contains(const std::string& name) {
+            return this->name2id_container_.contains(name);
         }
 
         std::string get_name(const std::size_t& index) {
-            if (id2name_.count(index) != 0) return id2name_[index];
+            if (id2name_container_.count(index) != 0) return id2name_container_[index];
             return "";
         }
 
-        void append(const std::string& name, std::shared_ptr<T> element) {
-            lockMutex();
-            this->appendUNSAFE(name, element);
-            unlockMutex();
-        }
-
-        void appendUNSAFE(const std::string& name, std::shared_ptr<T> element) {
-            if ((this->count(element->id) == 0)) {
-                this->elements_[element->id] = element;
-                this->id2name_[element->id]  = name;
-                this->names_.insert(name);
+        std::size_t get_id(const std::string& name) {
+            if (this->name2id_container_.count(name) == 1) {
+                return this->name2id_container_[name];
             }
             else {
-                OE_Warn("Element with ID: '" + std::to_string(element->id) + "' and name: '" + name +
+                return 0;
+            }
+        }
+
+        void append(const std::string& name, std::shared_ptr<T> element) {
+            if ((this->contains(element->id) == 0) and not this->name2id_container_.contains(name)) {
+                this->elements_container_[element->id] = element;
+                this->id2name_container_[element->id]  = name;
+                this->name2id_container_[name]         = element->id;
+            }
+            else {
+                OE_Warn("element_t with ID: '" + std::to_string(element->id) + "' and name: '" + name +
                         "' already exists in SharedIndexMap<" + typeid(T).name() + ">.");
             }
         }
 
         void force_append(const std::string& name, std::shared_ptr<T> element) {
-            lockMutex();
-            this->force_appendUNSAFE(name, element);
-            unlockMutex();
-        }
-
-        void force_appendUNSAFE(const std::string& name, std::shared_ptr<T> element) {
-            if (names_.count(name) == 1) {
+            if (name2id_container_.count(name) == 1) {
                 size_t prev_id = this->name2id[name];
-                this->elements_.erase(prev_id);
-                this->id2name_.erase(prev_id);
+                this->elements_container_.erase(prev_id);
+                this->id2name_container_.erase(prev_id);
                 registered_.remove(prev_id);
                 deleted_.add(prev_id);
             }
-            this->elements_[element->id] = element;
-            this->id2name_[element->id]  = name;
-            this->registered_.add(element->id);
-            this->names_.insert(name);
+            this->elements_container_[element->id] = element;
+            this->id2name_container_[element->id]  = name;
+            this->name2id_container_[name]         = element->id;
         }
 
         std::string to_str() {
-            lockMutex();
+
             std::string output = "[\n";
-            for (auto x : elements_) {
-                output.append(id2name_[x.first] + " ; " + std::to_string(x.first));
+            for (auto x : elements_container_) {
+                output.append(id2name_container_[x.first] + " ; " + std::to_string(x.first));
                 output.append("\n");
             }
             output.append("]");
-            unlockMutex();
+
             return output;
         }
 
-        void reset_registered() {
-            lockMutex();
-            this->reset_registeredUNSAFE();
-            unlockMutex();
-        }
+        const element_t operator[](const std::size_t& index) noexcept {
 
-        void reset_registeredUNSAFE() {
-            this->registered_.clear();
-        }
+            auto output = element_t();
 
-        void synchronize(bool clear_all) noexcept {
 
-            lockMutex();
-
-            this->reset_registeredUNSAFE();
-
-            for (auto x : deleted_.indices_) {
-                if (elements_.count(x) == 0) continue;
-                elements_.erase(x);
-                names_.erase(id2name_[x]);
-                id2name_.erase(x);
-            }
-
-            deleted_.clear();
-
-            if (clear_all) this->clear_internally();
-            unlockMutex();
-        }
-
-        Element operator[](const std::size_t& index) noexcept {
-
-            auto output = Element();
-
-            lockMutex();
-            if (elements_.count(index) != 0)
-                output = Element(this, index, elements_[index]);
+            if (elements_container_.contains(index))
+                output = element_t(this, elements_container_[index]);
             else
-                output = Element(this, index, nullptr);
-            unlockMutex();
+                output = element_t(this, nullptr);
+
 
             if (!output.is_valid()) {
-                OE_Warn("Element with ID: '" + std::to_string(output.id_) + "' does not exist in SharedIndexMap<" +
+                OE_Warn("element_t with ID: '" + std::to_string(index) + "' does not exist in SharedIndexMap<" +
                         typeid(T).name() + ">.");
             }
 
             return output;
         }
 
-        Element operator[](const std::string& name) noexcept {
+        const element_t operator[](const std::string& name) noexcept {
 
-            auto output = Element();
+            auto output = element_t();
 
-            lockMutex();
-            if (this->names_.count(name) != 0) {
-                size_t elem_id = name2id[name];
-                output         = Element(this, elem_id, elements_[elem_id]);
+
+            if (this->name2id_container_.contains(name)) {
+                size_t elem_id = name2id_container_[name];
+                output         = element_t(this, elements_container_[elem_id]);
             }
             else
-                output = Element(this, name2id[name], nullptr);
-            unlockMutex();
+                output = element_t(this, nullptr);
+
 
             if (!output.is_valid()) {
-                OE_Warn("Element with name: '" + name + "' does not exist in SharedIndexMap<" + typeid(T).name() + ">.");
+                OE_Warn("element_t with name: '" + name + "' does not exist in SharedIndexMap<" + typeid(T).name() + ">.");
             }
 
             return output;
         }
 
-        Element at(const std::size_t& index) {
+        const element_t at(const std::size_t& index) {
 
             auto output = this[0][index];
 
@@ -279,7 +217,7 @@ namespace oe {
             return output;
         }
 
-        Element at(const std::string& name) {
+        const element_t at(const std::string& name) {
 
             auto output = this[0][name];
 
@@ -291,43 +229,49 @@ namespace oe {
         }
 
         void remove(const std::size_t& index) {
-            lockMutex();
+
             this->deleted_.add(index);
-            unlockMutex();
         }
 
         //*******************************************/
         // Regular iterator for interfacing ALL elements
 
-        class Iterator {
+        class iterator_t {
         public:
             typedef typename std::unordered_map<std::size_t, std::shared_ptr<T>>::iterator map_iter_t;
             typedef typename std::pair<std::size_t, std::shared_ptr<T>>                    map_iter_element_t;
 
             using iterator_category = std::input_iterator_tag;
-            using difference_type   = int;
+            using difference_type   = std::ptrdiff_t;
+            using value_type        = element_t;
+            using reference         = value_type&;
+            using pointer           = value_type*;
 
-            Iterator(event_container_t<T>& db, map_iter_t beginning) : iter(beginning), db_(db) {
+            iterator_t(event_container_t<T>& db, map_iter_t beginning) : iter(beginning), db_(db) {
             }
 
-            Iterator& operator++() {
+            iterator_t& operator++() {
                 iter++;
                 return *this;
             }
-            Iterator operator++(int) {
-                Iterator tmp = *this;
+            iterator_t operator++(int) {
+                iterator_t tmp = *this;
                 ++(*this);
                 return tmp;
             }
 
-            Element operator*() {
-                return db_[(*iter).first];
+            const element_t operator*() {
+                return element_t(&db_, (*iter).second);
             }
 
-            friend bool operator==(const Iterator& a, const Iterator& b) {
+            const element_t* operator->() const {
+                return &element_t(db_, (*iter).second);
+            }
+
+            friend bool operator==(const iterator_t& a, const iterator_t& b) {
                 return a.iter == b.iter;
             };
-            friend bool operator!=(const Iterator& a, const Iterator& b) {
+            friend bool operator!=(const iterator_t& a, const iterator_t& b) {
                 return a.iter != b.iter;
             };
 
@@ -336,189 +280,157 @@ namespace oe {
             event_container_t<T>& db_{nullptr};
         };
 
-        Iterator begin() {
-            return Iterator(*this, this->elements_.begin());
+        iterator_t begin() {
+            return iterator_t(*this, this->elements_container_.begin());
         }
 
-        Iterator end() {
-            return Iterator(*this, this->elements_.end());
+        iterator_t end() {
+            return iterator_t(*this, this->elements_container_.end());
         }
 
         //*******************************************/
-        // Registered class for storing all element indices that registered the previous frame
+        // registered_t class for storing all element indices that registered the previous frame
 
-        class Registered {
+        class registered_t {
+            friend class event_container_t;
+
         public:
-            // Registered(){}
-            Registered(event_container_t<T>& inputa) : db_(inputa) {
+            // registered_t(){}
+            registered_t(event_container_t<T>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
-                if ((db_.elements_.count(index) != 0) && (db_.deleted_.count(index) == 0)) indices_.push_back(index);
+                if ((db_.elements_container_.count(index) != 0) && (db_.deleted_.count(index) == 0))
+                    indices_container_.push_back(index);
             }
 
             void remove(const std::size_t& index) {
-                if (std::count(indices_.begin(), indices_.end(), index) != 0) {
-                    std::erase(indices_, index);
+                if (std::count(indices_container_.begin(), indices_container_.end(), index) != 0) {
+                    std::erase(indices_container_, index);
                 }
             }
 
             bool empty() {
-                return this->indices_.empty();
+                return this->indices_container_.empty();
             }
 
             void clear() {
-                this->indices_.clear();
+                this->indices_container_.clear();
             }
 
-            //*******************************************/
-            // Registered iterator for getting the registered events in the right direction
-            class RegisteredIter {
-            public:
-                typedef std::vector<std::size_t>::iterator vector_iter_t;
+            typedef std::vector<std::size_t>::iterator vector_iter_t;
 
-                using iterator_category = std::input_iterator_tag;
-                using difference_type   = int;
-
-                RegisteredIter(event_container_t<T>& db, vector_iter_t beginning) : iter(beginning), db_(db) {
-                }
-
-                RegisteredIter& operator++() {
-                    iter++;
-                    return *this;
-                }
-                RegisteredIter operator++(int) {
-                    RegisteredIter tmp = *this;
-                    ++(*this);
-                    return tmp;
-                }
-
-                // This needs robust error handling in multiple threads
-                Element operator*() {
-                    return db_[*iter];
-                }
-
-                friend bool operator==(const RegisteredIter& a, const RegisteredIter& b) {
-                    return a.iter == b.iter;
-                };
-                friend bool operator!=(const RegisteredIter& a, const RegisteredIter& b) {
-                    return a.iter != b.iter;
-                };
-
-            protected:
-                vector_iter_t         iter;
-                event_container_t<T>& db_;
-            };
-
-            RegisteredIter begin() {
-                return RegisteredIter(this->db_, this->indices_.begin());
+            vector_iter_t begin() {
+                return this->indices_container_.begin();
             }
 
-            RegisteredIter end() {
-                return RegisteredIter(this->db_, this->indices_.end());
+            vector_iter_t end() {
+                return this->indices_container_.end();
             }
 
+        private:
             event_container_t<T>&    db_;
-            std::vector<std::size_t> indices_;
+            std::vector<std::size_t> indices_container_;
         };
 
-        Registered registered_;
 
-        Registered registered() {
-            return this->registered_;
+
+        const std::vector<std::size_t> registered() {
+            return this->registered_.indices_container_;
+        }
+
+        void register_event(const std::size_t& index) {
+
+            this->registered_.add(index);
         }
 
         bool has_registered_events() {
-            lockMutex();
+
             bool output = not this->registered_.empty();
-            unlockMutex();
+
             return output;
         }
 
         //*******************************************/
-        // Deleted class for storing all element indices that registered the previous frame
+        // deleted_t class for storing all element indices that registered the previous frame
 
-        class Deleted {
+        class deleted_t {
         public:
-            // Deleted(){}
-            Deleted(event_container_t<T>& inputa) : db_(inputa) {
+            // deleted_t(){}
+            deleted_t(event_container_t<T>& inputa) : db_(inputa) {
             }
 
             void add(const std::size_t& index) {
-                indices_.insert(index);
-                if (db_.elements_.count(index) != 0) {
+                indices_container_.insert(index);
+                if (db_.elements_container_.count(index) != 0) {
                     db_.registered_.remove(index);
                 }
             }
 
             void remove(const std::size_t& index) {
-                if (indices_.count(index) != 0) {
-                    indices_.erase(index);
+                if (indices_container_.count(index) != 0) {
+                    indices_container_.erase(index);
                 }
             }
 
             int count(const std::size_t& index) {
-                return this->indices_.count(index);
+                return this->indices_container_.count(index);
             }
 
             void clear() {
-                this->indices_.clear();
-            }
-
-            //*******************************************/
-            // Deleted iterator for getting only the objects that registered
-            class DeletedIter {
-            public:
-                typedef std::set<std::size_t, std::greater<std::size_t>>::iterator set_iter_t;
-
-                using iterator_category = std::input_iterator_tag;
-                using difference_type   = int;
-
-                DeletedIter(event_container_t<T>& db, set_iter_t beginning) : iter(beginning), db_(db) {
-                }
-
-                DeletedIter& operator++() {
-                    iter++;
-                    return *this;
-                }
-                DeletedIter operator++(int) {
-                    DeletedIter tmp = *this;
-                    ++(*this);
-                    return tmp;
-                }
-
-                Element operator*() {
-                    return db_[*iter];
-                }
-
-                friend bool operator==(const DeletedIter& a, const DeletedIter& b) {
-                    return a.iter == b.iter;
-                };
-                friend bool operator!=(const DeletedIter& a, const DeletedIter& b) {
-                    return a.iter != b.iter;
-                };
-
-            protected:
-                set_iter_t            iter;
-                event_container_t<T>& db_;
-            };
-
-            DeletedIter begin() {
-                return DeletedIter(this->db_, this->indices_.begin());
-            }
-
-            DeletedIter end() {
-                return DeletedIter(this->db_, this->indices_.end());
+                this->indices_container_.clear();
             }
 
             event_container_t<T>&                            db_;
-            std::set<std::size_t, std::greater<std::size_t>> indices_;
+            std::set<std::size_t, std::greater<std::size_t>> indices_container_;
         };
 
-        Deleted deleted_;
+        const std::set<std::size_t, std::greater<std::size_t>> deleted() {
+            return this->deleted_.indices_container_;
+        }
 
-        Deleted deleted() {
-            return this->deleted_;
+
+    private:
+        std::unordered_map<std::size_t, std::shared_ptr<T>> elements_container_;
+        std::unordered_map<std::string, std::size_t>        name2id_container_;
+
+        std::unordered_map<std::size_t, std::string> id2name_container_;
+
+        registered_t registered_;
+
+        deleted_t deleted_;
+
+
+        void clear_internally() {
+
+            for (auto x : elements_container_) {
+                this->deleted_.add(x.first);
+            }
+            elements_container_.clear();
+            registered_.clear();
+
+            name2id_container_.clear();
+            id2name_container_.clear();
+        }
+
+        void reset_registered() {
+            this->registered_.clear();
+        }
+
+        void synchronize(bool clear_all) noexcept {
+
+            this->reset_registered();
+
+            for (auto x : deleted_.indices_container_) {
+                if (elements_container_.count(x) == 0) continue;
+                elements_container_.erase(x);
+                name2id_container_.erase(id2name_container_[x]);
+                id2name_container_.erase(x);
+            }
+
+            deleted_.clear();
+
+            if (clear_all) this->clear_internally();
         }
     };
 }; // namespace oe

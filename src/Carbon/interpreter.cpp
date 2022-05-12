@@ -1,5 +1,6 @@
 #include <OE/Carbon/interpreter.h>
 #include <OE/api_oe.h>
+#include <OE/global_variables.h>
 #include <OE/math_oe.h>
 
 
@@ -46,19 +47,19 @@ namespace csl {
 
         oe::OE_Main->lockMutex();
 
-        OE_World::objectsList.extend(object_list_, true);
-        OE_World::materialsList.extend(material_list_, true);
-        OE_World::texturesList.extend(texture_list_, true);
-        OE_World::tcmsList.extend(tcm_list_, true);
-        OE_World::viewportsList.extend(viewport_list_, true);
-        OE_World::scenesList.extend(scene_list_, true);
+        oe::objects_list.extend(object_list_, true);
+        oe::materials_list.extend(material_list_, true);
+        oe::textures_list.extend(texture_list_, true);
+        oe::tcms_list.extend(tcm_list_, true);
+        oe::viewports_list.extend(viewport_list_, true);
+        oe::scenes_list.extend(scene_list_, true);
 
-        oe::OE_Main->pending_world = world;
+        oe::OE_Main->set_pending_world(world);
         oe::OE_Main->unlockMutex();
     }
 
     world_ptr Interpreter::process_world(const element& world_e) {
-        world_ptr result = std::make_shared<oe::world>();
+        world_ptr result = std::make_shared<oe::world_t>();
 
 
         // Child Elements
@@ -85,8 +86,8 @@ namespace csl {
         auto loaded_scene    = world_e.single_assignments.at("loaded_scene");
 
         // TODO: Dependency
-        result->loaded_viewport = viewport_list_.name2id[std::string(loaded_viewport)];
-        result->loaded_scene    = scene_list_.name2id[std::string(loaded_scene)];
+        result->loaded_viewport = viewport_list_.get_id(std::string(loaded_viewport));
+        result->loaded_scene    = scene_list_.get_id(std::string(loaded_scene));
 
 
         return result;
@@ -171,12 +172,12 @@ namespace csl {
         // TODO: Make this use std::string_view
         auto parent = camera_e.single_assignments.at("parent");
         // TODO: Dependency
-        result->parent = object_list_.name2id(std::string(parent));
+        result->parent = object_list_.get_id(std::string(parent));
         // TODO: This was wrong in the previous interpreter
         result->parent_type = sv_to_int(camera_e.single_assignments.at("parent_type"));
 
 
-        // List Assignments
+        // _list Assignments
 
 
         // TODO: Make functions more readable: make a function for current_state
@@ -226,11 +227,11 @@ namespace csl {
 
         auto parent = light_e.single_assignments.at("parent");
         // TODO: Dependency
-        result->parent      = object_list_.name2id(std::string(parent));
+        result->parent      = object_list_.get_id(std::string(parent));
         result->parent_type = sv_to_int(light_e.single_assignments.at("parent_type"));
 
 
-        // List Assignments
+        // _list Assignments
 
 
         auto cs_v = light_e.list_assignments.at("current_state");
@@ -262,7 +263,7 @@ namespace csl {
         //			// TODO: Is emplace_back an option?
         //			// TODO: Dependency
         //			// TODO: Make this not use std::string
-        //			result->objects.push_back(object_list_.name2id[std::string(o)]);
+        //			result->objects.push_back(object_list_.get_id(std::string(o)));
         //		}
 
 
@@ -308,11 +309,11 @@ namespace csl {
 
         auto parent = mesh_e.single_assignments.at("parent");
         // TODO: Dependency
-        result->parent      = object_list_.name2id(std::string(parent));
+        result->parent      = object_list_.get_id(std::string(parent));
         result->parent_type = sv_to_int(mesh_e.single_assignments.at("parent_type"));
 
 
-        // List Assignments
+        // _list Assignments
 
 
         auto cs_v = mesh_e.list_assignments.at("current_state");
@@ -336,7 +337,7 @@ namespace csl {
         //		for (const auto& t : mesh_e.list_assignments.at("textureCM_IDs")) {
         //			// TODO: std::string
         //			// TODO: WHY TF.
-        //			result->textureCM_IDs.push_back(oe::world::tcmsList.name2id[std::string(t)]);
+        //			result->textureCM_IDs.push_back(oe::world::tcms_list.get_id(std::string(t)));
         //		}
 
         for (const auto& v : mesh_e.list_assignments.at("vertices")) {
@@ -405,10 +406,10 @@ namespace csl {
         auto material_id = vgroup_e.single_assignments.at("material_id");
         // TODO: Dependency
         // TODO: std::string
-        result->material_id = material_list_.name2id(std::string(material_id));
+        result->material_id = material_list_.get_id(std::string(material_id));
 
 
-        // List Assignments
+        // _list Assignments
 
 
         // TODO: This is NOT optional. It may just be an empty list. Fix the writer
@@ -439,7 +440,7 @@ namespace csl {
         auto camera = texture_e.single_assignments.at("camera");
         // TODO: Dependency
         // TODO: std::string
-        result->camera = object_list_.name2id(std::string(camera));
+        result->camera = object_list_.get_id(std::string(camera));
 
 
         return result;
@@ -479,14 +480,14 @@ namespace csl {
         result->specular_hardness  = sv_to_float(material_e.single_assignments.at("specular_hardness"));
 
 
-        // List Assignments
+        // _list Assignments
 
 
         //		// TODO: Make naming uniform (textureCM_IDs -> tcms)
         //		for (const auto& t : material_e.list_assignments.at("textureCM_IDs")) {
         //			// TODO: Dependency
         //			// TODO: std::string
-        //			result->textureCM_IDs.push_back(tcm_list_.name2id[std::string(t)]);
+        //			result->textureCM_IDs.push_back(tcm_list_.get_id(std::string(t)));
         //		}
 
 
@@ -535,7 +536,7 @@ namespace csl {
 
 
         // Single Assignments
-        // List Assignments
+        // _list Assignments
 
 
         for (const auto& s : vpconfig_e.list_assignments.at("split_screen_positions")) {
@@ -553,7 +554,7 @@ namespace csl {
         for (const auto& c : vpconfig_e.list_assignments.at("cameras")) {
             // TODO: Dependency
             // TODO: std::string
-            result->cameras.push_back(object_list_.name2id[std::string(c)]);
+            result->cameras.push_back(object_list_.get_id(std::string(c)));
         }
 
 
@@ -579,7 +580,7 @@ namespace csl {
         auto texture_id = tcm_texture_e.single_assignments.at("textureID");
         // TODO: Dependency
         // TODO: std::string
-        result.textureID = texture_list_.name2id(std::string(texture_id));
+        result.textureID = texture_list_.get_id(std::string(texture_id));
 
 
         return result;
@@ -600,7 +601,7 @@ namespace csl {
         result.elements.reserve(num_of_uvs);
 
 
-        // List Assignments
+        // _list Assignments
 
 
         for (const auto& e : uvmap_data_e.list_assignments.at("elements")) {
@@ -616,7 +617,7 @@ namespace csl {
         oe::triangle result;
 
 
-        // List Assignments
+        // _list Assignments
 
         // cout << "processing triangle" << endl;
 

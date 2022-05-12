@@ -893,6 +893,19 @@ void nre::gl3::api_t::clear_framebuffer(std::size_t id, nre::gpu::FRAMEBUFFER_CO
     }
 }
 
+void nre::gl3::api_t::discard_framebuffer(std::size_t id) {
+    // TODO
+    /*if (id != 0) {
+        this->check_fbo_id_(id, "discard_framebuffer");
+        glBindFramebuffer(GL_FRAMEBUFFER, this->fbos_[id].handle);
+        glDiscardFramebufferEXT(GL_FRAMEBUFFER, this->fbos_[id].handle);
+    }
+    else {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDiscardFramebufferEXT(GL_FRAMEBUFFER, this->fbos_[id].handle);
+    }*/
+}
+
 void nre::gl3::api_t::use_framebuffer(std::size_t id) {
     if (id != 0) {
         this->check_fbo_id_(id, "use_framebuffer");

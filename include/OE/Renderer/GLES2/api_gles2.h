@@ -149,6 +149,7 @@ namespace nre { namespace gles2 {
         void copy_framebuffer(std::size_t, std::size_t, nre::gpu::FRAMEBUFFER_COPY);
         void use_framebuffer(std::size_t);
         void clear_framebuffer(std::size_t, nre::gpu::FRAMEBUFFER_COPY, float);
+        void discard_framebuffer(std::size_t);
         void delete_framebuffer(std::size_t);
 
         void set_program_vs(std::size_t, nre::gpu::vertex_shader_t);
@@ -167,7 +168,7 @@ namespace nre { namespace gles2 {
         void set_render_mode(nre::gpu::RENDERMODE);
         void use_wireframe(bool);
 
-    protected:
+    private:
         std::size_t cur_rbo_{0};
         std::size_t cur_vbo_{0};
         std::size_t cur_ibo_{0};
@@ -192,7 +193,7 @@ namespace nre { namespace gles2 {
         std::unordered_map<nre::gpu::pixel_shader_t, GLuint>  fs_db_;
         std::unordered_map<program_t, program_data_t>         prog_db_;
 
-    private:
+
         void check_rbo_id(std::size_t, std::string_view);
         void check_vbo_id(std::size_t, std::string_view);
         void check_ibo_id(std::size_t, std::string_view);
@@ -241,6 +242,7 @@ namespace nre { namespace gles2 {
         bool has_ext_texture_filter_anisotropic_{false};
         bool has_oes_texture_npot_{false};
         bool has_ext_texture_compression_s3tc_{false}; // WEBGL_compressed_texture_s3tc
+        bool has_ext_discard_framebuffer_{false};
         bool has_ext_srgb_{false};
 
         uint32_t x_{0};

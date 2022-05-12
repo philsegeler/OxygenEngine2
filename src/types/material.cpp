@@ -1,5 +1,5 @@
+#include <OE/global_variables.h>
 #include <OE/types/material.h>
-#include <OE/types/world.h>
 
 using namespace std;
 
@@ -7,16 +7,9 @@ std::atomic<std::size_t> OE_Material::current_id(0);
 // unordered_map<size_t, string> OE_Material::id2name;
 // OE_Name2ID          OE_Material::name2id = OE_Name2ID(&OE_Material::id2name);
 
-OE_Material::OE_Material() {
-
-    this->id = ++OE_Material::current_id;
+OE_Material::OE_Material() : id(++OE_Material::current_id) {
 }
 
-
-OE_Material::OE_Material(const string& name) {
-
-    this->id = ++OE_Material::current_id;
-}
 
 OE_Material::~OE_Material() {
 }
@@ -45,13 +38,13 @@ std::vector<float> OE_Material::GetRendererData() {
 }
 
 string OE_Material::to_str() const {
-    string output = outputTypeTag("Material", {{"name", "\"" + OE_World::materialsList.id2name_[this->id] + "\""}});
+    string output = outputTypeTag("Material", {{"name", "\"" + oe::materials_list.get_name(this->id) + "\""}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
     vector<string> tcm_strs;
     for (const auto& x : this->textureCM_IDs) {
-        tcm_strs.push_back("\"" + OE_World::tcmsList.id2name_[x] + "\"");
+        tcm_strs.push_back("\"" + oe::tcms_list.get_name(x) + "\"");
     }
     if (tcm_strs.size() != 0) {
         output.append(outputList("textureCM_IDs", tcm_strs));

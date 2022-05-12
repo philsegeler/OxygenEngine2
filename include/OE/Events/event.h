@@ -34,14 +34,12 @@ namespace oe {
         MOUSE_EVENT      = 2,
         GAMEPAD_EVENT    = 3,
         NETWORK_EVENT    = 4,
-        COLLISION_EVENT  = 5,
+        PHYSICS_EVENT    = 5,
         MOUSE_MOVE_EVENT = 6,
         EVENT_COMBO      = 7
     };
 
-    int template_event_func(OE_Task, std::string);
-
-    typedef std::function<int(OE_Task, std::string)> event_func_type;
+    task_action template_event_func(const task_info_t);
 
     /* general event type */
     class event_t : public OE_THREAD_SAFETY_OBJECT {
@@ -52,24 +50,23 @@ namespace oe {
         // static bool finished;
         event_t();
         virtual ~event_t();
-        virtual int call() = 0;
+        virtual task_action call();
 
         static std::atomic<std::size_t> current_id;
-        std::size_t                     id;
+        const std::size_t               id;
 
     protected:
         // internal_call() is implemented in OE_Error.cpp
-        int internal_call();
+        task_action internal_call();
 
-        void set_func(const event_func_type);
+        void set_func(const method_type);
 
-        bool        active_{false};
-        std::string name_;
+        std::atomic<bool> active_{false};
 
-        event_type      type_;
-        event_func_type func_;
+        event_type  type_;
+        method_type func_{&template_event_func};
 
-        OE_Task task_;
+        task_info_t task_;
 
         bool                            has_init_{false};
         std::unordered_set<std::size_t> sub_events_;
@@ -88,9 +85,9 @@ namespace oe {
     public:
         keyboard_event_t();
         ~keyboard_event_t();
-        int call();
+        task_action call();
 
-    protected:
+    private:
         uint8_t     keystate_;
         std::string key_;
         bool        is_main_event_{false};
@@ -104,9 +101,9 @@ namespace oe {
     public:
         mouse_event_t();
         ~mouse_event_t();
-        int call();
+        task_action call();
 
-    protected:
+    private:
         uint8_t     keystate_;
         bool        is_main_event_{false};
         std::string key_;
@@ -120,7 +117,7 @@ namespace oe {
     public:
         mouse_move_event_t();
         ~mouse_move_event_t();
-        int call();
+        task_action call();
     };
 
     /// class intended to store gamepad events (3 for each mouse buttons 1-5 and mouse position)
@@ -131,9 +128,9 @@ namespace oe {
     public:
         gamepad_event_t();
         ~gamepad_event_t();
-        int call();
+        task_action call();
 
-    protected:
+    private:
         uint8_t     keystate_;
         std::string key_;
 
@@ -150,7 +147,42 @@ namespace oe {
     public:
         custom_event_t();
         ~custom_event_t();
-        int call();
+
+    protected:
+    };
+
+    /// class intended for physics events
+    class renderer_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        renderer_event_t()  = default;
+        ~renderer_event_t() = default;
+
+    protected:
+    };
+
+    /// class intended for physics events
+    class physics_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        physics_event_t();
+        ~physics_event_t();
+
+    protected:
+    };
+
+    /// class intended for network events
+    class network_event_t : public event_t {
+        friend class event_handler_t;
+        friend class input_event_handler_t;
+
+    public:
+        network_event_t();
+        ~network_event_t();
 
     protected:
     };

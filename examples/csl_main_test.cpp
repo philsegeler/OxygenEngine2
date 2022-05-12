@@ -1,4 +1,5 @@
 #include <OE/api_oe.h>
+#include <OE/Carbon/interpreter.h>
 
 using namespace std;
 using namespace oe;

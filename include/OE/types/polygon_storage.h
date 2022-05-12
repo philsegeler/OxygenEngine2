@@ -69,7 +69,7 @@ public:
  * in a similar fashion to .obj and COLLADA formats
  */
 
-class OE_Triangle32 : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
+class OE_Triangle32 : public CSL_WriterBase {
 
     friend class OE_PolygonStorage32;
     friend class CSL_Interpreter;

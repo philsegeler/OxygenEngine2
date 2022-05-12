@@ -29,10 +29,9 @@ class OE_Object : public OE_THREAD_SAFETY_OBJECT, public CSL_WriterBase {
 
 public:
     static std::atomic<std::size_t> current_id;
-    std::size_t                     id;
+    const std::size_t               id;
 
     OE_Object();
-    OE_Object(const std::string&);
     virtual ~OE_Object();
 
     virtual OE_OBJECT_TYPE getType() const;

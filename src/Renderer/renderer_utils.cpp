@@ -143,7 +143,7 @@ void NRE_Renderer::generateDrawCalls() {
         }
 
         // delete remaining draw call programs from existing scenes
-        for (auto ren_group : this->sce_ren_groups[scene.first].to_be_deleted_) {
+        for (auto ren_group : this->sce_ren_groups[scene.first].deleted()) {
 
             if (ren_group.z_prepass_program != 0) nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0) nre::gpu::del_program(ren_group.program);
@@ -250,7 +250,7 @@ void NRE_RendererLegacy::generateDrawCalls() {
         }
 
         // delete remaining draw call programs from existing scenes
-        for (auto ren_group : this->sce_ren_groups[scene.first].to_be_deleted_) {
+        for (auto ren_group : this->sce_ren_groups[scene.first].deleted()) {
 
             if (ren_group.z_prepass_program != 0) nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0) nre::gpu::del_program(ren_group.program);

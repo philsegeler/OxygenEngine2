@@ -1,5 +1,6 @@
 #include <OE/types/base_types.h>
 #include <OE/types/libs_oe.h>
+#include <iostream>
 
 using namespace std;
 
@@ -33,11 +34,11 @@ OE_THREAD_SAFETY_OBJECT::~OE_THREAD_SAFETY_OBJECT() {
 
 
 
-void OE_THREAD_SAFETY_OBJECT::lockMutex() {
+void OE_THREAD_SAFETY_OBJECT::lockMutex() const {
     SDL_LockMutex(this->wmutex);
 }
 
-void OE_THREAD_SAFETY_OBJECT::unlockMutex() {
+void OE_THREAD_SAFETY_OBJECT::unlockMutex() const {
     SDL_UnlockMutex(wmutex);
 }
 
@@ -114,19 +115,19 @@ std::string CSL_WriterBase::outputTypeTag(const std::string& name, const std::ma
     return output;
 }
 
-OE_Name2ID::OE_Name2ID() {
+OE_Name2ID_ContainerDeprecated::OE_Name2ID_ContainerDeprecated() {
 }
-OE_Name2ID::~OE_Name2ID() {
+OE_Name2ID_ContainerDeprecated::~OE_Name2ID_ContainerDeprecated() {
 }
-OE_Name2ID::OE_Name2ID(std::unordered_map<std::size_t, std::string>* arg) {
+OE_Name2ID_ContainerDeprecated::OE_Name2ID_ContainerDeprecated(std::unordered_map<std::size_t, std::string>* arg) {
     this->id2name = arg;
 }
 
-std::size_t OE_Name2ID::operator[](std::string name) {
+std::size_t OE_Name2ID_ContainerDeprecated::operator[](std::string name) {
     return this->operator()(name);
 }
 
-std::size_t OE_Name2ID::operator()(std::string name) {
+std::size_t OE_Name2ID_ContainerDeprecated::operator()(std::string name) {
     for (const auto& x : *id2name) {
         if (x.second == name) {
             return x.first;

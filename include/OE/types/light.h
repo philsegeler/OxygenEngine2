@@ -20,7 +20,6 @@ class OE_Light : public OE_Object {
 
 public:
     OE_Light();
-    OE_Light(const std::string&);
     ~OE_Light();
 
     std::vector<float> GetLightGPUData();

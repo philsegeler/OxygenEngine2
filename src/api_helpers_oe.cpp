@@ -1,29 +1,29 @@
+#include <OE/Carbon/interpreter.h>
 #include <OE/api_helpers_oe.h>
 #include <OE/api_oe.h>
-
 
 using namespace oe;
 using namespace OE_API_Helpers;
 using namespace std;
 
-int OE_API_Helpers::load_world(OE_Task task, string filename) {
+oe::task_action OE_API_Helpers::load_world(const oe::task_info_t task, string filename) {
 
     csl::interpret_file(filename);
 
     oe::broadcast_event("loaded-" + filename);
 
-    return 0;
+    return oe::task_action::discard;
 }
 
-int OE_API_Helpers::manage_mouse(OE_Task task, std::string event_name) {
+oe::task_action OE_API_Helpers::manage_mouse(const oe::task_info_t task) {
 
-    if (event_name == "mouse-lock") {
+    if (oe::get_event_name(task.get_id()) == "mouse-lock") {
         OE_Main->window->lock_mouse();
     }
-    else if (event_name == "mouse-unlock") {
+    else if (oe::get_event_name(task.get_id()) == "mouse-unlock") {
         OE_Main->window->unlock_mouse();
     }
-    return 0;
+    return oe::task_action::keep;
 }
 
 void OE_API_Helpers::checkIfInit() {

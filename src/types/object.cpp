@@ -1,6 +1,5 @@
 #include <OE/math_oe.h>
 #include <OE/types/object.h>
-#include <OE/types/world.h>
 
 using namespace std;
 
@@ -11,23 +10,11 @@ std::vector<float> OE_ObjectData::to_arr() const {
 
 std::atomic<size_t> OE_Object::current_id(0);
 
-OE_Object::OE_Object() {
+OE_Object::OE_Object() : id(++OE_Object::current_id) {
 
     this->parent      = 0;
     this->parent_type = 0;
     this->visible     = true;
-
-    this->id = ++OE_Object::current_id;
-}
-
-
-OE_Object::OE_Object(const string& name) {
-
-    this->parent      = 0;
-    this->parent_type = 0;
-    this->visible     = true;
-
-    this->id = ++OE_Object::current_id;
 }
 
 OE_Object::~OE_Object() {

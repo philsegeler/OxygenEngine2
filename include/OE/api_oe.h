@@ -36,17 +36,11 @@ namespace oe {
     extern OE_TaskManager* OE_Main;
 
     // class typedefs
-
-    typedef OE_Task   task;
     typedef OE_Vec3   vec3;
     typedef OE_Vec4   vec4;
     typedef OE_Mat4x4 mat4x4;
     typedef OE_Quat   quat;
     typedef OE_Mat3x3 mat3x3;
-
-    // enum typedefs
-
-    typedef OE_METHOD method_type;
 
     //------------------------BLOCK-------------------------//
     // API functions to be executed before the engine runs
@@ -213,41 +207,45 @@ namespace oe {
     void remove_task(std::string);
     void remove_task(std::string, std::string);
 
-    void broadcast_event(std::string);
-    void create_event(std::string);
+    void        broadcast_event(std::string);
+    void        broadcast_event(std::size_t);
+    std::size_t create_event(std::string);
+    std::size_t create_internal_physics_event(std::string);
+    std::size_t create_internal_renderer_event(std::string);
+    std::size_t create_internal_network_event(std::string);
+    std::size_t get_event_id(std::string);
+    std::string get_event_name(std::size_t);
 
     template <typename T, typename... Args>
     void set_event_func(std::string name, T func, Args... arguments) {
 
         assert(OE_Main != nullptr);
-        oe::event_func_type func_copy =
-            std::bind(func, std::placeholders::_1, std::placeholders::_2, std::forward<Args...>(arguments...));
-        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
+        oe::method_type func_copy = std::bind(func, std::placeholders::_1, std::forward<Args...>(arguments...));
+        OE_Main->window->event_handler_.set_event_func(name, func_copy);
     }
 
     template <typename T>
     void set_event_func(std::string name, T func) {
 
         assert(OE_Main != nullptr);
-        oe::event_func_type func_copy = std::bind(func, std::placeholders::_1, std::placeholders::_2);
-        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
+        oe::method_type func_copy = std::bind(func, std::placeholders::_1);
+        OE_Main->window->event_handler_.set_event_func(name, func_copy);
     }
 
     template <typename T, typename A, typename... Args>
     void set_event_method(std::string name, T func, A instance, Args... arguments) {
 
         assert(OE_Main != nullptr);
-        oe::event_func_type func_copy =
-            std::bind(func, instance, std::placeholders::_1, std::placeholders::_2, std::forward<Args...>(arguments...));
-        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
+        oe::method_type func_copy = std::bind(func, instance, std::placeholders::_1, std::forward<Args...>(arguments...));
+        OE_Main->window->event_handler_.set_event_func(name, func_copy);
     }
 
     template <typename T, typename A>
     void set_event_method(std::string name, T func, A instance) {
 
         assert(OE_Main != nullptr);
-        oe::event_func_type func_copy = std::bind(func, instance, std::placeholders::_1, std::placeholders::_2);
-        OE_Main->window->event_handler_.set_ievent_func(name, func_copy);
+        oe::method_type func_copy = std::bind(func, instance, std::placeholders::_1);
+        OE_Main->window->event_handler_.set_event_func(name, func_copy);
     }
 
     void destroy_event(std::string);
@@ -279,7 +277,7 @@ namespace oe {
 
     //------------------------BLOCK-------------------------//
 
-    OE_Task get_task_info(std::string, std::string);
+    task_info_t get_task_info(std::string, std::string);
 
     void create_new_thread(std::string);
 
@@ -358,11 +356,6 @@ namespace oe {
     OE_Vec3               get_object_model_matrix(std::size_t);
     OE_Quat               get_object_rot(std::size_t);
 
-    std::set<std::size_t> get_scene_objects(std::string);
-    OE_Vec3               get_object_pos(std::string);
-    OE_Vec3               get_object_model_matrix(std::string);
-    OE_Quat               get_object_rot(std::string);
-
     void set_object_pos(std::size_t, OE_Vec3);
     void set_object_rot(std::size_t, OE_Quat);
     void set_object_rot(std::size_t, OE_Vec4);
@@ -371,27 +364,14 @@ namespace oe {
     void change_object_rot(std::size_t, OE_Quat);
     void change_object_rot(std::size_t, OE_Vec4);
 
-    void set_object_pos(std::string, OE_Vec3);
-    void set_object_rot(std::string, OE_Quat);
-    void set_object_rot(std::string, OE_Vec4);
-
-    void change_object_pos(std::string, OE_Vec3);
-    void change_object_rot(std::string, OE_Quat);
-    void change_object_rot(std::string, OE_Vec4);
-
     void change_object_global_rot(std::size_t, OE_Quat);
     void change_object_global_rot(std::size_t, OE_Vec4);
-    void change_object_global_rot(std::string, OE_Quat);
-    void change_object_global_rot(std::string, OE_Vec4);
 
     void change_object_local_pos(std::size_t, OE_Vec3);
-    void change_object_local_pos(std::string, OE_Vec3);
 
     void set_object_scale(std::size_t, OE_Vec3);
-    void set_object_scale(std::string, OE_Vec3);
 
     void change_object_scale(std::size_t, OE_Vec3);
-    void change_object_scale(std::string, OE_Vec3);
 
     /** API functions to control the renderer
      *  These should work for ANY renderer

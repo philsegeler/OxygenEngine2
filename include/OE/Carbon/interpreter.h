@@ -29,7 +29,7 @@ class OE_TaskManager;
 // so it's a chance I'm willing to take
 // Update: TODO: Don't add this to the oe namespace
 namespace oe {
-    using world       = OE_World;
+    using world_t     = OE_World;
     using scene       = OE_Scene;
     using camera      = OE_Camera;
     using light       = OE_Light;
@@ -46,7 +46,7 @@ namespace oe {
 
 
 namespace csl {
-    using world_ptr    = std::shared_ptr<oe::world>;
+    using world_ptr    = std::shared_ptr<oe::world_t>;
     using scene_ptr    = std::shared_ptr<oe::scene>;
     using camera_ptr   = std::shared_ptr<oe::camera>;
     using light_ptr    = std::shared_ptr<oe::light>;
@@ -66,12 +66,12 @@ namespace csl {
         void interpret(std::string& input);
 
     private:
-        OE_SharedIndexMap<OE_Scene>          scene_list_;
-        OE_SharedIndexMap<OE_Object>         object_list_;
-        OE_SharedIndexMap<OE_Material>       material_list_;
-        OE_SharedIndexMap<OE_Texture>        texture_list_;
-        OE_SharedIndexMap<OE_TCM>            tcm_list_;
-        OE_SharedIndexMap<OE_ViewportConfig> viewport_list_;
+        oe::shared_index_map_t<OE_Scene>          scene_list_;
+        oe::shared_index_map_t<OE_Object>         object_list_;
+        oe::shared_index_map_t<OE_Material>       material_list_;
+        oe::shared_index_map_t<OE_Texture>        texture_list_;
+        oe::shared_index_map_t<OE_TCM>            tcm_list_;
+        oe::shared_index_map_t<OE_ViewportConfig> viewport_list_;
 
 
         world_ptr    process_world(const element&);

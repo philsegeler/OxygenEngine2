@@ -27,6 +27,7 @@ namespace nre {
                 return "Calling GPU API function '" + func_ + "' with invalid render buffer ID: '" + id_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -42,6 +43,7 @@ namespace nre {
                 return "Calling GPU API function '" + func_ + "' with invalid vertex buffer ID: '" + id_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -57,6 +59,7 @@ namespace nre {
                 return "Calling GPU API function '" + func_ + "' with invalid index buffer ID: '" + id_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -72,6 +75,7 @@ namespace nre {
                 return "Calling GPU API function '" + func_ + "' with invalid uniform buffer ID: '" + id_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -96,6 +100,7 @@ namespace nre {
                            length_ + "' using the wrong type (probably array instead of vec/mat).";
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string uniform_;
@@ -114,6 +119,7 @@ namespace nre {
                 return "Calling GPU API function '" + func_ + "' with invalid vertex layout ID: '" + id_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -129,6 +135,7 @@ namespace nre {
                 return "Calling GPU API function '" + func_ + "' with invalid framebuffer ID: '" + id_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -144,6 +151,7 @@ namespace nre {
                 return "Calling GPU API function '" + func_ + "' with invalid texture ID: '" + id_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -161,6 +169,7 @@ namespace nre {
                        "'. Invalid vertex buffer ID: '" + vbo_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string vbo_;
@@ -177,6 +186,7 @@ namespace nre {
                 return "Calling GPU API function '" + func_ + "' with invalid shader program ID: '" + id_ + "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -196,6 +206,7 @@ namespace nre {
                        "Windows).";
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string uniform_;
@@ -216,6 +227,7 @@ namespace nre {
                        "Windows).";
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string uniform_;
@@ -237,6 +249,7 @@ namespace nre {
                        "'.\n\t offset + length = '" + off_length_ + "' goes out of bounds.";
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string off_length_;
@@ -255,6 +268,7 @@ namespace nre {
                 return "GPU API function '" + func_ + "' is not implemented in the API: '" + api_ + "'. " + info_;
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string api_;
@@ -273,6 +287,7 @@ namespace nre {
                        "'. Forgot to run 'setup_program' maybe?";
             };
 
+        private:
             std::string id_;
             std::string func_;
         };
@@ -294,6 +309,7 @@ namespace nre {
                        "'.";
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string count_;
@@ -314,6 +330,7 @@ namespace nre {
                        "' textures. Remember to query support for a particular feature before using it.";
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string api_;
@@ -335,6 +352,7 @@ namespace nre {
                        info_;
             };
 
+        private:
             std::string id_;
             std::string func_;
             std::string api_;
@@ -354,6 +372,7 @@ namespace nre {
             return "loaded_viewport with ID: '" + id_ + "' is incomplete. No cameras are defined.";
         };
 
+    private:
         std::string id_;
         std::string func_;
     };
@@ -369,6 +388,7 @@ namespace nre {
             return "loaded_viewport with ID: '" + id_ + "' is not possible to display. " + msg_ + ".";
         };
 
+    private:
         std::string id_;
         std::string func_;
         std::string msg_;

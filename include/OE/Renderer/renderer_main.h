@@ -15,9 +15,9 @@ public:
     // last bool is true if the renderer has been restarted. This is useful so as to fetch all the data again
     bool update_data(oe::renderer_update_info, oe::winsys_output, bool);
 
-    bool update_multi_thread(OE_Task*, int);
     void destroy();
 
+private:
     // holds all rendering data from the engine
     nre::data_handler_t data_;
 
@@ -57,7 +57,6 @@ public:
     bool setup_bbox_prog{false};
     bool setup_sphere_prog{false};
 
-protected:
     void initOffscreenFrameBuffer();
     void initFullscreenQuad();
     void initGammaCorrectionProg();

@@ -191,13 +191,16 @@ oe::winsys_output OE_SDL_WindowSystem::finishInit() {
 #else
     SDL_GL_MakeCurrent(this->window, this->context);
 #endif
-    printf("Vendor:   '%s'\n", glGetString(GL_VENDOR));
-    printf("Renderer: '%s'\n", glGetString(GL_RENDERER));
-    printf("Version:  '%s'\n", glGetString(GL_VERSION));
+    std::stringstream ss;
+    ss << "Vendor:   '" << glGetString(GL_VENDOR) << "'"
+       << "\n";
+    ss << "Renderer: '" << glGetString(GL_RENDERER) << "'"
+       << "\n";
+    ss << "Version:  '" << glGetString(GL_VERSION) << "'"
+       << "\n";
 
-    OE_WriteToLog(string("Vendor:   '") + string((const char*)glGetString(GL_VENDOR)) + "'\n");
-    OE_WriteToLog(string("Renderer: '") + string((const char*)glGetString(GL_RENDERER)) + "'\n");
-    OE_WriteToLog(string("Version:  '") + string((const char*)glGetString(GL_VERSION)) + "'\n");
+    cout << ss.str();
+    OE_WriteToLog(ss.str());
     SDL_GL_SetSwapInterval(1);
 
     SDL_GetWindowSize(window, &this->resolution_x, &this->resolution_y);
@@ -305,7 +308,7 @@ oe::winsys_output OE_SDL_WindowSystem::update(oe::winsys_update_info update_info
 
         this->event_handler_.unlockMutex();
 
-        this->event_handler_.broadcast_ievent("mouse-motion");
+        this->event_handler_.broadcast_event("mouse-motion");
     }
 
     // This is needed to support things like OE_Finish()
@@ -379,7 +382,7 @@ bool OE_SDL_WindowSystem::update_events() {
         //  fetch mouse position, since this may be needed
         this->event_handler_.unlockMutex();
 
-        this->event_handler_.broadcast_ievent("mouse-wheel");
+        this->event_handler_.broadcast_event("mouse-wheel");
         break;
     }
 
