@@ -1,5 +1,5 @@
+#include <OE/global_variables.h>
 #include <OE/types/material.h>
-#include <OE/types/world.h>
 
 using namespace std;
 
@@ -38,13 +38,13 @@ std::vector<float> OE_Material::GetRendererData() {
 }
 
 string OE_Material::to_str() const {
-    string output = outputTypeTag("Material", {{"name", "\"" + OE_World::materialsList.get_name(this->id) + "\""}});
+    string output = outputTypeTag("Material", {{"name", "\"" + oe::materials_list.get_name(this->id) + "\""}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
     vector<string> tcm_strs;
     for (const auto& x : this->textureCM_IDs) {
-        tcm_strs.push_back("\"" + OE_World::tcmsList.get_name(x) + "\"");
+        tcm_strs.push_back("\"" + oe::tcms_list.get_name(x) + "\"");
     }
     if (tcm_strs.size() != 0) {
         output.append(outputList("textureCM_IDs", tcm_strs));

@@ -5,7 +5,6 @@
 #include <OE/Renderer/api_gpu.h>
 #include <OE/task.h>
 #include <OE/types/base_types.h>
-#include <OE/types/world.h>
 
 class OE_TaskManager;
 
@@ -125,14 +124,12 @@ namespace oe {
         virtual bool update_multi_thread(const task_info_t, int); // stub for now
         virtual void destroy();
 
-        void              set_world(std::shared_ptr<OE_World>);
         bool              is_multi_threaded();
         const std::string get_name();
 
     protected:
-        const bool                use_multithreading_{false};
-        std::shared_ptr<OE_World> world_{nullptr};
-        const std::string         name_;
+        const bool        use_multithreading_{false};
+        const std::string name_;
     };
 
     /** This is a dummy class aimed to be a base class for
@@ -161,12 +158,10 @@ namespace oe {
         virtual bool update_multi_thread(const task_info_t, int);
         virtual void destroy();
 
-        void              set_world(std::shared_ptr<OE_World>);
         const std::string get_name();
 
     protected:
-        std::shared_ptr<OE_World> world_{nullptr};
-        const std::string         name_;
+        const std::string name_;
     };
 
     /** This is a dummy class aimed to be a base class for

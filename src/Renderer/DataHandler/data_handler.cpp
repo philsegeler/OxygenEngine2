@@ -1,5 +1,5 @@
 #include <OE/Renderer/DataHandler/data_handler.h>
-#include <OE/api_oe.h>
+#include <OE/global_variables.h>
 
 using namespace oe;
 using namespace std;
@@ -18,11 +18,11 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
 
         // cout << OE_Main->world->to_str() << endl;
 
-        for (auto mat : OE_World::materialsList) {
+        for (auto mat : oe::materials_list) {
             mat.flag_as_changed();
         }
 
-        for (auto obj : OE_World::objectsList) {
+        for (auto obj : oe::objects_list) {
             if (obj->getType() == OE_OBJECT_MESH) {
                 auto mesh              = static_pointer_cast<OE_Mesh32>(obj.get_pointer());
                 mesh->data->vbo_exists = false;
@@ -31,25 +31,25 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
             obj.flag_as_changed();
         }
 
-        for (auto sce : OE_World::scenesList) {
+        for (auto sce : oe::scenes_list) {
             sce.flag_as_changed();
         }
 
-        for (auto vpc : OE_World::viewportsList) {
+        for (auto vpc : oe::viewports_list) {
             vpc.flag_as_changed();
         }
     }
 
     // Update element data
 
-    for (auto mat : OE_World::materialsList.changed()) {
+    for (auto mat : oe::materials_list.changed()) {
         this->handle_material_data(mat.get_id(), mat.get_pointer());
     }
 
     this->has_dir_lights_changed_ = false;
     this->has_pt_lights_changed_  = false;
 
-    for (auto obj : OE_World::objectsList.changed()) {
+    for (auto obj : oe::objects_list.changed()) {
         if (obj->getType() == OE_OBJECT_MESH) {
             this->handle_mesh_data(obj.get_id(), static_pointer_cast<OE_Mesh32>(obj.get_pointer()));
         }
@@ -58,31 +58,31 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
         }
     }
 
-    for (auto obj : OE_World::objectsList.changed()) {
+    for (auto obj : oe::objects_list.changed()) {
         if (obj->getType() == OE_OBJECT_CAMERA) {
             this->handle_camera_data(obj.get_id(), static_pointer_cast<OE_Camera>(obj.get_pointer()));
             camera_ids.push_back(obj.get_id());
         }
     }
 
-    for (auto sce : OE_World::scenesList.changed()) {
+    for (auto sce : oe::scenes_list.changed()) {
         this->handle_scene_data(sce.get_id(), sce.get_pointer());
     }
 
-    for (auto vpc : OE_World::viewportsList.changed()) {
+    for (auto vpc : oe::viewports_list.changed()) {
         this->handle_viewport_data(vpc.get_id(), vpc.get_pointer());
-        this->loaded_viewport_ = OE_Main->get_world()->loaded_viewport;
+        this->loaded_viewport_ = oe::world->get_loaded_viewport();
     }
 
     // handle deleted elements (should look if the element exists first)
 
-    for (auto mat : OE_World::materialsList.deleted()) {
+    for (auto mat : oe::materials_list.deleted()) {
         if (this->materials_.count(mat) == 1) {
             this->deleted_materials_.insert(mat);
         }
     }
 
-    for (auto obj : OE_World::objectsList.deleted()) {
+    for (auto obj : oe::objects_list.deleted()) {
 
         if (this->meshes_.count(obj) == 1) {
             this->deleted_meshes_.insert(obj);
@@ -103,13 +103,13 @@ bool nre::data_handler_t::update(bool restart_renderer, bool load_minmax_element
     }
 
 
-    for (auto sce : OE_World::scenesList.deleted()) {
+    for (auto sce : oe::scenes_list.deleted()) {
         if (this->scenes_.count(sce) == 1) {
             this->deleted_scenes_.insert(sce);
         }
     }
 
-    for (auto vpc : OE_World::viewportsList.deleted()) {
+    for (auto vpc : oe::viewports_list.deleted()) {
         if (this->viewports_.count(vpc) == 1) {
             this->viewports_.erase(vpc);
             if (this->loaded_viewport_ == vpc) {

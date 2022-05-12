@@ -118,7 +118,6 @@ void NRE_RendererLegacy::initGPUSphere() {
 
 bool NRE_RendererLegacy::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
                                      bool has_renderer_restarted) {
-    assert(this->world_ != nullptr);
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
 

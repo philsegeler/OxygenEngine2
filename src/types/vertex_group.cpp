@@ -1,7 +1,7 @@
+#include <OE/global_variables.h>
 #include <OE/types/material.h>
 #include <OE/types/object.h>
 #include <OE/types/vertex_group.h>
-#include <OE/types/world.h>
 
 using namespace std;
 
@@ -42,7 +42,7 @@ string OE_VertexGroup::to_str() const {
 
     string temp4;
     if (this->material_id != 0)
-        temp4 = outputVar("material_id", "\"" + OE_World::materialsList.get_name(this->material_id) + "\"");
+        temp4 = outputVar("material_id", "\"" + oe::materials_list.get_name(this->material_id) + "\"");
     else {
         temp4 = outputVar("material_id", "\"\"");
     }

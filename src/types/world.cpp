@@ -1,16 +1,7 @@
-#include <OE/api_oe.h>
-#include <OE/math_oe.h>
-#include <OE/types/world.h>
+#include <OE/global_variables.h>
 
 
 using namespace std;
-
-oe::shared_index_map_t<OE_Scene>          OE_World::scenesList    = oe::shared_index_map_t<OE_Scene>();
-oe::shared_index_map_t<OE_Object>         OE_World::objectsList   = oe::shared_index_map_t<OE_Object>();
-oe::shared_index_map_t<OE_Material>       OE_World::materialsList = oe::shared_index_map_t<OE_Material>();
-oe::shared_index_map_t<OE_Texture>        OE_World::texturesList  = oe::shared_index_map_t<OE_Texture>();
-oe::shared_index_map_t<OE_TCM>            OE_World::tcmsList      = oe::shared_index_map_t<OE_TCM>();
-oe::shared_index_map_t<OE_ViewportConfig> OE_World::viewportsList = oe::shared_index_map_t<OE_ViewportConfig>();
 
 OE_World::OE_World() {
 
@@ -21,9 +12,16 @@ OE_World::OE_World() {
 OE_World::~OE_World() {
 
     for (auto& x : scenes)
-        OE_World::scenesList.remove(x);
+        oe::scenes_list.remove(x);
     for (auto& x : viewports)
-        OE_World::viewportsList.remove(x);
+        oe::viewports_list.remove(x);
+}
+
+std::size_t OE_World::get_loaded_viewport() {
+    lockMutex();
+    std::size_t output = this->loaded_viewport;
+    unlockMutex();
+    return output;
 }
 
 void OE_World::setup() {
@@ -35,21 +33,21 @@ void OE_World::setup() {
     // where the first scene and first camera are only defined
     if (this->viewports.size() == 0) {
 
-        for (auto scene : OE_World::scenesList) {
+        for (auto scene : oe::scenes_list) {
 
             for (auto obj : scene->objects) {
-                if (OE_World::objectsList[obj]->getType() == OE_OBJECT_CAMERA) {
+                if (oe::objects_list[obj]->getType() == OE_OBJECT_CAMERA) {
 
                     // create and store default viewport config
                     std::shared_ptr<OE_ViewportConfig> vp_config = std::make_shared<OE_ViewportConfig>();
 
                     // add first found camera to default (0) layer
-                    auto cam = OE_World::objectsList[obj];
+                    auto cam = oe::objects_list[obj];
                     vp_config->lockMutex();
                     vp_config->addCamera(cam.get_id(), 0);
                     vp_config->unlockMutex();
 
-                    OE_World::viewportsList.force_append_now("default", vp_config);
+                    oe::viewports_list.force_append_now("default", vp_config);
                     this->viewports.insert(vp_config->id);
                     this->loaded_viewport = vp_config->id;
                     break;
@@ -70,19 +68,19 @@ string OE_World::to_str() const {
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
     for (const auto& x : this->scenes) {
-        output.append(OE_World::scenesList[x]->to_str());
+        output.append(oe::scenes_list[x]->to_str());
         output.append("\n");
     }
 
     for (const auto& x : this->viewports) {
-        output.append(OE_World::viewportsList[x]->to_str());
+        output.append(oe::viewports_list[x]->to_str());
         output.append("\n");
     }
 
-    output.append(outputVar("loaded_scene", "\"" + OE_World::scenesList.get_name(this->loaded_scene) + "\""));
+    output.append(outputVar("loaded_scene", "\"" + oe::scenes_list.get_name(this->loaded_scene) + "\""));
     output.append("\n");
 
-    output.append(outputVar("loaded_viewport", "\"" + OE_World::viewportsList.get_name(this->loaded_viewport) + "\""));
+    output.append(outputVar("loaded_viewport", "\"" + oe::viewports_list.get_name(this->loaded_viewport) + "\""));
     output.append("\n");
 
     CSL_WriterBase::indent = CSL_WriterBase::indent - 1;

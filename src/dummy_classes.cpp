@@ -64,11 +64,6 @@ bool oe::renderer_base_t::update_multi_thread(const oe::task_info_t, int) {
 void oe::renderer_base_t::destroy() {
 }
 
-void oe::renderer_base_t::set_world(std::shared_ptr<OE_World> world_in) {
-    lockMutex();
-    world_ = world_in;
-    unlockMutex();
-}
 bool oe::renderer_base_t::is_multi_threaded() {
     return use_multithreading_;
 }
@@ -99,11 +94,6 @@ void oe::physics_base_t::destroy() {
     return;
 }
 
-void oe::physics_base_t::set_world(std::shared_ptr<OE_World> world_in) {
-    lockMutex();
-    world_ = world_in;
-    unlockMutex();
-}
 
 const std::string oe::physics_base_t::get_name() {
     return name_;

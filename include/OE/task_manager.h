@@ -1,12 +1,10 @@
 #ifndef OE_TASKMANAGER_H
 #define OE_TASKMANAGER_H
 
-#include <OE/Carbon/interpreter.h>
 #include <OE/Events/event_handler.h>
 #include <OE/Events/mutex_condition.h>
 #include <OE/dummy_classes.h>
-#include <OE/task.h>
-#include <OE/types/world.h>
+#include <OE/global_variables.h>
 #include <queue>
 
 
@@ -140,9 +138,6 @@ private:
     bool              physics_init_errors{false};
     bool              winsys_init_errors{false};
     bool              network_init_errors{false};
-
-    std::shared_ptr<OE_World> world{nullptr};
-    std::shared_ptr<OE_World> pending_world{nullptr}; // for loading a world
 
     // synchronized threads
     oe::shared_index_map_t<OE_ThreadStruct>      threads;

@@ -1,6 +1,6 @@
+#include <OE/global_variables.h>
 #include <OE/types/camera.h>
 #include <OE/types/viewport_config.h>
-#include <OE/types/world.h>
 
 using namespace std;
 
@@ -114,7 +114,7 @@ bool OE_ViewportConfig::existsCameraLayer(std::size_t cam_id, std::size_t layer)
 
 std::string OE_ViewportConfig::to_str() const {
     lockMutex();
-    string output = outputTypeTag("ViewportConfig", {{"name", "\"" + OE_World::viewportsList.get_name(this->id) + "\""}});
+    string output = outputTypeTag("ViewportConfig", {{"name", "\"" + oe::viewports_list.get_name(this->id) + "\""}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
@@ -123,7 +123,7 @@ std::string OE_ViewportConfig::to_str() const {
 
     vector<string> camera_strs;
     for (const auto& x : this->cameras) {
-        camera_strs.push_back("\"" + OE_World::objectsList.get_name(x) + "\"");
+        camera_strs.push_back("\"" + oe::objects_list.get_name(x) + "\"");
     }
     output.append(outputList("cameras", camera_strs));
     output.append("\n");

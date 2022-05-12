@@ -1,5 +1,5 @@
+#include <OE/global_variables.h>
 #include <OE/types/tcm.h>
-#include <OE/types/world.h>
 
 using namespace std;
 
@@ -13,7 +13,7 @@ std::string OE_TCM_Texture::to_str() const {
     string output          = outputTypeTag("TCM_Texture", {});
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
-    output.append(outputVar("textureID", "\"" + OE_World::texturesList.get_name(this->textureID) + "\""));
+    output.append(outputVar("textureID", "\"" + oe::textures_list.get_name(this->textureID) + "\""));
     output.append("\n");
 
     output.append(outputVar("mode", convert(this->mode)));
@@ -48,7 +48,7 @@ OE_TCM::~OE_TCM() {
 
 string OE_TCM::to_str() const {
     lockMutex();
-    string output = outputTypeTag("TextureCombineMode", {{"name", "\"" + OE_World::tcmsList.get_name(this->id) + "\""}});
+    string output = outputTypeTag("TextureCombineMode", {{"name", "\"" + oe::tcms_list.get_name(this->id) + "\""}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 

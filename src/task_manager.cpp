@@ -79,7 +79,7 @@ void OE_TaskManager::set_pending_world(std::shared_ptr<OE_World> worldin) {
 }
 std::shared_ptr<OE_World> OE_TaskManager::get_world() {
     lockMutex();
-    auto output = this->world;
+    auto output = oe::world;
     unlockMutex();
     return output;
 }
@@ -242,10 +242,10 @@ void OE_TaskManager::sync_end_frame() {
 void OE_TaskManager::Step() {
     // synchronize at start
     bool temp_done = false;
-    if (this->world != nullptr) {
+    if (oe::world != nullptr) {
 
-        // this->physics->world = this->world;
-        // this->renderer->world = this->world;
+        // this->physics->world = oe::world;
+        // this->renderer->world = oe::world;
         // auto t=clock();
         if (not this->renderer_init_errors) temp_done = temp_done or this->try_run_renderer_update_data();
         this->restart_renderer = false;
@@ -335,8 +335,8 @@ void OE_TaskManager::Destroy() {
     delete this->window;
     delete this->network;
 
-    if (this->world != nullptr) this->world = nullptr;
-    if (this->pending_world != nullptr) this->pending_world = nullptr;
+    if (oe::world != nullptr) oe::world = nullptr;
+    if (oe::pending_world != nullptr) oe::pending_world = nullptr;
 
     this->destroy(); // from OE_MutexCondition
 }
@@ -438,23 +438,20 @@ int OE_TaskManager::get_ready_threads() {
 void OE_TaskManager::update_world() {
     lockMutex();
 
-    OE_World::objectsList.synchronize(this->pending_world != nullptr);
-    OE_World::materialsList.synchronize(this->pending_world != nullptr);
-    OE_World::texturesList.synchronize(this->pending_world != nullptr);
-    OE_World::tcmsList.synchronize(this->pending_world != nullptr);
-    OE_World::viewportsList.synchronize(this->pending_world != nullptr);
-    OE_World::scenesList.synchronize(this->pending_world != nullptr);
+    oe::objects_list.synchronize(oe::pending_world != nullptr);
+    oe::materials_list.synchronize(oe::pending_world != nullptr);
+    oe::textures_list.synchronize(oe::pending_world != nullptr);
+    oe::tcms_list.synchronize(oe::pending_world != nullptr);
+    oe::viewports_list.synchronize(oe::pending_world != nullptr);
+    oe::scenes_list.synchronize(oe::pending_world != nullptr);
 
 
-    if (this->pending_world != nullptr) {
-        if (this->world != nullptr) this->world = nullptr;
-        this->world = this->pending_world;
-        this->world->setup();
+    if (oe::pending_world != nullptr) {
+        if (oe::world != nullptr) oe::world = nullptr;
+        oe::world = oe::pending_world;
+        oe::world->setup();
     }
-    this->pending_world = nullptr;
-
-    this->physics->set_world(this->world);
-    this->renderer->set_world(this->world);
+    oe::pending_world = nullptr;
     unlockMutex();
 }
 

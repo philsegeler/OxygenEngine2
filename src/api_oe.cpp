@@ -225,18 +225,18 @@ void oe::create_new_thread(std::string name) {
  */
 
 std::size_t oe::get_object_id(std::string name) {
-    return OE_World::objectsList.get_id(name);
+    return oe::objects_list.get_id(name);
 }
 
 std::string oe::get_object_name(std::size_t id) {
-    return OE_World::objectsList.get_name(id);
+    return oe::objects_list.get_name(id);
 }
 
 std::set<std::size_t> oe::get_scene_objects(std::size_t id) {
 
     std::set<std::size_t> output;
 
-    auto scene = OE_World::scenesList[id];
+    auto scene = oe::scenes_list[id];
     if (scene.is_valid()) {
         scene->lockMutex();
         output = scene->objects;
@@ -252,7 +252,7 @@ OE_Vec3 oe::get_object_pos(std::size_t id) {
 
     OE_Vec3 output;
 
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         output[0] = object->current_state.pos_x;
@@ -267,7 +267,7 @@ OE_Quat oe::get_object_rot(std::size_t id) {
 
     OE_Quat output = OE_Quat();
 
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         output = object->GetRot();
@@ -277,7 +277,7 @@ OE_Quat oe::get_object_rot(std::size_t id) {
 }
 
 void oe::set_object_pos(std::size_t id, OE_Vec3 pos) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->current_state.pos_x = pos.x;
@@ -289,7 +289,7 @@ void oe::set_object_pos(std::size_t id, OE_Vec3 pos) {
 }
 
 void oe::set_object_rot(std::size_t id, OE_Quat rot) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->SetRot(rot);
@@ -299,7 +299,7 @@ void oe::set_object_rot(std::size_t id, OE_Quat rot) {
 }
 
 void oe::set_object_rot(std::size_t id, OE_Vec4 rot) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->SetRot(OE_QuatFromAxisAngle(rot[0], rot[1], rot[2], rot[3]));
@@ -309,7 +309,7 @@ void oe::set_object_rot(std::size_t id, OE_Vec4 rot) {
 }
 
 void oe::change_object_pos(std::size_t id, OE_Vec3 pos) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->current_state.pos_x = object->current_state.pos_x + pos.x;
@@ -321,7 +321,7 @@ void oe::change_object_pos(std::size_t id, OE_Vec3 pos) {
 }
 
 void oe::change_object_rot(std::size_t id, OE_Quat rot) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->SetRot(object->GetRot() * rot);
@@ -331,7 +331,7 @@ void oe::change_object_rot(std::size_t id, OE_Quat rot) {
 }
 
 void oe::change_object_rot(std::size_t id, OE_Vec4 rot) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->SetRot(object->GetRot() * OE_QuatFromAxisAngle(rot[0], rot[1], rot[2], rot[3]));
@@ -341,7 +341,7 @@ void oe::change_object_rot(std::size_t id, OE_Vec4 rot) {
 }
 
 void oe::change_object_global_rot(std::size_t id, OE_Quat rot) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->SetRot(rot * object->GetRot());
@@ -351,7 +351,7 @@ void oe::change_object_global_rot(std::size_t id, OE_Quat rot) {
 }
 
 void oe::change_object_global_rot(std::size_t id, OE_Vec4 rot) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->SetRot(OE_QuatFromAxisAngle(rot[0], rot[1], rot[2], rot[3]) * object->GetRot());
@@ -361,7 +361,7 @@ void oe::change_object_global_rot(std::size_t id, OE_Vec4 rot) {
 }
 
 void oe::change_object_local_pos(std::size_t id, OE_Vec3 pos) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         OE_Mat3x3 rot_matrix        = object->GetModelMatrix();
@@ -375,7 +375,7 @@ void oe::change_object_local_pos(std::size_t id, OE_Vec3 pos) {
 }
 
 void oe::set_object_scale(std::size_t id, OE_Vec3 sca) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->current_state.sca_x = sca.x;
@@ -387,7 +387,7 @@ void oe::set_object_scale(std::size_t id, OE_Vec3 sca) {
 }
 
 void oe::change_object_scale(std::size_t id, OE_Vec3 sca) {
-    auto object = OE_World::objectsList[id];
+    auto object = oe::objects_list[id];
     if (object.is_valid()) {
         object->lockMutex();
         object->current_state.sca_x = object->current_state.sca_x + sca.x;

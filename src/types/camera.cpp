@@ -1,5 +1,5 @@
+#include <OE/global_variables.h>
 #include <OE/types/camera.h>
-#include <OE/types/world.h>
 
 using namespace std;
 
@@ -20,14 +20,14 @@ OE_OBJECT_TYPE OE_Camera::getType() const {
 
 string OE_Camera::to_str() const {
     string output = outputTypeTag(
-        "Camera", {{"name", "\"" + OE_World::objectsList.get_name(this->id) + "\""}, {"visible", convert((int)visible)}});
+        "Camera", {{"name", "\"" + oe::objects_list.get_name(this->id) + "\""}, {"visible", convert((int)visible)}});
     output.append("\n");
     CSL_WriterBase::indent = CSL_WriterBase::indent + 1;
 
     output.append(outputList("current_state", this->current_state.to_arr()));
     output.append("\n");
 
-    output.append(outputVar("parent", "\"" + OE_World::objectsList.get_name(this->parent) + "\""));
+    output.append(outputVar("parent", "\"" + oe::objects_list.get_name(this->parent) + "\""));
     output.append("\n");
 
     output.append(outputVar("parent_type", convert(this->parent_type)));
