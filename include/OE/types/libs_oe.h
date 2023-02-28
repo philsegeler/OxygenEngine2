@@ -42,7 +42,7 @@
 #define OE_PLATFORM_UNKNOWN
 #define OE_RENDERER_OPENGL
 
-//#include <Renderer/glad.h>
+// #include <Renderer/glad.h>
 
 #include <SDL2/SDL.h>
 

@@ -65,7 +65,7 @@ OE_Mat4x4 OE_Object::GetViewMatrix() {
 
     OE_Mat4x4 view_mat(1.0f);
     OE_Vec4   nor_quat = OE_Normalize(
-          OE_Vec4(this->current_state.rot_w, -this->current_state.rot_x, -this->current_state.rot_y, -this->current_state.rot_z));
+        OE_Vec4(this->current_state.rot_w, -this->current_state.rot_x, -this->current_state.rot_y, -this->current_state.rot_z));
 
     OE_Quat rot_quat        = OE_Quat(nor_quat[0], nor_quat[1], nor_quat[2], nor_quat[3]);
     OE_Vec3 translation_vec = OE_Vec3(-this->current_state.pos_x, -this->current_state.pos_y, -this->current_state.pos_z);

@@ -5,6 +5,7 @@
 #include <OE/Renderer/GLES2/shaders_gles2.h>
 #include <OE/Renderer/api_gpu.h>
 #include <OE/types/libs_oe.h>
+#include <utility>
 
 namespace nre { namespace gles2 {
     struct renderbuffer_t {
@@ -88,12 +89,12 @@ namespace nre { namespace gles2 {
 }; }; // namespace nre::gles2
 
 namespace std {
-    template <>
-    struct hash<nre::gles2::program_t> {
-        auto operator()(const nre::gles2::program_t& xyz) const -> size_t {
-            return hash<size_t>{}(xyz.gen_hash());
-        }
-    };
+template <>
+struct hash<nre::gles2::program_t> {
+    auto operator()(const nre::gles2::program_t& xyz) const -> size_t {
+        return hash<size_t>{}(xyz.gen_hash());
+    }
+};
 } // namespace std
 
 namespace nre { namespace gles2 {

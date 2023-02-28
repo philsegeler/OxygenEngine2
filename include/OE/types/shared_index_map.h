@@ -5,13 +5,14 @@
 #include <OE/error_oe.h>
 #include <OE/types/base_types.h>
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <map>
 #include <memory>
 #include <set>
 #include <type_traits>
-
+#include <utility>
 
 /** New General class intended to optimize and properly parallelize accesing of
  * individual meshes/materials/etc. Stores ids and names. Only stores one name per element and one id per element.

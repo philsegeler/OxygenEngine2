@@ -5,6 +5,7 @@
 #include <OE/Renderer/GL3/shaders_gl3.h>
 #include <OE/Renderer/api_gpu.h>
 #include <OE/types/libs_oe.h>
+#include <utility>
 
 namespace nre { namespace gl3 {
     struct renderbuffer_t {
@@ -97,12 +98,12 @@ namespace nre { namespace gl3 {
 }; }; // namespace nre::gl3
 
 namespace std {
-    template <>
-    struct hash<nre::gl3::program_t> {
-        auto operator()(const nre::gl3::program_t& xyz) const -> size_t {
-            return hash<size_t>{}(xyz.gen_hash());
-        }
-    };
+template <>
+struct hash<nre::gl3::program_t> {
+    auto operator()(const nre::gl3::program_t& xyz) const -> size_t {
+        return hash<size_t>{}(xyz.gen_hash());
+    }
+};
 } // namespace std
 
 namespace nre { namespace gl3 {
