@@ -22,39 +22,39 @@ private:
     nre::data_handler_t data_;
 
     // normal and point light draw calls, framebuffer, integer texture and ubo/program
-    std::set<NRE_PointLightDrawCall, std::greater<NRE_PointLightDrawCall>> pt_visible_lights;
-    std::map<std::size_t, NRE_DrawCallContainer>                           sce_ren_groups;
+    std::set<NRE_PointLightDrawCall, std::greater<NRE_PointLightDrawCall>> pt_visible_lights_;
+    std::map<std::size_t, NRE_DrawCallContainer>                           sce_ren_groups_;
 
-    std::size_t pt_light_ubo{0};
-    std::size_t prog_light{0};
+    std::size_t pt_light_ubo_{0};
+    std::size_t prog_light_{0};
 
-    std::size_t fbo_light{0};
-    std::size_t tex_light{0};
+    std::size_t fbo_light_{0};
+    std::size_t tex_light_{0};
 
     // bounding box and sphere data
-    std::size_t prog_bbox{0};
-    std::size_t vbo_bbox{0};
-    std::size_t vao_bbox{0};
+    std::size_t prog_bbox_{0};
+    std::size_t vbo_bbox_{0};
+    std::size_t vao_bbox_{0};
 
-    std::size_t prog_sphere{0};
-    std::size_t vbo_sphere{0};
-    std::size_t vao_sphere{0};
-    std::size_t ibo_sphere{0};
+    std::size_t prog_sphere_{0};
+    std::size_t vbo_sphere_{0};
+    std::size_t vao_sphere_{0};
+    std::size_t ibo_sphere_{0};
 
     // data for offscreen framebuffer
-    std::size_t framebuffer{0};
-    std::size_t colortexture{0};
-    std::size_t depthrbo{0};
+    std::size_t framebuffer_{0};
+    std::size_t colortexture_{0};
+    std::size_t depthrbo_{0};
 
     // data for fullscreen quad
-    std::size_t vbo_fullscreen_quad{0};
-    std::size_t vao_fullscreen_quad{0};
+    std::size_t vbo_fullscreen_quad_{0};
+    std::size_t vao_fullscreen_quad_{0};
 
     // gamma correction program
-    std::size_t gamma_cor_prog{0};
+    std::size_t gamma_cor_prog_{0};
 
-    bool setup_bbox_prog{false};
-    bool setup_sphere_prog{false};
+    bool setup_bbox_prog_{false};
+    bool setup_sphere_prog_{false};
 
     void initOffscreenFrameBuffer();
     void initFullscreenQuad();
@@ -80,16 +80,16 @@ private:
     void updateCameraGPUData();
     void updateLightGPUData();
 
-    oe::RENDERER_SHADING_MODE shading_mode{oe::RENDERER_REGULAR_SHADING};
-    bool                      use_wireframe{false};
-    bool                      render_bounding_boxes{false};
-    bool                      render_bounding_spheres{false};
-    bool                      use_HDR{false};
-    bool                      use_z_prepass{false};
+    oe::RENDERER_SHADING_MODE shading_mode_{oe::RENDERER_REGULAR_SHADING};
+    bool                      use_wireframe_{false};
+    bool                      render_bounding_boxes_{false};
+    bool                      render_bounding_spheres_{false};
+    bool                      use_HDR_{false};
+    bool                      use_z_prepass_{false};
 
     int                    res_x_{0};
     int                    res_y_{0};
-    oe::renderer_init_info init_info;
+    oe::renderer_init_info init_info_;
 };
 
 #endif

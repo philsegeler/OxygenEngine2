@@ -20,7 +20,7 @@ bool NRE_Renderer::init(oe::renderer_init_info init_info, oe::renderer_update_in
     cout << "NRE Vgroups: " << data_.vgroups.size() << endl;*/
 
     // make sure we use the right API
-    this->init_info = init_info;
+    this->init_info_ = init_info;
     nre::gpu::init(winsys_info.backend, winsys_info.major, winsys_info.minor);
 
     this->initOffscreenFrameBuffer();
@@ -33,44 +33,44 @@ bool NRE_Renderer::init(oe::renderer_init_info init_info, oe::renderer_update_in
 
 void NRE_Renderer::initOffscreenFrameBuffer() {
     // setup offscreen framebuffer
-    this->framebuffer  = nre::gpu::new_framebuffer();
-    this->colortexture = nre::gpu::new_texture();
-    this->depthrbo     = nre::gpu::new_renderbuffer();
+    this->framebuffer_  = nre::gpu::new_framebuffer();
+    this->colortexture_ = nre::gpu::new_texture();
+    this->depthrbo_     = nre::gpu::new_renderbuffer();
 
-    if (this->use_HDR == false) {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGB10_A2, nre::gpu::NEAREST, res_x_, res_y_, 0);
-        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
-        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
+    if (this->use_HDR_ == false) {
+        nre::gpu::set_texture_format(this->colortexture_, nre::gpu::RGB10_A2, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        // nre::gpu::set_texture_format(this->depthtexture_, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo_, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     else {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, res_x_, res_y_, 0);
-        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
-        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
+        nre::gpu::set_texture_format(this->colortexture_, nre::gpu::RGBA16F, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        // nre::gpu::set_texture_format(this->depthtexture_, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo_, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
 
-    nre::gpu::set_framebuffer_texture(this->framebuffer, this->colortexture, 0);
-    // nre::gpu::set_framebuffer_texture(this->framebuffer, this->depthtexture, 0);
-    nre::gpu::set_framebuffer_renderbuffer(this->framebuffer, this->depthrbo, 0);
+    nre::gpu::set_framebuffer_texture(this->framebuffer_, this->colortexture_, 0);
+    // nre::gpu::set_framebuffer_texture(this->framebuffer_, this->depthtexture_, 0);
+    nre::gpu::set_framebuffer_renderbuffer(this->framebuffer_, this->depthrbo_, 0);
 }
 
 void NRE_Renderer::initFullscreenQuad() {
     // setup fullscreen quad
-    this->vbo_fullscreen_quad = nre::gpu::new_vertex_buf();
-    this->vao_fullscreen_quad = nre::gpu::new_vertex_layout();
+    this->vbo_fullscreen_quad_ = nre::gpu::new_vertex_buf();
+    this->vao_fullscreen_quad_ = nre::gpu::new_vertex_layout();
 
-    nre::gpu::set_vertex_buf_memory_and_data(this->vbo_fullscreen_quad,
+    nre::gpu::set_vertex_buf_memory_and_data(this->vbo_fullscreen_quad_,
                                              {1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f},
                                              nre::gpu::STATIC);
 
     typedef nre::gpu::vertex_layout_input VLI; // for clarity
     std::vector<VLI>                      vao_quad_data;
-    vao_quad_data.push_back(VLI(this->vbo_fullscreen_quad, 0, 2, 2));
-    nre::gpu::set_vertex_layout_format(this->vao_fullscreen_quad, vao_quad_data);
+    vao_quad_data.push_back(VLI(this->vbo_fullscreen_quad_, 0, 2, 2));
+    nre::gpu::set_vertex_layout_format(this->vao_fullscreen_quad_, vao_quad_data);
 }
 
 void NRE_Renderer::initGammaCorrectionProg() {
     // setup gamma correction program
-    this->gamma_cor_prog = nre::gpu::new_program();
+    this->gamma_cor_prog_ = nre::gpu::new_program();
 
     nre::gpu::vertex_shader_t vs_gamma;
     nre::gpu::pixel_shader_t  fs_gamma;
@@ -79,43 +79,43 @@ void NRE_Renderer::initGammaCorrectionProg() {
     vs_gamma.fullscreenQuad = true;
     fs_gamma.type           = nre::gpu::FS_GAMMA;
 
-    nre::gpu::set_program_vertex_shader(this->gamma_cor_prog, vs_gamma);
-    nre::gpu::set_program_pixel_shader(this->gamma_cor_prog, fs_gamma);
+    nre::gpu::set_program_vertex_shader(this->gamma_cor_prog_, vs_gamma);
+    nre::gpu::set_program_pixel_shader(this->gamma_cor_prog_, fs_gamma);
 
-    nre::gpu::setup_program(this->gamma_cor_prog);
-    // nre::gpu::setProgramTextureSlot(this->gamma_cor_prog, "tex_output", 0);
+    nre::gpu::setup_program(this->gamma_cor_prog_);
+    // nre::gpu::setProgramTextureSlot(this->gamma_cor_prog_, "tex_output", 0);
 }
 
 void NRE_Renderer::initGPUSphere() {
     // the same VBO, VAO and IBO are used for every object
     // it holds a sphere with radius one
 
-    this->vbo_sphere = nre::gpu::new_vertex_buf();
-    this->ibo_sphere = nre::gpu::new_index_buf();
+    this->vbo_sphere_ = nre::gpu::new_vertex_buf();
+    this->ibo_sphere_ = nre::gpu::new_index_buf();
 
     auto sphere_vbo_data = OE_GetBoundingSphereVertexBuffer(1.0f, 1.0f, 16);
     auto sphere_ibo_data = OE_GetBoundingSphereIndexBuffer(1.0f, 1.0f, 16);
 
-    nre::gpu::set_vertex_buf_memory_and_data(this->vbo_sphere, sphere_vbo_data, nre::gpu::STATIC);
-    nre::gpu::set_index_buf_memory_and_data(this->ibo_sphere, sphere_ibo_data, nre::gpu::STATIC);
+    nre::gpu::set_vertex_buf_memory_and_data(this->vbo_sphere_, sphere_vbo_data, nre::gpu::STATIC);
+    nre::gpu::set_index_buf_memory_and_data(this->ibo_sphere_, sphere_ibo_data, nre::gpu::STATIC);
 
     typedef nre::gpu::vertex_layout_input VLI; // for clarity
-    this->vao_sphere = nre::gpu::new_vertex_layout();
+    this->vao_sphere_ = nre::gpu::new_vertex_layout();
 
     std::vector<VLI> vao_sphere_data;
-    vao_sphere_data.push_back(VLI(this->vbo_sphere, 0, 3, 6));
-    vao_sphere_data.push_back(VLI(this->vbo_sphere, 3, 3, 6));
+    vao_sphere_data.push_back(VLI(this->vbo_sphere_, 0, 3, 6));
+    vao_sphere_data.push_back(VLI(this->vbo_sphere_, 3, 3, 6));
 
-    nre::gpu::set_vertex_layout_format(this->vao_sphere, vao_sphere_data);
+    nre::gpu::set_vertex_layout_format(this->vao_sphere_, vao_sphere_data);
 }
 
 void NRE_Renderer::initLightUBOProgramFBO() {
 
     // setup point light ubo
-    this->pt_light_ubo = nre::gpu::new_uniform_buf();
+    this->pt_light_ubo_ = nre::gpu::new_uniform_buf();
 
     // setup light program
-    this->prog_light = nre::gpu::new_program();
+    this->prog_light_ = nre::gpu::new_program();
 
     nre::gpu::vertex_shader_t vs_light;
     nre::gpu::pixel_shader_t  fs_light;
@@ -126,22 +126,22 @@ void NRE_Renderer::initLightUBOProgramFBO() {
     fs_light.type       = nre::gpu::FS_LIGHT_INDEX;
     fs_light.num_of_uvs = 0;
 
-    nre::gpu::set_program_vertex_shader(this->prog_light, vs_light);
-    nre::gpu::set_program_pixel_shader(this->prog_light, fs_light);
+    nre::gpu::set_program_vertex_shader(this->prog_light_, vs_light);
+    nre::gpu::set_program_pixel_shader(this->prog_light_, fs_light);
 
-    nre::gpu::setup_program(this->prog_light);
+    nre::gpu::setup_program(this->prog_light_);
 
-    nre::gpu::set_program_uniform_buf_slot(this->prog_light, "OE_Camera", 0);
-    nre::gpu::set_program_uniform_buf_slot(this->prog_light, "OE_Lights", 1);
+    nre::gpu::set_program_uniform_buf_slot(this->prog_light_, "OE_Camera", 0);
+    nre::gpu::set_program_uniform_buf_slot(this->prog_light_, "OE_Lights", 1);
 
     // setup light own texture and framebuffer to be used for storing the indices
-    this->tex_light = nre::gpu::new_texture();
+    this->tex_light_ = nre::gpu::new_texture();
 
-    nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_, res_y_, 0);
+    nre::gpu::set_texture_format(this->tex_light_, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_, res_y_, 0);
 
-    this->fbo_light = nre::gpu::new_framebuffer();
-    nre::gpu::set_framebuffer_texture(this->fbo_light, this->tex_light, 0);
-    nre::gpu::set_framebuffer_renderbuffer(this->fbo_light, this->depthrbo, 0);
+    this->fbo_light_ = nre::gpu::new_framebuffer();
+    nre::gpu::set_framebuffer_texture(this->fbo_light_, this->tex_light_, 0);
+    nre::gpu::set_framebuffer_renderbuffer(this->fbo_light_, this->depthrbo_, 0);
 }
 
 //------------------------updateData---------------------------//
@@ -151,22 +151,23 @@ bool NRE_Renderer::update_data(oe::renderer_update_info update_info, oe::winsys_
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
 
-    this->use_wireframe           = update_info.use_wireframe;
-    this->render_bounding_boxes   = update_info.render_bounding_boxes;
-    this->render_bounding_spheres = update_info.render_bounding_spheres;
-    this->use_HDR                 = update_info.use_hdr;
-    this->use_z_prepass           = update_info.use_z_prepass;
-    bool temp_restart_renderer    = (this->shading_mode != update_info.shading_mode);
+    this->use_wireframe_           = update_info.use_wireframe;
+    this->render_bounding_boxes_   = update_info.render_bounding_boxes;
+    this->render_bounding_spheres_ = update_info.render_bounding_spheres;
+    this->use_HDR_                 = update_info.use_hdr;
+    this->use_z_prepass_           = update_info.use_z_prepass;
+    bool temp_restart_renderer     = (this->shading_mode_ != update_info.shading_mode);
 
     if (temp_restart_renderer) {
         this->destroy();
-        this->init(this->init_info, update_info, winsys_info);
+        this->init(this->init_info_, update_info, winsys_info);
     }
     else if (has_renderer_restarted) {
-        this->init(this->init_info, update_info, winsys_info);
+        this->init(this->init_info_, update_info, winsys_info);
     }
-    this->shading_mode = update_info.shading_mode;
-    data_.update(temp_restart_renderer or has_renderer_restarted, this->render_bounding_boxes or this->render_bounding_spheres);
+    this->shading_mode_ = update_info.shading_mode;
+    data_.update(temp_restart_renderer or has_renderer_restarted,
+                 this->render_bounding_boxes_ or this->render_bounding_spheres_);
 
     return true;
 }
@@ -178,27 +179,27 @@ bool NRE_Renderer::update_single_thread(oe::renderer_update_info update_info, oe
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
 
-    this->use_wireframe           = update_info.use_wireframe;
-    this->render_bounding_boxes   = update_info.render_bounding_boxes;
-    this->render_bounding_spheres = update_info.render_bounding_spheres;
-    this->use_HDR                 = update_info.use_hdr;
-    this->use_z_prepass           = update_info.use_z_prepass;
+    this->use_wireframe_           = update_info.use_wireframe;
+    this->render_bounding_boxes_   = update_info.render_bounding_boxes;
+    this->render_bounding_spheres_ = update_info.render_bounding_spheres;
+    this->use_HDR_                 = update_info.use_hdr;
+    this->use_z_prepass_           = update_info.use_z_prepass;
 
     nre::gpu::update(res_x_, res_y_, update_info.sanity_checks);
 
-    if (this->use_HDR == false) {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGB10_A2, nre::gpu::NEAREST, res_x_, res_y_, 0);
-        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
-        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
+    if (this->use_HDR_ == false) {
+        nre::gpu::set_texture_format(this->colortexture_, nre::gpu::RGB10_A2, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        // nre::gpu::set_texture_format(this->depthtexture_, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo_, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     else {
-        nre::gpu::set_texture_format(this->colortexture, nre::gpu::RGBA16F, nre::gpu::NEAREST, res_x_, res_y_, 0);
-        // nre::gpu::set_texture_format(this->depthtexture, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
+        nre::gpu::set_texture_format(this->colortexture_, nre::gpu::RGBA16F, nre::gpu::NEAREST, res_x_, res_y_, 0);
+        // nre::gpu::set_texture_format(this->depthtexture_, nre::gpu::DEPTHSTENCIL, nre::gpu::NEAREST,
         // res_x_, res_y_, 0);
-        nre::gpu::set_renderbuffer_textype(this->depthrbo, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
+        nre::gpu::set_renderbuffer_textype(this->depthrbo_, nre::gpu::DEPTHSTENCIL, res_x_, res_y_);
     }
     // update light texture
-    nre::gpu::set_texture_format(this->tex_light, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_, res_y_, 0);
+    nre::gpu::set_texture_format(this->tex_light_, nre::gpu::RGBA, nre::gpu::NEAREST, res_x_, res_y_, 0);
 
     // generate draw calls
     this->generateDrawCalls();
@@ -211,15 +212,15 @@ bool NRE_Renderer::update_single_thread(oe::renderer_update_info update_info, oe
 
 
     // render viewport
-    nre::gpu::use_wireframe(this->use_wireframe);
+    nre::gpu::use_wireframe(this->use_wireframe_);
 
     /*cout << "NRE Cameras: " << data_.cameras.size() << endl;
     cout << "NRE Materials: " << data_.materials.size() << endl;
     cout << "NRE Meshes: " << data_.meshes.size() << endl;
     cout << "NRE Vgroups: " << data_.vgroups.size() << endl;*/
 
-    nre::gpu::use_framebuffer(this->framebuffer);
-    nre::gpu::clear_framebuffer(this->framebuffer, nre::gpu::FBO_ALL, 1.0f);
+    nre::gpu::use_framebuffer(this->framebuffer_);
+    nre::gpu::clear_framebuffer(this->framebuffer_, nre::gpu::FBO_ALL, 1.0f);
 
     if (data_.loaded_viewport_ != 0) {
 
@@ -241,93 +242,93 @@ bool NRE_Renderer::update_single_thread(oe::renderer_update_info update_info, oe
 
         // draw everything required for the z prepass, which also populates the depth buffer
         nre::gpu::set_render_mode(nre::gpu::Z_PREPASS_BACKFACE);
-        for (auto x : this->sce_ren_groups[scene_id]) {
+        for (auto x : this->sce_ren_groups_[scene_id]) {
             if (x.camera == camera_id) {
                 this->drawRenderGroupZPrePass(x);
-                this->sce_ren_groups[scene_id].replace(x);
+                this->sce_ren_groups_[scene_id].replace(x);
             }
         }
-        this->sce_ren_groups[scene_id].update();
+        this->sce_ren_groups_[scene_id].update();
 
         // sort point lights
         this->sortPointLights(scene_id, camera_id);
         this->updateLightGPUData();
 
-        nre::gpu::use_framebuffer(this->fbo_light);
-        nre::gpu::clear_framebuffer(this->fbo_light, nre::gpu::FBO_COLORSTENCIL, 0.0f);
+        nre::gpu::use_framebuffer(this->fbo_light_);
+        nre::gpu::clear_framebuffer(this->fbo_light_, nre::gpu::FBO_COLORSTENCIL, 0.0f);
 
         nre::gpu::set_render_mode(nre::gpu::LIGHT_PREPASS_2);
 
-        nre::gpu::set_uniform_buf_state(this->pt_light_ubo, this->prog_light, 1, 0, 0);
-        nre::gpu::set_uniform_buf_state(data_.cameras_[camera_id].ubo, this->prog_light, 0, 0, 0);
+        nre::gpu::set_uniform_buf_state(this->pt_light_ubo_, this->prog_light_, 1, 0, 0);
+        nre::gpu::set_uniform_buf_state(data_.cameras_[camera_id].ubo, this->prog_light_, 0, 0, 0);
 
-        int lights_count = this->pt_visible_lights.size();
+        int lights_count = this->pt_visible_lights_.size();
 
-        nre::gpu::draw_instanced(this->prog_light, this->vao_sphere, this->ibo_sphere, std::min<int>(lights_count, 255));
+        nre::gpu::draw_instanced(this->prog_light_, this->vao_sphere_, this->ibo_sphere_, std::min<int>(lights_count, 255));
 
         nre::gpu::set_render_mode(nre::gpu::LIGHT_AFTERPASS_RG);
-        nre::gpu::draw_instanced(this->prog_light, this->vao_sphere, this->ibo_sphere, std::min<int>(lights_count, 255));
+        nre::gpu::draw_instanced(this->prog_light_, this->vao_sphere_, this->ibo_sphere_, std::min<int>(lights_count, 255));
 
         nre::gpu::set_render_mode(nre::gpu::LIGHT_AFTERPASS_BA);
-        nre::gpu::draw_instanced(this->prog_light, this->vao_sphere, this->ibo_sphere, std::min<int>(lights_count, 255));
+        nre::gpu::draw_instanced(this->prog_light_, this->vao_sphere_, this->ibo_sphere_, std::min<int>(lights_count, 255));
 
         // draw everything normally
-        nre::gpu::use_framebuffer(this->framebuffer);
+        nre::gpu::use_framebuffer(this->framebuffer_);
         nre::gpu::set_render_mode(nre::gpu::AFTERPREPASS_BACKFACE);
-        for (auto x : this->sce_ren_groups[scene_id]) {
+        for (auto x : this->sce_ren_groups_[scene_id]) {
             if (x.camera == camera_id) {
                 this->drawRenderGroup(x);
-                this->sce_ren_groups[scene_id].replace(x);
+                this->sce_ren_groups_[scene_id].replace(x);
             }
         }
-        this->sce_ren_groups[scene_id].update();
+        this->sce_ren_groups_[scene_id].update();
 
         // optionally draw a bounding box/sphere for each object (in wireframe mode)
-        bool render_bboxes  = this->render_bounding_boxes;
-        bool render_spheres = this->render_bounding_spheres;
+        bool render_bboxes  = this->render_bounding_boxes_;
+        bool render_spheres = this->render_bounding_spheres_;
         nre::gpu::use_wireframe(true);
 
         if (render_bboxes) {
             nre::gpu::set_render_mode(nre::gpu::REGULAR_BOTH);
-            if (!this->setup_bbox_prog) {
+            if (!this->setup_bbox_prog_) {
 
                 this->setupBoundingBoxProgram();
-                this->setup_bbox_prog = true;
+                this->setup_bbox_prog_ = true;
             }
-            for (auto x : this->sce_ren_groups[scene_id]) {
+            for (auto x : this->sce_ren_groups_[scene_id]) {
                 if (x.camera == camera_id) {
                     this->drawRenderGroupBoundingBox(x);
-                    this->sce_ren_groups[scene_id].replace(x);
+                    this->sce_ren_groups_[scene_id].replace(x);
                 }
             }
-            this->sce_ren_groups[scene_id].update();
+            this->sce_ren_groups_[scene_id].update();
         }
         if (render_spheres) {
             nre::gpu::set_render_mode(nre::gpu::REGULAR_BOTH);
-            if (!this->setup_sphere_prog) {
+            if (!this->setup_sphere_prog_) {
 
                 this->setupBoundingSphereProgram();
-                this->setup_sphere_prog = true;
+                this->setup_sphere_prog_ = true;
             }
-            for (auto x : this->sce_ren_groups[scene_id]) {
+            for (auto x : this->sce_ren_groups_[scene_id]) {
                 if (x.camera == camera_id) {
                     this->drawRenderGroupBoundingSphere(x);
-                    this->sce_ren_groups[scene_id].replace(x);
+                    this->sce_ren_groups_[scene_id].replace(x);
                 }
             }
-            this->sce_ren_groups[scene_id].update();
+            this->sce_ren_groups_[scene_id].update();
         }
     }
 
-    // nre::gpu::copyFrameBuffer(this->framebuffer, 0, nre::gpu::FBO_DEPTHSTENCIL);
+    // nre::gpu::copyFrameBuffer(this->framebuffer_, 0, nre::gpu::FBO_DEPTHSTENCIL);
 
     nre::gpu::use_framebuffer(0);
     nre::gpu::use_wireframe(false);
     nre::gpu::set_render_mode(nre::gpu::FULLSCREEN_QUAD);
 
-    nre::gpu::set_texture_slot(this->colortexture, 0);
+    nre::gpu::set_texture_slot(this->colortexture_, 0);
 
-    nre::gpu::draw(this->gamma_cor_prog, this->vao_fullscreen_quad);
+    nre::gpu::draw(this->gamma_cor_prog_, this->vao_fullscreen_quad_);
 
     return true;
 }
@@ -347,7 +348,7 @@ void NRE_Renderer::drawRenderGroup(NRE_RenderGroup& ren_group) {
         // choose shading mode
         ren_group.fs = nre::gpu::pixel_shader_t();
         lockMutex();
-        switch (this->shading_mode) {
+        switch (this->shading_mode_) {
         case oe::RENDERER_NORMALS_SHADING:
             ren_group.fs.type = nre::gpu::FS_NORMALS;
             break;
@@ -411,16 +412,16 @@ void NRE_Renderer::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
 
 void NRE_Renderer::drawRenderGroupBoundingBox(NRE_RenderGroup& ren_group) {
 
-    nre::gpu::set_uniform_buf_state(data_.meshes_[ren_group.mesh].ubo, this->prog_bbox, 1, 0, 0);
-    nre::gpu::set_uniform_buf_state(data_.cameras_[ren_group.camera].ubo, this->prog_bbox, 0, 0, 0);
-    nre::gpu::draw(this->prog_bbox, this->vao_bbox);
+    nre::gpu::set_uniform_buf_state(data_.meshes_[ren_group.mesh].ubo, this->prog_bbox_, 1, 0, 0);
+    nre::gpu::set_uniform_buf_state(data_.cameras_[ren_group.camera].ubo, this->prog_bbox_, 0, 0, 0);
+    nre::gpu::draw(this->prog_bbox_, this->vao_bbox_);
 }
 
 void NRE_Renderer::drawRenderGroupBoundingSphere(NRE_RenderGroup& ren_group) {
 
-    nre::gpu::set_uniform_buf_state(data_.meshes_[ren_group.mesh].ubo, this->prog_sphere, 1, 0, 0);
-    nre::gpu::set_uniform_buf_state(data_.cameras_[ren_group.camera].ubo, this->prog_sphere, 0, 0, 0);
-    nre::gpu::draw(this->prog_sphere, this->vao_sphere, this->ibo_sphere);
+    nre::gpu::set_uniform_buf_state(data_.meshes_[ren_group.mesh].ubo, this->prog_sphere_, 1, 0, 0);
+    nre::gpu::set_uniform_buf_state(data_.cameras_[ren_group.camera].ubo, this->prog_sphere_, 0, 0, 0);
+    nre::gpu::draw(this->prog_sphere_, this->vao_sphere_, this->ibo_sphere_);
 }
 
 
@@ -430,20 +431,20 @@ void NRE_Renderer::setupBoundingBoxProgram() {
     // The vbo holds a cube with side 1 that is scaled appropriately in the shader
     // through the uniform block variable 'scaling_data'
 
-    this->vbo_bbox = nre::gpu::new_vertex_buf();
-    auto bbox_data = OE_GetBoundingBoxVertexBuffer(1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f);
-    nre::gpu::set_vertex_buf_memory_and_data(this->vbo_bbox, bbox_data, nre::gpu::STATIC);
+    this->vbo_bbox_ = nre::gpu::new_vertex_buf();
+    auto bbox_data  = OE_GetBoundingBoxVertexBuffer(1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f);
+    nre::gpu::set_vertex_buf_memory_and_data(this->vbo_bbox_, bbox_data, nre::gpu::STATIC);
 
     typedef nre::gpu::vertex_layout_input VLI; // for clarity
-    this->vao_bbox = nre::gpu::new_vertex_layout();
+    this->vao_bbox_ = nre::gpu::new_vertex_layout();
 
     std::vector<VLI> vao_bbox_data;
-    vao_bbox_data.push_back(VLI(this->vbo_bbox, 0, 3, 6));
-    vao_bbox_data.push_back(VLI(this->vbo_bbox, 3, 3, 6));
+    vao_bbox_data.push_back(VLI(this->vbo_bbox_, 0, 3, 6));
+    vao_bbox_data.push_back(VLI(this->vbo_bbox_, 3, 3, 6));
 
-    nre::gpu::set_vertex_layout_format(this->vao_bbox, vao_bbox_data);
+    nre::gpu::set_vertex_layout_format(this->vao_bbox_, vao_bbox_data);
 
-    this->prog_bbox = nre::gpu::new_program();
+    this->prog_bbox_ = nre::gpu::new_program();
 
     nre::gpu::vertex_shader_t vs_bbox;
     nre::gpu::pixel_shader_t  fs_bbox;
@@ -454,20 +455,20 @@ void NRE_Renderer::setupBoundingBoxProgram() {
     fs_bbox.type       = nre::gpu::FS_NORMALS;
     fs_bbox.num_of_uvs = 0;
 
-    nre::gpu::set_program_vertex_shader(this->prog_bbox, vs_bbox);
-    nre::gpu::set_program_pixel_shader(this->prog_bbox, fs_bbox);
+    nre::gpu::set_program_vertex_shader(this->prog_bbox_, vs_bbox);
+    nre::gpu::set_program_pixel_shader(this->prog_bbox_, fs_bbox);
 
-    nre::gpu::setup_program(this->prog_bbox);
-    nre::gpu::set_program_uniform_buf_slot(this->prog_bbox, "OE_Camera", 0);
-    nre::gpu::set_program_uniform_buf_slot(this->prog_bbox, "OE_Mesh32", 1);
-    if (nre::gpu::get_program_uniform_buf_slot(this->prog_bbox, "OE_Material") != -2) {
-        nre::gpu::set_program_uniform_buf_slot(this->prog_bbox, "OE_Material", 2);
+    nre::gpu::setup_program(this->prog_bbox_);
+    nre::gpu::set_program_uniform_buf_slot(this->prog_bbox_, "OE_Camera", 0);
+    nre::gpu::set_program_uniform_buf_slot(this->prog_bbox_, "OE_Mesh32", 1);
+    if (nre::gpu::get_program_uniform_buf_slot(this->prog_bbox_, "OE_Material") != -2) {
+        nre::gpu::set_program_uniform_buf_slot(this->prog_bbox_, "OE_Material", 2);
     }
 }
 
 void NRE_Renderer::setupBoundingSphereProgram() {
 
-    this->prog_sphere = nre::gpu::new_program();
+    this->prog_sphere_ = nre::gpu::new_program();
 
     nre::gpu::vertex_shader_t vs_sphere;
     nre::gpu::pixel_shader_t  fs_sphere;
@@ -478,14 +479,14 @@ void NRE_Renderer::setupBoundingSphereProgram() {
     fs_sphere.type       = nre::gpu::FS_NORMALS;
     fs_sphere.num_of_uvs = 0;
 
-    nre::gpu::set_program_vertex_shader(this->prog_sphere, vs_sphere);
-    nre::gpu::set_program_pixel_shader(this->prog_sphere, fs_sphere);
+    nre::gpu::set_program_vertex_shader(this->prog_sphere_, vs_sphere);
+    nre::gpu::set_program_pixel_shader(this->prog_sphere_, fs_sphere);
 
-    nre::gpu::setup_program(this->prog_sphere);
-    nre::gpu::set_program_uniform_buf_slot(this->prog_sphere, "OE_Camera", 0);
-    nre::gpu::set_program_uniform_buf_slot(this->prog_sphere, "OE_Mesh32", 1);
-    if (nre::gpu::get_program_uniform_buf_slot(this->prog_sphere, "OE_Material") != -2) {
-        nre::gpu::set_program_uniform_buf_slot(this->prog_sphere, "OE_Material", 2);
+    nre::gpu::setup_program(this->prog_sphere_);
+    nre::gpu::set_program_uniform_buf_slot(this->prog_sphere_, "OE_Camera", 0);
+    nre::gpu::set_program_uniform_buf_slot(this->prog_sphere_, "OE_Mesh32", 1);
+    if (nre::gpu::get_program_uniform_buf_slot(this->prog_sphere_, "OE_Material") != -2) {
+        nre::gpu::set_program_uniform_buf_slot(this->prog_sphere_, "OE_Material", 2);
     }
 }
 
@@ -584,7 +585,7 @@ void NRE_Renderer::updateMeshGPUData() {
     }
 
     for (auto cam : data_.deleted_meshes_) {
-        this->sce_ren_groups[data_.meshes_[cam].scene_id].removeMesh(cam);
+        this->sce_ren_groups_[data_.meshes_[cam].scene_id].removeMesh(cam);
         data_.delete_mesh(cam);
     }
     data_.deleted_meshes_.clear();
@@ -612,7 +613,7 @@ void NRE_Renderer::updateMaterialGPUData() {
     }
 
     for (auto cam : data_.deleted_materials_) {
-        this->sce_ren_groups[data_.materials_[cam].scene_id].removeMaterial(cam);
+        this->sce_ren_groups_[data_.materials_[cam].scene_id].removeMaterial(cam);
         data_.delete_material(cam);
     }
     data_.deleted_materials_.clear();
@@ -639,7 +640,7 @@ void NRE_Renderer::updateCameraGPUData() {
     }
 
     for (auto cam : data_.deleted_cameras_) {
-        this->sce_ren_groups[data_.cameras_[cam].scene_id].removeCamera(cam);
+        this->sce_ren_groups_[data_.cameras_[cam].scene_id].removeCamera(cam);
         data_.delete_camera(cam);
     }
     data_.deleted_cameras_.clear();
@@ -666,7 +667,7 @@ void NRE_Renderer::updateLightGPUData() {
     std::vector<float> pt_light_data;
     pt_light_data.reserve(16 * 255);
     int count = 0;
-    for (auto l : this->pt_visible_lights) {
+    for (auto l : this->pt_visible_lights_) {
         pt_light_data.insert(pt_light_data.end(), data_.pt_lights_[l.id].data.begin(), data_.pt_lights_[l.id].data.end());
 
         count++;
@@ -677,18 +678,18 @@ void NRE_Renderer::updateLightGPUData() {
     for (int i = 0; i < 16 * (255 - count); i++) {
         pt_light_data.push_back(0.0f);
     }
-    nre::gpu::set_uniform_buf_memory(this->pt_light_ubo, pt_light_data.size(), nre::gpu::STREAM);
-    nre::gpu::set_uniform_buf_data(this->pt_light_ubo, pt_light_data, 0);
+    nre::gpu::set_uniform_buf_memory(this->pt_light_ubo_, pt_light_data.size(), nre::gpu::STREAM);
+    nre::gpu::set_uniform_buf_data(this->pt_light_ubo_, pt_light_data, 0);
 }
 
 
 void NRE_Renderer::destroy() {
 
-    this->setup_bbox_prog   = false;
-    this->setup_sphere_prog = false;
+    this->setup_bbox_prog_   = false;
+    this->setup_sphere_prog_ = false;
 
     data_.clear();
-    this->sce_ren_groups.clear();
+    this->sce_ren_groups_.clear();
 
     nre::gpu::destroy();
 }

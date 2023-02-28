@@ -64,7 +64,7 @@ bool NRE_PointLightDrawCall::operator>(const NRE_PointLightDrawCall& other) cons
 }
 
 void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) {
-    this->pt_visible_lights.clear();
+    this->pt_visible_lights_.clear();
 
     auto persp_mat = data_.cameras_[camera_id].perspective_mat;
 
@@ -116,7 +116,7 @@ void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) 
             (not is_too_above) and (not is_too_below)) {
             auto point_light = NRE_PointLightDrawCall(
                 l, (data_.cameras_[camera_id].perspective_view_mat * data_.pt_lights_[l].model_mat[3])[2], 0);
-            this->pt_visible_lights.insert(point_light);
+            this->pt_visible_lights_.insert(point_light);
         }
     }
     // cout << "pt size " << this->pt_visible_lights.size() << endl;
@@ -126,29 +126,29 @@ void NRE_Renderer::generateDrawCalls() {
 
     // delete all remaining draw call programs from deleted scenes
     for (auto& sce : data_.deleted_scenes_) {
-        for (auto ren_group : this->sce_ren_groups[sce]) {
+        for (auto ren_group : this->sce_ren_groups_[sce]) {
 
             if (ren_group.z_prepass_program != 0) nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0) nre::gpu::del_program(ren_group.program);
         }
         data_.scenes_.erase(sce);
-        this->sce_ren_groups.erase(sce);
+        this->sce_ren_groups_.erase(sce);
     }
     data_.deleted_scenes_.clear();
 
     for (auto& scene : data_.scenes_) {
 
-        if (!this->sce_ren_groups.count(scene.first)) {
-            this->sce_ren_groups[scene.first] = NRE_DrawCallContainer();
+        if (!this->sce_ren_groups_.count(scene.first)) {
+            this->sce_ren_groups_[scene.first] = NRE_DrawCallContainer();
         }
 
         // delete remaining draw call programs from existing scenes
-        for (auto ren_group : this->sce_ren_groups[scene.first].deleted()) {
+        for (auto ren_group : this->sce_ren_groups_[scene.first].deleted()) {
 
             if (ren_group.z_prepass_program != 0) nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0) nre::gpu::del_program(ren_group.program);
         }
-        this->sce_ren_groups[scene.first].cleanupPrograms();
+        this->sce_ren_groups_[scene.first].cleanupPrograms();
 
         // gemerate draw calls anew
         for (auto cam : scene.second.cameras) {
@@ -159,8 +159,8 @@ void NRE_Renderer::generateDrawCalls() {
                     render_data.vgroup   = vgroup;
                     render_data.mesh     = mesh;
                     render_data.material = data_.vgroups_[vgroup].material_id;
-                    if (!this->sce_ren_groups[scene.first].contains(render_data)) {
-                        this->sce_ren_groups[scene.first].insert(render_data);
+                    if (!this->sce_ren_groups_[scene.first].contains(render_data)) {
+                        this->sce_ren_groups_[scene.first].insert(render_data);
                     }
                 }
             }
@@ -171,7 +171,7 @@ void NRE_Renderer::generateDrawCalls() {
 // legacy renderer
 
 void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camera_id) {
-    this->pt_visible_lights.clear();
+    this->pt_visible_lights_.clear();
 
     auto persp_mat = data_.cameras_[camera_id].perspective_mat;
 
@@ -223,7 +223,7 @@ void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camer
             (not is_too_above) and (not is_too_below)) {
             auto point_light = NRE_PointLightDrawCall(
                 l, (data_.cameras_[camera_id].perspective_view_mat * data_.pt_lights_[l].model_mat[3])[2], 0);
-            this->pt_visible_lights.insert(point_light);
+            this->pt_visible_lights_.insert(point_light);
         }
     }
     // cout << "pt size " << this->pt_visible_lights.size() << endl;
@@ -233,29 +233,29 @@ void NRE_RendererLegacy::generateDrawCalls() {
 
     // delete all remaining draw call programs from deleted scenes
     for (auto& sce : data_.deleted_scenes_) {
-        for (auto ren_group : this->sce_ren_groups[sce]) {
+        for (auto ren_group : this->sce_ren_groups_[sce]) {
 
             if (ren_group.z_prepass_program != 0) nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0) nre::gpu::del_program(ren_group.program);
         }
         data_.scenes_.erase(sce);
-        this->sce_ren_groups.erase(sce);
+        this->sce_ren_groups_.erase(sce);
     }
     data_.deleted_scenes_.clear();
 
     for (auto& scene : data_.scenes_) {
 
-        if (!this->sce_ren_groups.count(scene.first)) {
-            this->sce_ren_groups[scene.first] = NRE_DrawCallContainer();
+        if (!this->sce_ren_groups_.count(scene.first)) {
+            this->sce_ren_groups_[scene.first] = NRE_DrawCallContainer();
         }
 
         // delete remaining draw call programs from existing scenes
-        for (auto ren_group : this->sce_ren_groups[scene.first].deleted()) {
+        for (auto ren_group : this->sce_ren_groups_[scene.first].deleted()) {
 
             if (ren_group.z_prepass_program != 0) nre::gpu::del_program(ren_group.z_prepass_program);
             if (ren_group.program != 0) nre::gpu::del_program(ren_group.program);
         }
-        this->sce_ren_groups[scene.first].cleanupPrograms();
+        this->sce_ren_groups_[scene.first].cleanupPrograms();
 
         // gemerate draw calls anew
         for (auto cam : scene.second.cameras) {
@@ -266,8 +266,8 @@ void NRE_RendererLegacy::generateDrawCalls() {
                     render_data.vgroup   = vgroup;
                     render_data.mesh     = mesh;
                     render_data.material = data_.vgroups_[vgroup].material_id;
-                    if (!this->sce_ren_groups[scene.first].contains(render_data)) {
-                        this->sce_ren_groups[scene.first].insert(render_data);
+                    if (!this->sce_ren_groups_[scene.first].contains(render_data)) {
+                        this->sce_ren_groups_[scene.first].insert(render_data);
                     }
                 }
             }
