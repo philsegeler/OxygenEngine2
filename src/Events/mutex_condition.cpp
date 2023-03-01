@@ -20,9 +20,6 @@ OE_MutexCondition::OE_MutexCondition() {
 }
 
 OE_MutexCondition::~OE_MutexCondition() {
-}
-
-void OE_MutexCondition::destroy() {
     lockMutex();
 #ifndef __EMSCRIPTEN__
     for (auto x : this->conditions)

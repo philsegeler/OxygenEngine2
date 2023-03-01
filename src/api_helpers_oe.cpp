@@ -18,10 +18,10 @@ oe::task_action OE_API_Helpers::load_world(const oe::task_info_t task, string fi
 oe::task_action OE_API_Helpers::manage_mouse(const oe::task_info_t task) {
 
     if (oe::get_event_name(task.get_id()) == "mouse-lock") {
-        OE_Main->window->lock_mouse();
+        OE_Main->window_->lock_mouse();
     }
     else if (oe::get_event_name(task.get_id()) == "mouse-unlock") {
-        OE_Main->window->unlock_mouse();
+        OE_Main->window_->unlock_mouse();
     }
     return oe::task_action::keep;
 }

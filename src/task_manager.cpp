@@ -9,12 +9,12 @@
 using namespace std;
 using namespace oe;
 
-std::atomic<std::size_t> OE_ThreadStruct::current_id(0);
+std::atomic<std::size_t> oe::thread_struct::current_id(0);
 
-OE_ThreadStruct::OE_ThreadStruct() : id(++OE_ThreadStruct::current_id) {
+oe::thread_struct::thread_struct() : id(++oe::thread_struct::current_id) {
 }
 
-oe::task_manager_t* OE_ThreadData::taskMgr = nullptr;
+oe::task_manager_t* oe::thread_data::taskMgr = nullptr;
 
 #ifdef OE_PLATFORM_WEB
 std::atomic<bool> oe_threads_ready_to_start = false;
@@ -28,7 +28,7 @@ extern "C" int oxygen_engine_update_thread(void* data) {
 #endif
     // fetch the task manager and the thread from the pointer
     // execute all functions which are bind to that thread
-    OE_ThreadData* actual_data = static_cast<OE_ThreadData*>(data);
+    oe::thread_data* actual_data = static_cast<oe::thread_data*>(data);
 
     OE_Main->update_thread(actual_data->thread_id);
 
@@ -43,15 +43,15 @@ extern "C" int oxygen_engine_update_unsync_thread(void* data) {
         SDL_Delay(1);
 #endif
     // execute detached threads
-    OE_UnsyncThreadData* actual_data = static_cast<OE_UnsyncThreadData*>(data);
+    oe::unsync_thread_data* actual_data = static_cast<oe::unsync_thread_data*>(data);
 
     int output = OE_Main->try_run_unsync_thread(actual_data);
 
     OE_Main->lockMutex();
-    OE_Main->finished_unsync_threadIDs.insert(actual_data->name);
+    OE_Main->finished_unsync_threadIDs_.insert(actual_data->name);
     OE_Main->unlockMutex();
 #ifdef OE_PLATFORM_WEB
-    actual_data->~OE_UnsyncThreadData();
+    actual_data->~oe::unsync_thread_data();
     ::operator delete(actual_data, std::align_val_t(16));
 #else
     delete actual_data;
@@ -61,10 +61,10 @@ extern "C" int oxygen_engine_update_unsync_thread(void* data) {
 
 
 oe::task_manager_t::task_manager_t() {
-    completed_threads = 0;
+    completed_threads_ = 0;
     done_             = false;
-    started_threads   = 0;
-    countar           = 0;
+    started_threads_   = 0;
+    countar_           = 0;
     world             = nullptr;
 }
 
@@ -85,42 +85,42 @@ std::shared_ptr<OE_World> oe::task_manager_t::get_world() {
 }
 
 void oe::task_manager_t::force_restart_renderer() {
-    this->restart_renderer = true;
+    this->restart_renderer_ = true;
 }
 
 /************************
  *  INIT
  * ***********************/
 
-int oe::task_manager_t::Init(std::string titlea, int x, int y, bool fullscreen, oe::renderer_init_info renderer_init_info_in,
+int oe::task_manager_t::init(std::string titlea, int x, int y, bool fullscreen, oe::renderer_init_info renderer_init_info_in,
                              oe::winsys_init_info winsys_init_info_in, oe::physics_init_info physics_init_info_in,
                              oe::networking_init_info networking_init_info_in) {
 
-    this->window_mutex.lockMutex();
-    this->window             = new oe::sdl_window_system_t();
-    this->winsys_init_errors = this->try_run_winsys_init(x, y, titlea, fullscreen, winsys_init_info_in);
-    this->window_mutex.unlockMutex();
+    this->window_mutex_.lockMutex();
+    this->window_             = new oe::sdl_window_system_t();
+    this->winsys_init_errors_ = this->try_run_winsys_init(x, y, titlea, fullscreen, winsys_init_info_in);
+    this->window_mutex_.unlockMutex();
 
-    this->renderer_mutex.lockMutex();
+    this->renderer_mutex_.lockMutex();
     if (winsys_init_info_in.requested_backend == nre::gpu::GLES2)
-        this->renderer = new nre::renderer_legacy_t();
+        this->renderer_ = new nre::renderer_legacy_t();
     else
-        this->renderer = new nre::renderer_t();
+        this->renderer_ = new nre::renderer_t();
 
     // do NOT try to initialise the renderer if the window system is borked
-    if (not this->winsys_init_errors)
-        this->renderer_init_errors = this->try_run_renderer_init(renderer_init_info_in);
+    if (not this->winsys_init_errors_)
+        this->renderer_init_errors_ = this->try_run_renderer_init(renderer_init_info_in);
     else
-        this->renderer_init_errors = true;
-    this->renderer_mutex.unlockMutex();
+        this->renderer_init_errors_ = true;
+    this->renderer_mutex_.unlockMutex();
 
-    this->physics_mutex.lockMutex();
-    this->physics             = new oe::physics_base_t("default");
-    this->physics_init_errors = this->try_run_physics_init(physics_init_info_in);
-    this->physics_mutex.unlockMutex();
+    this->physics_mutex_.lockMutex();
+    this->physics_            = new oe::physics_base_t("default");
+    this->physics_init_errors_ = this->try_run_physics_init(physics_init_info_in);
+    this->physics_mutex_.unlockMutex();
 
-    this->network             = new oe::networking_base_t("default");
-    this->network_init_errors = this->try_run_network_init(networking_init_info_in);
+    this->network_             = new oe::networking_base_t("default");
+    this->network_init_errors_ = this->try_run_network_init(networking_init_info_in);
 
     this->createCondition();
     this->createCondition();
@@ -130,55 +130,55 @@ int oe::task_manager_t::Init(std::string titlea, int x, int y, bool fullscreen, 
     this->set_frame_rate(200);
     this->done_ = false;
 
-    this->CreateNewThread("default");
-    this->CreateNewThread("something else");
+    this->create_new_thread("default");
+    this->create_new_thread("something else");
 #ifdef OE_PLATFORM_WEB
 
 #endif
-    if (not this->network_init_errors)
-        oe::create_unsync_thread_method("network", &oe::networking_base_t::execute, this->network);
+    if (not this->network_init_errors_)
+        oe::create_unsync_thread_method("network", &oe::networking_base_t::execute, this->network_);
 
 #ifdef OE_PLATFORM_WEB
     oe_threads_ready_to_start = true;
 #endif
-    this->errors_on_init =
-        this->renderer_init_errors or this->physics_init_errors or this->winsys_init_errors or this->network_init_errors;
+    this->errors_on_init_ =
+        this->renderer_init_errors_ or this->physics_init_errors_ or this->winsys_init_errors_ or this->network_init_errors_;
     // cout << "just ran init" << endl;
     return 0;
 }
 
-void oe::task_manager_t::CreateUnsyncThread(string thread_name, const oe::method_type func) {
+void oe::task_manager_t::create_unsync_thread(string thread_name, const oe::method_type func) {
 
 #ifdef OE_PLATFORM_WEB
-    auto threaddata = new (std::align_val_t(16)) OE_UnsyncThreadData();
+    auto threaddata = new (std::align_val_t(16)) oe::unsync_thread_data();
 #else
-    auto threaddata = new OE_UnsyncThreadData();
+    auto threaddata = new oe::unsync_thread_data();
 #endif
     threaddata->func    = func;
     threaddata->name    = thread_name;
     threaddata->taskMgr = this;
     lockMutex();
-    this->unsync_threadIDs[thread_name] =
+    this->unsync_threadIDs_[thread_name] =
         SDL_CreateThread(oxygen_engine_update_unsync_thread, thread_name.c_str(), (void*)threaddata);
     unlockMutex();
 }
 
-void oe::task_manager_t::CreateNewThread(string thread_name) {
+void oe::task_manager_t::create_new_thread(string thread_name) {
 
     bool synchro = true;
 
     lockMutex();
 
-    this->threads.append_now(thread_name, std::shared_ptr<OE_ThreadStruct>(new OE_ThreadStruct()));
-    size_t thread_id       = this->threads[thread_name].get_id();
-    OE_ThreadData::taskMgr = this;
-    OE_ThreadData* data    = new OE_ThreadData();
+    this->threads_.append_now(thread_name, std::shared_ptr<oe::thread_struct>(new oe::thread_struct()));
+    size_t thread_id       = this->threads_[thread_name].get_id();
+    oe::thread_data::taskMgr = this;
+    oe::thread_data* data    = new oe::thread_data();
     data->thread_id        = thread_id;
 
     if (synchro)
-        this->threadIDs[thread_id] = SDL_CreateThread(oxygen_engine_update_thread, thread_name.c_str(), (void*)data);
+        this->threadIDs_[thread_id] = SDL_CreateThread(oxygen_engine_update_thread, thread_name.c_str(), (void*)data);
     else // USELESS
-        this->unsync_threadIDs[thread_name] = SDL_CreateThread(oxygen_engine_update_thread, thread_name.c_str(), (void*)data);
+        this->unsync_threadIDs_[thread_name] = SDL_CreateThread(oxygen_engine_update_thread, thread_name.c_str(), (void*)data);
 
     unlockMutex();
 }
@@ -187,10 +187,10 @@ void oe::task_manager_t::CreateNewThread(string thread_name) {
 
 void oe::task_manager_t::sync_begin_frame() {
     lockMutex();
-    started_threads++;
+    started_threads_++;
 
-    if (started_threads > get_ready_threads()) {
-        started_threads = 0;
+    if (started_threads_ > get_ready_threads()) {
+        started_threads_ = 0;
         condBroadcast(1);
     }
     else {
@@ -201,7 +201,7 @@ void oe::task_manager_t::sync_begin_frame() {
 
 void oe::task_manager_t::sync_end_frame() {
     lockMutex();
-    completed_threads++;
+    completed_threads_++;
 
 
     // --------------------------------------------------------------
@@ -220,11 +220,11 @@ void oe::task_manager_t::sync_end_frame() {
     // - Filippos, est. 2056
     // --------------------------------------------------------------
 
-    if (completed_threads > get_ready_threads()) {
+    if (completed_threads_ > get_ready_threads()) {
         /// if this is the last motheyacking thread
         /// that slows down the game, signal all other threads
         /// to continue and reset the counter
-        completed_threads = 0;
+        completed_threads_ = 0;
         condBroadcast(2);
     }
     else {
@@ -239,7 +239,7 @@ void oe::task_manager_t::sync_end_frame() {
  *  STEP
  * ***********************/
 
-void oe::task_manager_t::Step() {
+void oe::task_manager_t::step() {
     // synchronize at start
     bool temp_done = false;
     if (oe::world != nullptr) {
@@ -247,23 +247,23 @@ void oe::task_manager_t::Step() {
         // this->physics->world = oe::world;
         // this->renderer->world = oe::world;
         // auto t=clock();
-        if (not this->renderer_init_errors) temp_done = temp_done or this->try_run_renderer_update_data();
-        this->restart_renderer = false;
+        if (not this->renderer_init_errors_) temp_done = temp_done or this->try_run_renderer_update_data();
+        this->restart_renderer_ = false;
         // cout << "NRE UPDATE DATA " << (float)(clock()-t)/CLOCKS_PER_SEC << endl;
     }
 
     this->update_world();
     // cout << "overcome critical part" << endl;
-    this->window->event_handler_.handle_all_events();
+    this->window_->event_handler_.handle_all_events();
 
     this->sync_begin_frame();
 
-    if (not this->renderer_init_errors) temp_done = temp_done or this->try_run_renderer_update_single_thread();
+    if (not this->renderer_init_errors_) temp_done = temp_done or this->try_run_renderer_update_single_thread();
 
-    if (not this->winsys_init_errors) temp_done = temp_done or this->try_run_winsys_update();
-    temp_done = temp_done or this->window->event_handler_.done();
+    if (not this->winsys_init_errors_) temp_done = temp_done or this->try_run_winsys_update();
+    temp_done = temp_done or this->window_->event_handler_.done();
     // count how many times the step function has been called
-    countar++;
+    countar_++;
 
     // THIS is where obsolete unsync threads are cleaned up
     this->remove_finished_unsync_threads();
@@ -272,10 +272,10 @@ void oe::task_manager_t::Step() {
 }
 
 
-void oe::task_manager_t::Start() {
+void oe::task_manager_t::start() {
     done_ = false;
-    if (this->errors_on_init) {
-        this->Destroy();
+    if (this->errors_on_init_) {
+        this->destroy();
         return;
     }
     // starts and maintains the game engine
@@ -283,11 +283,11 @@ void oe::task_manager_t::Start() {
     emscripten_set_main_loop(&oe::step, 0, true);
 #else
     while (!(done_)) {
-        this->Step();
+        this->step();
     }
 #endif
     // if an error occurs or the program ends cleanup
-    this->Destroy();
+    this->destroy();
 }
 
 
@@ -295,50 +295,49 @@ void oe::task_manager_t::Start() {
  *  DESTROY
  * ***********************/
 
-void oe::task_manager_t::Destroy() {
+void oe::task_manager_t::destroy() {
 
     // finish everything
     if (!done_) {
-        this->window->event_handler_.done_ = true;
-        this->Step();
+        this->window_->event_handler_.done_ = true;
+        this->step();
     }
 
     lockMutex();
-    completed_threads++;
+    completed_threads_++;
     unlockMutex();
 
 
 
-    if (not this->network_init_errors) this->network->destroy();
+    if (not this->network_init_errors_) this->network_->destroy();
     int thread_output = 0;
-    for (auto thread : this->threadIDs) {
+    for (auto thread : this->threadIDs_) {
         SDL_WaitThread(thread.second, &thread_output);
-        cout << this->threads[thread.first]->countar << endl;
+        cout << this->threads_[thread.first]->countar << endl;
     }
 
-    for (auto thread : this->unsync_threadIDs) {
+    for (auto thread : this->unsync_threadIDs_) {
 
         SDL_WaitThread(thread.second, &thread_output);
     }
-    cout << this->countar << endl;
+    cout << this->countar_ << endl;
 
-    if (not this->renderer_init_errors) this->renderer->destroy();
+    if (not this->renderer_init_errors_) this->renderer_->destroy();
 
-    if (not this->physics_init_errors) this->physics->destroy();
+    if (not this->physics_init_errors_) this->physics_->destroy();
 
-    if (not this->winsys_init_errors) {
-        this->window->event_handler_.cleanup();
-        this->window->destroy();
+    if (not this->winsys_init_errors_) {
+        this->window_->event_handler_.cleanup();
+        this->window_->destroy();
     }
-    delete this->renderer;
-    delete this->physics;
-    delete this->window;
-    delete this->network;
+    delete this->renderer_;
+    delete this->physics_;
+    delete this->window_;
+    delete this->network_;
 
     if (oe::world != nullptr) oe::world = nullptr;
     if (oe::pending_world != nullptr) oe::pending_world = nullptr;
 
-    this->destroy(); // from OE_MutexCondition
 }
 
 /************************
@@ -348,8 +347,8 @@ void oe::task_manager_t::Destroy() {
 void oe::task_manager_t::update_thread(std::size_t thread_id) {
 
     //  update physics task
-    this->threads[thread_id]->physics_task = oe::task_info_t(0, 0, this->getTicks());
-    this->threads[thread_id]->physics_task.set_type_task(oe::task_type::PHYSICS);
+    this->threads_[thread_id]->physics_task = oe::task_info_t(0, 0, this->getTicks());
+    this->threads_[thread_id]->physics_task.set_type_task(oe::task_type::PHYSICS);
 
     // obtain the queue in which the tasks are executed if the task queue if changed
 
@@ -367,30 +366,30 @@ void oe::task_manager_t::update_thread(std::size_t thread_id) {
 
         /// synchronize threads to N fps initially
         this->lockMutex();
-        unsigned int local_framerate = framerate;
+        unsigned int local_framerate = framerate_;
         unsigned int current_ticks   = this->getTicks() - ticks;
         this->unlockMutex();
 
         if ((local_framerate) > current_ticks) {
             // this->pause(local_framerate - (current_ticks));
-            this->current_framerate = 1000.0 / (float)local_framerate;
+            this->current_framerate_ = 1000.0 / (float)local_framerate;
         }
         else {
-            this->current_framerate = 1000.0 / (float)(current_ticks);
+            this->current_framerate_ = 1000.0 / (float)(current_ticks);
         }
 
         // count how many times the thread has been called
-        this->threads[thread_id]->countar++;
+        this->threads_[thread_id]->countar++;
 
         // SYNCHRONIZE PHYSICS
         lockMutex();
-        physics_threads++;
-        comp_threads_copy = physics_threads;
-        if (physics_threads > (get_ready_threads() - 1)) {
-            physics_threads = 0;
-            this->physics_mutex.lockMutex();
-            if (not this->physics_init_errors) this->physics->update_info(this->physics_info);
-            this->physics_mutex.unlockMutex();
+        physics_threads_++;
+        comp_threads_copy = physics_threads_;
+        if (physics_threads_ > (get_ready_threads() - 1)) {
+            physics_threads_ = 0;
+            this->physics_mutex_.lockMutex();
+            if (not this->physics_init_errors_) this->physics_->update_info(this->physics_info_);
+            this->physics_mutex_.unlockMutex();
             condBroadcast(3);
         }
         else {
@@ -401,8 +400,8 @@ void oe::task_manager_t::update_thread(std::size_t thread_id) {
 
         /**************************/
         // This is where physics are run
-        this->threads[thread_id]->physics_task.update();
-        if (not this->physics_init_errors)
+        this->threads_[thread_id]->physics_task.update();
+        if (not this->physics_init_errors_)
             done_ = done_ or this->try_run_physics_update_multi_thread(thread_id, comp_threads_copy);
         /**************************/
 
@@ -418,18 +417,18 @@ void oe::task_manager_t::update_thread(std::size_t thread_id) {
 // Otherwise they will pile up and waste memory on longer gaming sessions
 void oe::task_manager_t::remove_finished_unsync_threads() {
     lockMutex();
-    for (const auto& x : this->finished_unsync_threadIDs) {
-        SDL_DetachThread(this->unsync_threadIDs[x]);
-        this->unsync_threadIDs.erase(x);
+    for (const auto& x : this->finished_unsync_threadIDs_) {
+        SDL_DetachThread(this->unsync_threadIDs_[x]);
+        this->unsync_threadIDs_.erase(x);
     }
-    this->finished_unsync_threadIDs.clear();
+    this->finished_unsync_threadIDs_.clear();
     unlockMutex();
 }
 
 int oe::task_manager_t::get_ready_threads() {
     /// count ALL (i repeat) AAALLLLL threads that are set to be synchronized together
     unsigned int number_of_threads = 0;
-    number_of_threads              = this->threads.size();
+    number_of_threads              = this->threads_.size();
     return number_of_threads;
 }
 
@@ -457,91 +456,91 @@ void oe::task_manager_t::update_world() {
 
 unsigned int oe::task_manager_t::get_frame_rate() {
     // return active framerate
-    return this->current_framerate;
+    return this->current_framerate_;
 }
 
 void oe::task_manager_t::set_frame_rate(unsigned int frametarget) {
     // set desired framerate
     lockMutex();
-    this->framerate = 1000u / frametarget;
+    this->framerate_ = 1000u / frametarget;
     unlockMutex();
 }
 
-void oe::task_manager_t::AddTask(string name, const oe::method_type func) {
+void oe::task_manager_t::add_task(string name, const oe::method_type func) {
 
     std::shared_ptr<oe::task_t> task = std::shared_ptr<oe::task_t>(new oe::task_t(0, 0, this->getTicks()));
     task->set_func(func);
     lockMutex();
-    this->threads["default"]->tasks_.force_append(name, task);
+    this->threads_["default"]->tasks_.force_append(name, task);
     unlockMutex();
 }
 
-void oe::task_manager_t::AddTask(string name, const oe::method_type func, int priority) {
+void oe::task_manager_t::add_task(string name, const oe::method_type func, int priority) {
 
     std::shared_ptr<oe::task_t> task = std::shared_ptr<oe::task_t>(new oe::task_t(priority, 0, this->getTicks()));
     task->set_func(func);
     lockMutex();
-    this->threads["default"]->tasks_.force_append(name, task);
+    this->threads_["default"]->tasks_.force_append(name, task);
     unlockMutex();
 }
 
-void oe::task_manager_t::AddTask(string name, const oe::method_type func, int priority, string threadname) {
+void oe::task_manager_t::add_task(string name, const oe::method_type func, int priority, string threadname) {
 
     std::shared_ptr<oe::task_t> task = std::shared_ptr<oe::task_t>(new oe::task_t(priority, 0, this->getTicks()));
     task->set_func(func);
 
     lockMutex();
 
-    if (not this->threads.contains(threadname)) {
+    if (not this->threads_.contains(threadname)) {
         unlockMutex();
         throw oe::invalid_thread_name(threadname);
     }
 
-    this->threads[threadname]->tasks_.force_append(name, task);
+    this->threads_[threadname]->tasks_.force_append(name, task);
 
     unlockMutex();
 }
 
-void oe::task_manager_t::AddTask(string name, const oe::method_type func, string threadname) {
+void oe::task_manager_t::add_task(string name, const oe::method_type func, string threadname) {
 
     std::shared_ptr<oe::task_t> task = std::shared_ptr<oe::task_t>(new oe::task_t(0, 0, this->getTicks()));
     task->set_func(func);
     lockMutex();
 
-    if (not this->threads.contains(threadname)) {
+    if (not this->threads_.contains(threadname)) {
         unlockMutex();
         throw oe::invalid_thread_name(threadname);
     }
 
-    this->threads[threadname]->tasks_.force_append(name, task);
+    this->threads_[threadname]->tasks_.force_append(name, task);
     unlockMutex();
 }
 
-void oe::task_manager_t::DoOnce(string name, const oe::method_type func, int delay) {
+void oe::task_manager_t::do_once(string name, const oe::method_type func, int delay) {
 
     std::shared_ptr<oe::task_t> task = std::shared_ptr<oe::task_t>(new oe::task_t(0, delay, this->getTicks()));
     task->set_func(func);
     lockMutex();
-    this->threads["default"]->tasks_.force_append(name, task);
+    this->threads_["default"]->tasks_.force_append(name, task);
     unlockMutex();
 }
 
-void oe::task_manager_t::RemoveTask(std::string name) {
+void oe::task_manager_t::remove_task(std::string name) {
     lockMutex();
-    size_t task_id = this->threads["default"]->tasks_.get_id(name);
-    this->threads["default"]->tasks_.remove(task_id);
+    size_t task_id = this->threads_["default"]->tasks_.get_id(name);
+    this->threads_["default"]->tasks_.remove(task_id);
     unlockMutex();
 }
 
-void oe::task_manager_t::RemoveTask(std::string threadname, std::string name) {
+void oe::task_manager_t::remove_task(std::string threadname, std::string name) {
     lockMutex();
 
-    if (not this->threads.contains(threadname)) {
+    if (not this->threads_.contains(threadname)) {
         unlockMutex();
         throw oe::invalid_thread_name(threadname);
     }
-    size_t task_id = this->threads[threadname]->tasks_.get_id(name);
-    this->threads[threadname]->tasks_.remove(task_id);
+    size_t task_id = this->threads_[threadname]->tasks_.get_id(name);
+    this->threads_[threadname]->tasks_.remove(task_id);
     unlockMutex();
 }
 
@@ -550,12 +549,12 @@ oe::task_info_t oe::task_manager_t::get_task_info(string threadname, string name
     oe::task_info_t result;
     lockMutex();
 
-    if (not this->threads.contains(threadname)) {
+    if (not this->threads_.contains(threadname)) {
         unlockMutex();
         throw oe::invalid_thread_name(threadname);
     }
 
-    auto task_elem = this->threads[threadname]->tasks_[name];
+    auto task_elem = this->threads_[threadname]->tasks_[name];
     if (!task_elem.is_valid()) {
         unlockMutex();
         throw oe::invalid_task_name(name, threadname);
@@ -570,7 +569,7 @@ oe::task_info_t oe::task_manager_t::get_task_info(string threadname, string name
 void oe::task_manager_t::run_thread_tasks(std::size_t thread_id) {
 
     std::set<std::size_t> obsolete_tasks;
-    for (auto task_elem : this->threads[thread_id]->tasks_.sorted()) {
+    for (auto task_elem : this->threads_[thread_id]->tasks_.sorted()) {
 
         task_elem->update();
         // call the task
@@ -581,10 +580,10 @@ void oe::task_manager_t::run_thread_tasks(std::size_t thread_id) {
     }
 
     for (auto task : obsolete_tasks) {
-        this->threads[thread_id]->tasks_.remove(task);
+        this->threads_[thread_id]->tasks_.remove(task);
     }
 }
 
 void oe::task_manager_t::update_task_list(std::size_t thread_id) {
-    this->threads[thread_id]->tasks_.synchronize(false);
+    this->threads_[thread_id]->tasks_.synchronize(false);
 }

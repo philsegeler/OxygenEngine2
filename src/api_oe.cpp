@@ -21,27 +21,27 @@ void oe::preinit::request_gles31() {
 
 size_t oe::init() {
     OE_Main = new oe::task_manager_t();
-    return OE_Main->Init("Oxygen Engine Test", 800, 600, false, preinit::renderer_parameters, preinit::winsys_parameters,
+    return OE_Main->init("Oxygen Engine Test", 800, 600, false, preinit::renderer_parameters, preinit::winsys_parameters,
                          preinit::physics_parameters, oe::preinit::networking_parameters);
 }
 size_t oe::init(std::string title, bool fullscreen) {
     OE_Main = new oe::task_manager_t();
-    return OE_Main->Init(title, 800, 600, fullscreen, preinit::renderer_parameters, preinit::winsys_parameters,
+    return OE_Main->init(title, 800, 600, fullscreen, preinit::renderer_parameters, preinit::winsys_parameters,
                          preinit::physics_parameters, oe::preinit::networking_parameters);
 }
 size_t oe::init(std::string title, int x, int y, bool fullscreen) {
     OE_Main = new oe::task_manager_t();
-    return OE_Main->Init(title, x, y, fullscreen, preinit::renderer_parameters, preinit::winsys_parameters,
+    return OE_Main->init(title, x, y, fullscreen, preinit::renderer_parameters, preinit::winsys_parameters,
                          preinit::physics_parameters, oe::preinit::networking_parameters);
 }
 void oe::step() {
     OE_API_Helpers::checkIfInit();
     // cout << "running step" << endl;
-    OE_Main->Step();
+    OE_Main->step();
 }
 void oe::start() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->Start();
+    OE_Main->start();
 }
 void oe::destroy() {
     OE_API_Helpers::checkIfInit();
@@ -51,7 +51,7 @@ void oe::destroy() {
         oe::step();
     }
 
-    OE_Main->Destroy();
+    OE_Main->destroy();
     delete OE_Main;
     OE_Main = nullptr;
 }
@@ -62,7 +62,7 @@ bool oe::is_done() {
 // ?? Where do i even need this ??? UPDATE: Now I remember
 void oe::finish() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.set_done(true);
+    OE_Main->window_->event_handler_.set_done(true);
 }
 
 // size_t OE_InitFromFile(std::string); //TODO
@@ -73,59 +73,59 @@ void oe::finish() {
 
 void oe::remove_task(std::string task) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->RemoveTask(task);
+    OE_Main->remove_task(task);
 }
 
 void oe::remove_task(std::string task, std::string thread) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->RemoveTask(task, thread);
+    OE_Main->remove_task(task, thread);
 }
 
 void oe::broadcast_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.broadcast_event(name);
+    OE_Main->window_->event_handler_.broadcast_event(name);
 }
 std::size_t oe::create_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->window->event_handler_.create_user_event(name);
+    return OE_Main->window_->event_handler_.create_user_event(name);
 }
 std::size_t oe::create_internal_physics_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->window->event_handler_.create_physics_event(name);
+    return OE_Main->window_->event_handler_.create_physics_event(name);
 }
 std::size_t oe::create_internal_renderer_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->window->event_handler_.create_renderer_event(name);
+    return OE_Main->window_->event_handler_.create_renderer_event(name);
 }
 std::size_t oe::create_internal_network_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->window->event_handler_.create_network_event(name);
+    return OE_Main->window_->event_handler_.create_network_event(name);
 }
 void oe::broadcast_event(std::size_t id) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.broadcast_event(id);
+    OE_Main->window_->event_handler_.broadcast_event(id);
 }
 
 std::size_t oe::get_event_id(std::string name) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->window->event_handler_.get_event_id(name);
+    return OE_Main->window_->event_handler_.get_event_id(name);
 }
 
 std::string oe::get_event_name(std::size_t id) {
     OE_API_Helpers::checkIfInit();
-    return OE_Main->window->event_handler_.get_event_name(id);
+    return OE_Main->window_->event_handler_.get_event_name(id);
 }
 
 size_t oe::get_event_activations(std::string name) {
     OE_API_Helpers::checkIfInit();
-    size_t event_id = OE_Main->window->event_handler_.get_event_id(name);
-    return OE_Main->window->event_handler_.get_event_activations(event_id);
+    size_t event_id = OE_Main->window_->event_handler_.get_event_id(name);
+    return OE_Main->window_->event_handler_.get_event_activations(event_id);
 }
 
 size_t oe::get_event_counter(std::string name) {
     OE_API_Helpers::checkIfInit();
-    size_t event_id = OE_Main->window->event_handler_.get_event_id(name);
-    return OE_Main->window->event_handler_.get_event_counter(event_id);
+    size_t event_id = OE_Main->window_->event_handler_.get_event_id(name);
+    return OE_Main->window_->event_handler_.get_event_counter(event_id);
 }
 
 bool oe::is_key_just_pressed(std::string key) {
@@ -154,42 +154,42 @@ bool oe::is_mouse_moved() {
 
 int oe::get_delta_mouse_x() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.lockMutex();
-    int output = OE_Main->window->event_handler_.get_mouse_delta_x();
-    OE_Main->window->event_handler_.unlockMutex();
+    OE_Main->window_->event_handler_.lockMutex();
+    int output = OE_Main->window_->event_handler_.get_mouse_delta_x();
+    OE_Main->window_->event_handler_.unlockMutex();
     return output;
 }
 
 int oe::get_delta_mouse_y() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.lockMutex();
-    int output = OE_Main->window->event_handler_.get_mouse_delta_y();
-    OE_Main->window->event_handler_.unlockMutex();
+    OE_Main->window_->event_handler_.lockMutex();
+    int output = OE_Main->window_->event_handler_.get_mouse_delta_y();
+    OE_Main->window_->event_handler_.unlockMutex();
     return output;
 }
 
 int oe::get_mouse_x() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.lockMutex();
-    int output = OE_Main->window->event_handler_.get_mouse_x();
-    OE_Main->window->event_handler_.unlockMutex();
+    OE_Main->window_->event_handler_.lockMutex();
+    int output = OE_Main->window_->event_handler_.get_mouse_x();
+    OE_Main->window_->event_handler_.unlockMutex();
     return output;
 }
 
 int oe::get_mouse_y() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.lockMutex();
-    int output = OE_Main->window->event_handler_.get_mouse_y();
-    OE_Main->window->event_handler_.unlockMutex();
+    OE_Main->window_->event_handler_.lockMutex();
+    int output = OE_Main->window_->event_handler_.get_mouse_y();
+    OE_Main->window_->event_handler_.unlockMutex();
     return output;
 }
 
 void oe::destroy_event(std::string name) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window->event_handler_.lockMutex();
-    size_t event_id = OE_Main->window->event_handler_.get_event_id(name);
-    OE_Main->window->event_handler_.destroy_event(event_id);
-    OE_Main->window->event_handler_.unlockMutex();
+    OE_Main->window_->event_handler_.lockMutex();
+    size_t event_id = OE_Main->window_->event_handler_.get_event_id(name);
+    OE_Main->window_->event_handler_.destroy_event(event_id);
+    OE_Main->window_->event_handler_.unlockMutex();
 }
 
 void oe::pause(int x) {
@@ -198,7 +198,7 @@ void oe::pause(int x) {
 }
 
 bool oe::is_mouse_locked() {
-    return OE_Main->window->is_mouse_locked();
+    return OE_Main->window_->is_mouse_locked();
 }
 
 void oe::mouse_lock() {
@@ -217,7 +217,7 @@ oe::task_info_t oe::get_task_info(std::string thread, std::string task) {
 
 void oe::create_new_thread(std::string name) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->CreateNewThread(name);
+    OE_Main->create_new_thread(name);
 }
 
 /** API functions for manipulating objects and basic types
@@ -404,157 +404,157 @@ void oe::change_object_scale(std::size_t id, OE_Vec3 sca) {
 
 void oe::restart_renderer() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window_mutex.lockMutex();
+    OE_Main->window_mutex_.lockMutex();
     OE_Main->force_restart_renderer();
-    OE_Main->window_mutex.unlockMutex();
+    OE_Main->window_mutex_.unlockMutex();
 }
 
 void oe::set_shading_mode(oe::RENDERER_SHADING_MODE shading_mode) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    OE_Main->renderer_info.shading_mode = shading_mode;
-    OE_Main->renderer_mutex.unlockMutex();
+    OE_Main->renderer_mutex_.lockMutex();
+    OE_Main->renderer_info_.shading_mode = shading_mode;
+    OE_Main->renderer_mutex_.unlockMutex();
     oe::restart_renderer();
 }
 
 oe::RENDERER_SHADING_MODE oe::get_shading_mode() {
     OE_API_Helpers::checkIfInit();
     oe::RENDERER_SHADING_MODE output;
-    OE_Main->renderer_mutex.lockMutex();
-    output = OE_Main->renderer_info.shading_mode;
-    OE_Main->renderer_mutex.unlockMutex();
+    OE_Main->renderer_mutex_.lockMutex();
+    output = OE_Main->renderer_info_.shading_mode;
+    OE_Main->renderer_mutex_.unlockMutex();
     return output;
 }
 
 void oe::render_wireframe(bool value) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    OE_Main->renderer_info.use_wireframe = value;
-    OE_Main->renderer_mutex.unlockMutex();
+    OE_Main->renderer_mutex_.lockMutex();
+    OE_Main->renderer_info_.use_wireframe = value;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 void oe::toggle_wireframe_rendering() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    if (OE_Main->renderer_info.use_wireframe)
-        OE_Main->renderer_info.use_wireframe = false;
+    OE_Main->renderer_mutex_.lockMutex();
+    if (OE_Main->renderer_info_.use_wireframe)
+        OE_Main->renderer_info_.use_wireframe = false;
     else
-        OE_Main->renderer_info.use_wireframe = true;
-    OE_Main->renderer_mutex.unlockMutex();
+        OE_Main->renderer_info_.use_wireframe = true;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 void oe::render_bounding_boxes(bool value) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    OE_Main->renderer_info.render_bounding_boxes = value;
-    OE_Main->renderer_mutex.unlockMutex();
+    OE_Main->renderer_mutex_.lockMutex();
+    OE_Main->renderer_info_.render_bounding_boxes = value;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 void oe::toggle_bounding_boxes_rendering() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    if (OE_Main->renderer_info.render_bounding_boxes)
-        OE_Main->renderer_info.render_bounding_boxes = false;
+    OE_Main->renderer_mutex_.lockMutex();
+    if (OE_Main->renderer_info_.render_bounding_boxes)
+        OE_Main->renderer_info_.render_bounding_boxes = false;
     else
-        OE_Main->renderer_info.render_bounding_boxes = true;
-    OE_Main->renderer_mutex.unlockMutex();
+        OE_Main->renderer_info_.render_bounding_boxes = true;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 void oe::render_bounding_spheres(bool value) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    OE_Main->renderer_info.render_bounding_spheres = value;
-    OE_Main->renderer_mutex.unlockMutex();
+    OE_Main->renderer_mutex_.lockMutex();
+    OE_Main->renderer_info_.render_bounding_spheres = value;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 void oe::toggle_bounding_spheres_rendering() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    if (OE_Main->renderer_info.render_bounding_spheres)
-        OE_Main->renderer_info.render_bounding_spheres = false;
+    OE_Main->renderer_mutex_.lockMutex();
+    if (OE_Main->renderer_info_.render_bounding_spheres)
+        OE_Main->renderer_info_.render_bounding_spheres = false;
     else
-        OE_Main->renderer_info.render_bounding_spheres = true;
-    OE_Main->renderer_mutex.unlockMutex();
+        OE_Main->renderer_info_.render_bounding_spheres = true;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 void oe::render_HDR(bool value) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    OE_Main->renderer_info.use_hdr = value;
-    OE_Main->renderer_mutex.unlockMutex();
+    OE_Main->renderer_mutex_.lockMutex();
+    OE_Main->renderer_info_.use_hdr = value;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 void oe::toggle_render_HDR() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    if (OE_Main->renderer_info.use_hdr)
-        OE_Main->renderer_info.use_hdr = false;
+    OE_Main->renderer_mutex_.lockMutex();
+    if (OE_Main->renderer_info_.use_hdr)
+        OE_Main->renderer_info_.use_hdr = false;
     else
-        OE_Main->renderer_info.use_hdr = true;
-    OE_Main->renderer_mutex.unlockMutex();
+        OE_Main->renderer_info_.use_hdr = true;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 void oe::render_z_prepass(bool value) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    OE_Main->renderer_info.use_z_prepass = value;
-    OE_Main->renderer_mutex.unlockMutex();
+    OE_Main->renderer_mutex_.lockMutex();
+    OE_Main->renderer_info_.use_z_prepass = value;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 void oe::toggle_render_z_prepass() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    if (OE_Main->renderer_info.use_z_prepass)
-        OE_Main->renderer_info.use_z_prepass = false;
+    OE_Main->renderer_mutex_.lockMutex();
+    if (OE_Main->renderer_info_.use_z_prepass)
+        OE_Main->renderer_info_.use_z_prepass = false;
     else
-        OE_Main->renderer_info.use_z_prepass = true;
-    OE_Main->renderer_mutex.unlockMutex();
+        OE_Main->renderer_info_.use_z_prepass = true;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 void oe::set_renderer_sanity_checks(bool value) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    OE_Main->renderer_info.sanity_checks = value;
-    OE_Main->renderer_mutex.unlockMutex();
+    OE_Main->renderer_mutex_.lockMutex();
+    OE_Main->renderer_info_.sanity_checks = value;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 void oe::toggle_renderer_sanity_checks() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->renderer_mutex.lockMutex();
-    if (OE_Main->renderer_info.sanity_checks)
-        OE_Main->renderer_info.sanity_checks = false;
+    OE_Main->renderer_mutex_.lockMutex();
+    if (OE_Main->renderer_info_.sanity_checks)
+        OE_Main->renderer_info_.sanity_checks = false;
     else
-        OE_Main->renderer_info.sanity_checks = true;
-    OE_Main->renderer_mutex.unlockMutex();
+        OE_Main->renderer_info_.sanity_checks = true;
+    OE_Main->renderer_mutex_.unlockMutex();
 }
 
 
 void oe::set_window_title(std::string title) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window_mutex.lockMutex();
-    OE_Main->window_info.title = title;
-    OE_Main->window_mutex.unlockMutex();
+    OE_Main->window_mutex_.lockMutex();
+    OE_Main->window_info_.title = title;
+    OE_Main->window_mutex_.unlockMutex();
 }
 
 std::string oe::get_window_title() {
     OE_API_Helpers::checkIfInit();
     std::string output;
-    OE_Main->window_mutex.lockMutex();
-    output = OE_Main->window_info.title;
-    OE_Main->window_mutex.unlockMutex();
+    OE_Main->window_mutex_.lockMutex();
+    output = OE_Main->window_info_.title;
+    OE_Main->window_mutex_.unlockMutex();
     return output;
 }
 
 void oe::toggle_window_fullscreen() {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window_mutex.lockMutex();
-    if (OE_Main->window_info.use_fullscreen)
-        OE_Main->window_info.use_fullscreen = false;
+    OE_Main->window_mutex_.lockMutex();
+    if (OE_Main->window_info_.use_fullscreen)
+        OE_Main->window_info_.use_fullscreen = false;
     else
-        OE_Main->window_info.use_fullscreen = true;
-    OE_Main->window_mutex.unlockMutex();
+        OE_Main->window_info_.use_fullscreen = true;
+    OE_Main->window_mutex_.unlockMutex();
 }
 
 void oe::set_window_fullscreen(bool value) {
     OE_API_Helpers::checkIfInit();
-    OE_Main->window_mutex.lockMutex();
-    OE_Main->window_info.use_fullscreen = value;
-    OE_Main->window_mutex.unlockMutex();
+    OE_Main->window_mutex_.lockMutex();
+    OE_Main->window_info_.use_fullscreen = value;
+    OE_Main->window_mutex_.unlockMutex();
 }

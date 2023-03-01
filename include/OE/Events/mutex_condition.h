@@ -23,7 +23,6 @@ public:
     OE_MutexCondition();
     ~OE_MutexCondition();
     void createCondition();
-    void destroy();
 
     void         condBroadcast(std::size_t);
     void         condWait(std::size_t);
