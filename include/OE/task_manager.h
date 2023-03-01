@@ -142,7 +142,7 @@ namespace oe {
         bool              network_init_errors_{false};
 
         // synchronized threads
-        oe::shared_index_map_t<thread_struct>      threads_;
+        oe::shared_index_map_t<thread_struct>        threads_;
         std::unordered_map<std::size_t, SDL_Thread*> threadIDs_ = {};
 
         // stores threads which should not be synchronized.

@@ -153,16 +153,16 @@ bool oe::task_manager_t::try_run_physics_update_multi_thread(std::size_t thread_
         this->physics_->update_multi_thread(this->threads_[thread_id]->physics_task, comp_threads_copy);
         return false;
     } catch (oe::api_error& e) {
-        std::string error_str = "[HPE Error] '" + e.name_ + "' thrown in update_multi_thread of '" + this->physics_->get_name() +
-                                "' in  thread: '" + this->threads_.get_name(thread_id) +
+        std::string error_str = "[HPE Error] '" + e.name_ + "' thrown in update_multi_thread of '" +
+                                this->physics_->get_name() + "' in  thread: '" + this->threads_.get_name(thread_id) +
                                 "', thread_num: " + std::to_string(comp_threads_copy);
         error_str += ", invocation: " + std::to_string(this->threads_[thread_id]->physics_task.get_counter()) + "\n";
         error_str += "\t" + e.what() + "\n";
         cout << error_str;
         OE_WriteToLog(error_str);
     } catch (oe::physics_error& e) {
-        std::string error_str = "[HPE Error] '" + e.name_ + "' thrown in update_multi_thread of '" + this->physics_->get_name() +
-                                "' in  thread: '" + this->threads_.get_name(thread_id) +
+        std::string error_str = "[HPE Error] '" + e.name_ + "' thrown in update_multi_thread of '" +
+                                this->physics_->get_name() + "' in  thread: '" + this->threads_.get_name(thread_id) +
                                 "', thread_num: " + std::to_string(comp_threads_copy);
         error_str += ", invocation: " + std::to_string(this->threads_[thread_id]->physics_task.get_counter()) + "\n";
         error_str += "\t" + e.what() + "\n";
@@ -180,8 +180,8 @@ bool oe::task_manager_t::try_run_physics_update_multi_thread(std::size_t thread_
         /// universal error handling. will catch any exception
         /// feel free to add specific handling for specific errors
         auto&  task    = this->threads_[thread_id]->physics_task;
-        string outputa = string("[HPE Error] Physics exception thrown in update_multi_thread of '" + this->physics_->get_name() +
-                                "' in  thread: '" + this->threads_.get_name(thread_id) +
+        string outputa = string("[HPE Error] Physics exception thrown in update_multi_thread of '" +
+                                this->physics_->get_name() + "' in  thread: '" + this->threads_.get_name(thread_id) +
                                 "', thread_num: " + std::to_string(comp_threads_copy));
         outputa += ", invocation: " + std::to_string(task.get_counter());
         cout << outputa << endl;

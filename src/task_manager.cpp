@@ -62,10 +62,10 @@ extern "C" int oxygen_engine_update_unsync_thread(void* data) {
 
 oe::task_manager_t::task_manager_t() {
     completed_threads_ = 0;
-    done_             = false;
+    done_              = false;
     started_threads_   = 0;
     countar_           = 0;
-    world             = nullptr;
+    world              = nullptr;
 }
 
 bool oe::task_manager_t::is_done() {
@@ -115,7 +115,7 @@ int oe::task_manager_t::init(std::string titlea, int x, int y, bool fullscreen, 
     this->renderer_mutex_.unlockMutex();
 
     this->physics_mutex_.lockMutex();
-    this->physics_            = new oe::physics_base_t("default");
+    this->physics_             = new oe::physics_base_t("default");
     this->physics_init_errors_ = this->try_run_physics_init(physics_init_info_in);
     this->physics_mutex_.unlockMutex();
 
@@ -170,10 +170,10 @@ void oe::task_manager_t::create_new_thread(string thread_name) {
     lockMutex();
 
     this->threads_.append_now(thread_name, std::shared_ptr<oe::thread_struct>(new oe::thread_struct()));
-    size_t thread_id       = this->threads_[thread_name].get_id();
+    size_t thread_id         = this->threads_[thread_name].get_id();
     oe::thread_data::taskMgr = this;
     oe::thread_data* data    = new oe::thread_data();
-    data->thread_id        = thread_id;
+    data->thread_id          = thread_id;
 
     if (synchro)
         this->threadIDs_[thread_id] = SDL_CreateThread(oxygen_engine_update_thread, thread_name.c_str(), (void*)data);
@@ -337,7 +337,6 @@ void oe::task_manager_t::destroy() {
 
     if (oe::world != nullptr) oe::world = nullptr;
     if (oe::pending_world != nullptr) oe::pending_world = nullptr;
-
 }
 
 /************************
