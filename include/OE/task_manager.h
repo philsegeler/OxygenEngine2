@@ -56,7 +56,7 @@ namespace oe {
         oe::task_info_t                                                           physics_task;
     };
 
-    class task_manager_t : public OE_MutexCondition {
+    class task_manager_t : public mutex_condition_t {
 
         friend int ::oxygen_engine_update_unsync_thread(void*);
         friend int ::oxygen_engine_update_thread(void*);

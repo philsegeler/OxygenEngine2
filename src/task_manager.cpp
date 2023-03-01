@@ -51,7 +51,7 @@ extern "C" int oxygen_engine_update_unsync_thread(void* data) {
     OE_Main->finished_unsync_threadIDs_.insert(actual_data->name);
     OE_Main->unlockMutex();
 #ifdef OE_PLATFORM_WEB
-    actual_data->~oe::unsync_thread_data();
+    actual_data->~unsync_thread_data();
     ::operator delete(actual_data, std::align_val_t(16));
 #else
     delete actual_data;
@@ -122,10 +122,10 @@ int oe::task_manager_t::init(std::string titlea, int x, int y, bool fullscreen, 
     this->network_             = new oe::networking_base_t("default");
     this->network_init_errors_ = this->try_run_network_init(networking_init_info_in);
 
-    this->createCondition();
-    this->createCondition();
-    this->createCondition();
-    this->createCondition();
+    this->create_condition();
+    this->create_condition();
+    this->create_condition();
+    this->create_condition();
 
     this->set_frame_rate(200);
     this->done_ = false;
@@ -191,10 +191,10 @@ void oe::task_manager_t::sync_begin_frame() {
 
     if (started_threads_ > get_ready_threads()) {
         started_threads_ = 0;
-        condBroadcast(1);
+        cond_broadcast(1);
     }
     else {
-        condWait(1);
+        cond_wait(1);
     }
     unlockMutex();
 }
@@ -225,12 +225,12 @@ void oe::task_manager_t::sync_end_frame() {
         /// that slows down the game, signal all other threads
         /// to continue and reset the counter
         completed_threads_ = 0;
-        condBroadcast(2);
+        cond_broadcast(2);
     }
     else {
         /// if this is NOT dat last sh**
         /// wait indefinitely for a signal from the last thread
-        condWait(2);
+        cond_wait(2);
     }
     unlockMutex();
 }
@@ -389,11 +389,11 @@ void oe::task_manager_t::update_thread(std::size_t thread_id) {
             this->physics_mutex_.lockMutex();
             if (not this->physics_init_errors_) this->physics_->update_info(this->physics_info_);
             this->physics_mutex_.unlockMutex();
-            condBroadcast(3);
+            cond_broadcast(3);
         }
         else {
 
-            condWait(3);
+            cond_wait(3);
         }
         unlockMutex();
 
