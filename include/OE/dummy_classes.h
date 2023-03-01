@@ -90,7 +90,7 @@ namespace oe {
      */
     // initial parameters
     struct renderer_init_info {
-        bool some_var{false};
+        bool use_software_vertex_shaders{false};
     };
 
     // dynamic parameters
