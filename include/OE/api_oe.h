@@ -33,7 +33,7 @@ enum oe::renderer::shading_mode::type : int{
 namespace oe {
 
     // GLOBAL VARIABLE
-    extern OE_TaskManager* OE_Main;
+    extern task_manager_t* OE_Main;
 
     // class typedefs
     typedef OE_Vec3   vec3;

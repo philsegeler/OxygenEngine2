@@ -10,9 +10,8 @@ class OE_WindowSystemBase;
 
 namespace oe {
     class event_handler_t : public OE_THREAD_SAFETY_OBJECT {
-        friend class ::OE_TaskManager;
-        friend class ::OE_SDL_WindowSystem;
-        friend class ::OE_WindowSystemBase;
+        friend class task_manager_t;
+        friend class sdl_window_system_t;
 
     public:
         event_handler_t();

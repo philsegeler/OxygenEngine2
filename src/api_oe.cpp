@@ -5,7 +5,7 @@
 using namespace oe;
 using namespace std;
 
-OE_TaskManager*          oe::OE_Main                        = nullptr;
+oe::task_manager_t*      oe::OE_Main                        = nullptr;
 oe::renderer_init_info   oe::preinit::renderer_parameters   = oe::renderer_init_info();
 oe::winsys_init_info     oe::preinit::winsys_parameters     = oe::winsys_init_info();
 oe::physics_init_info    oe::preinit::physics_parameters    = oe::physics_init_info();
@@ -20,17 +20,17 @@ void oe::preinit::request_gles31() {
 }
 
 size_t oe::init() {
-    OE_Main = new OE_TaskManager();
+    OE_Main = new oe::task_manager_t();
     return OE_Main->Init("Oxygen Engine Test", 800, 600, false, preinit::renderer_parameters, preinit::winsys_parameters,
                          preinit::physics_parameters, oe::preinit::networking_parameters);
 }
 size_t oe::init(std::string title, bool fullscreen) {
-    OE_Main = new OE_TaskManager();
+    OE_Main = new oe::task_manager_t();
     return OE_Main->Init(title, 800, 600, fullscreen, preinit::renderer_parameters, preinit::winsys_parameters,
                          preinit::physics_parameters, oe::preinit::networking_parameters);
 }
 size_t oe::init(std::string title, int x, int y, bool fullscreen) {
-    OE_Main = new OE_TaskManager();
+    OE_Main = new oe::task_manager_t();
     return OE_Main->Init(title, x, y, fullscreen, preinit::renderer_parameters, preinit::winsys_parameters,
                          preinit::physics_parameters, oe::preinit::networking_parameters);
 }

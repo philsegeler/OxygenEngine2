@@ -23,6 +23,7 @@ csl_2UVMAP_TEST.csl
 csl_very_large_object_test_copy.csl
 builddir
 subprojects/SDL2-2.0.12/
+subprojects/SDL2-2.26.0/
 subprojects/glm-0.9.9.8/
 subprojects/ctre
 subprojects/packagecache/
@@ -36,3 +37,4 @@ vgcore*
 audi_r8.csl
 OE_MASSIF*
 .idea/
+OxygenEngine2.kde*

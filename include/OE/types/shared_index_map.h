@@ -20,7 +20,6 @@
  * [Enhancement TODO for Andreas]: Add a custom container in place of std::set in changed_t/deleted_t
  */
 
-class OE_TaskManager;
 
 namespace oe {
 
@@ -196,7 +195,7 @@ namespace oe {
 
         constexpr static bool is_sorted = (IndexMapType != index_map_sort_type::unsorted);
 
-        friend class ::OE_TaskManager;
+        friend class task_manager_t;
         friend class changed_t;
         friend class deleted_t;
 
