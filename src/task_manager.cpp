@@ -103,9 +103,9 @@ int oe::task_manager_t::Init(std::string titlea, int x, int y, bool fullscreen, 
 
     this->renderer_mutex.lockMutex();
     if (winsys_init_info_in.requested_backend == nre::gpu::GLES2)
-        this->renderer = new NRE_RendererLegacy();
+        this->renderer = new nre::renderer_legacy_t();
     else
-        this->renderer = new NRE_Renderer();
+        this->renderer = new nre::renderer_t();
 
     // do NOT try to initialise the renderer if the window system is borked
     if (not this->winsys_init_errors)

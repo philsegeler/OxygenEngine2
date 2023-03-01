@@ -4,13 +4,14 @@
 
 using namespace std;
 
-NRE_Renderer::NRE_Renderer() : renderer_base_t(false, "renderer_main") {
+nre::renderer_t::renderer_t() : renderer_base_t(false, "renderer_main") {
 }
 
-NRE_Renderer::~NRE_Renderer() {
+nre::renderer_t::~renderer_t() {
 }
 
-bool NRE_Renderer::init(oe::renderer_init_info init_info, oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
+bool nre::renderer_t::init(oe::renderer_init_info init_info, oe::renderer_update_info update_info,
+                           oe::winsys_output winsys_info) {
 
 
     // make sure there are no stored objects
@@ -31,7 +32,7 @@ bool NRE_Renderer::init(oe::renderer_init_info init_info, oe::renderer_update_in
     return true;
 }
 
-void NRE_Renderer::initOffscreenFrameBuffer() {
+void nre::renderer_t::initOffscreenFrameBuffer() {
     // setup offscreen framebuffer
     this->framebuffer_  = nre::gpu::new_framebuffer();
     this->colortexture_ = nre::gpu::new_texture();
@@ -53,7 +54,7 @@ void NRE_Renderer::initOffscreenFrameBuffer() {
     nre::gpu::set_framebuffer_renderbuffer(this->framebuffer_, this->depthrbo_, 0);
 }
 
-void NRE_Renderer::initFullscreenQuad() {
+void nre::renderer_t::initFullscreenQuad() {
     // setup fullscreen quad
     this->vbo_fullscreen_quad_ = nre::gpu::new_vertex_buf();
     this->vao_fullscreen_quad_ = nre::gpu::new_vertex_layout();
@@ -68,7 +69,7 @@ void NRE_Renderer::initFullscreenQuad() {
     nre::gpu::set_vertex_layout_format(this->vao_fullscreen_quad_, vao_quad_data);
 }
 
-void NRE_Renderer::initGammaCorrectionProg() {
+void nre::renderer_t::initGammaCorrectionProg() {
     // setup gamma correction program
     this->gamma_cor_prog_ = nre::gpu::new_program();
 
@@ -86,7 +87,7 @@ void NRE_Renderer::initGammaCorrectionProg() {
     // nre::gpu::setProgramTextureSlot(this->gamma_cor_prog_, "tex_output", 0);
 }
 
-void NRE_Renderer::initGPUSphere() {
+void nre::renderer_t::initGPUSphere() {
     // the same VBO, VAO and IBO are used for every object
     // it holds a sphere with radius one
 
@@ -109,7 +110,7 @@ void NRE_Renderer::initGPUSphere() {
     nre::gpu::set_vertex_layout_format(this->vao_sphere_, vao_sphere_data);
 }
 
-void NRE_Renderer::initLightUBOProgramFBO() {
+void nre::renderer_t::initLightUBOProgramFBO() {
 
     // setup point light ubo
     this->pt_light_ubo_ = nre::gpu::new_uniform_buf();
@@ -146,8 +147,8 @@ void NRE_Renderer::initLightUBOProgramFBO() {
 
 //------------------------updateData---------------------------//
 
-bool NRE_Renderer::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
-                               bool has_renderer_restarted) {
+bool nre::renderer_t::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                                  bool has_renderer_restarted) {
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
 
@@ -174,7 +175,7 @@ bool NRE_Renderer::update_data(oe::renderer_update_info update_info, oe::winsys_
 
 //------------------------updateSIngleThread-------------------//
 
-bool NRE_Renderer::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
+bool nre::renderer_t::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
 
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
@@ -333,7 +334,7 @@ bool NRE_Renderer::update_single_thread(oe::renderer_update_info update_info, oe
     return true;
 }
 
-void NRE_Renderer::drawRenderGroup(NRE_RenderGroup& ren_group) {
+void nre::renderer_t::drawRenderGroup(nre::render_group& ren_group) {
 
     if (!ren_group.isSetup) {
         // cout << "Setting up Render group" << ren_group.camera << " " << ren_group.vgroup << " " << ren_group.mesh << endl;
@@ -386,7 +387,7 @@ void NRE_Renderer::drawRenderGroup(NRE_RenderGroup& ren_group) {
     nre::gpu::draw(ren_group.program, data_.meshes_[ren_group.mesh].vao, data_.vgroups_[ren_group.vgroup].ibo);
 }
 
-void NRE_Renderer::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
+void nre::renderer_t::drawRenderGroupZPrePass(nre::render_group& ren_group) {
 
     if (!ren_group.isZPrePassSetup) {
 
@@ -410,14 +411,14 @@ void NRE_Renderer::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
     nre::gpu::draw(ren_group.z_prepass_program, data_.meshes_[ren_group.mesh].vao, data_.vgroups_[ren_group.vgroup].ibo);
 }
 
-void NRE_Renderer::drawRenderGroupBoundingBox(NRE_RenderGroup& ren_group) {
+void nre::renderer_t::drawRenderGroupBoundingBox(nre::render_group& ren_group) {
 
     nre::gpu::set_uniform_buf_state(data_.meshes_[ren_group.mesh].ubo, this->prog_bbox_, 1, 0, 0);
     nre::gpu::set_uniform_buf_state(data_.cameras_[ren_group.camera].ubo, this->prog_bbox_, 0, 0, 0);
     nre::gpu::draw(this->prog_bbox_, this->vao_bbox_);
 }
 
-void NRE_Renderer::drawRenderGroupBoundingSphere(NRE_RenderGroup& ren_group) {
+void nre::renderer_t::drawRenderGroupBoundingSphere(nre::render_group& ren_group) {
 
     nre::gpu::set_uniform_buf_state(data_.meshes_[ren_group.mesh].ubo, this->prog_sphere_, 1, 0, 0);
     nre::gpu::set_uniform_buf_state(data_.cameras_[ren_group.camera].ubo, this->prog_sphere_, 0, 0, 0);
@@ -425,7 +426,7 @@ void NRE_Renderer::drawRenderGroupBoundingSphere(NRE_RenderGroup& ren_group) {
 }
 
 
-void NRE_Renderer::setupBoundingBoxProgram() {
+void nre::renderer_t::setupBoundingBoxProgram() {
 
     // the same vbo and vao are used for every object
     // The vbo holds a cube with side 1 that is scaled appropriately in the shader
@@ -466,7 +467,7 @@ void NRE_Renderer::setupBoundingBoxProgram() {
     }
 }
 
-void NRE_Renderer::setupBoundingSphereProgram() {
+void nre::renderer_t::setupBoundingSphereProgram() {
 
     this->prog_sphere_ = nre::gpu::new_program();
 
@@ -492,7 +493,7 @@ void NRE_Renderer::setupBoundingSphereProgram() {
 
 //---------------------------------Update actual GPU data------------------------------//
 
-void NRE_Renderer::updateMeshGPUData() {
+void nre::renderer_t::updateMeshGPUData() {
     for (auto mesh : data_.meshes_) {
 
         // first time buffer initialization
@@ -591,7 +592,7 @@ void NRE_Renderer::updateMeshGPUData() {
     data_.deleted_meshes_.clear();
 }
 
-void NRE_Renderer::updateMaterialGPUData() {
+void nre::renderer_t::updateMaterialGPUData() {
     for (auto mat : data_.materials_) {
 
         if (!data_.materials_[mat.first].has_init) {
@@ -619,7 +620,7 @@ void NRE_Renderer::updateMaterialGPUData() {
     data_.deleted_materials_.clear();
 }
 
-void NRE_Renderer::updateCameraGPUData() {
+void nre::renderer_t::updateCameraGPUData() {
     for (auto cam : data_.cameras_) {
 
         if (!data_.cameras_[cam.first].has_init) {
@@ -645,7 +646,7 @@ void NRE_Renderer::updateCameraGPUData() {
     }
     data_.deleted_cameras_.clear();
 }
-void NRE_Renderer::updateLightGPUData() {
+void nre::renderer_t::updateLightGPUData() {
     /*for (auto l: data_.pt_lights){
 
         if (!data_.pt_lights[l.first].has_init){
@@ -683,7 +684,7 @@ void NRE_Renderer::updateLightGPUData() {
 }
 
 
-void NRE_Renderer::destroy() {
+void nre::renderer_t::destroy() {
 
     this->setup_bbox_prog_   = false;
     this->setup_sphere_prog_ = false;

@@ -1,63 +1,64 @@
-#ifndef NRE_DRAWCALLCONTAINER_H
-#define NRE_DRAWCALLCONTAINER_H
+#ifndef DRAWCALLCONTAINER_H
+#define DRAWCALLCONTAINER_H
 
 #include <OE/Renderer/exceptions_nre.h>
 #include <iterator>
 #include <set>
 
-struct NRE_RenderGroup;
+namespace nre {
+    struct render_group;
 
-class NRE_DrawCallContainer {
-public:
-    NRE_DrawCallContainer();
-    ~NRE_DrawCallContainer();
-
-
-
-    class Iterator {
+    class drawcall_container_t {
     public:
-        typedef std::set<NRE_RenderGroup>::iterator set_iter_t;
-
-        Iterator(set_iter_t);
-
-        Iterator&       operator++();
-        Iterator        operator++(int);
-        NRE_RenderGroup operator*();
+        drawcall_container_t();
+        ~drawcall_container_t();
 
 
-        using iterator_category = std::input_iterator_tag;
-        using difference_type   = int;
 
-        friend bool operator==(const Iterator& a, const Iterator& b);
-        friend bool operator!=(const Iterator& a, const Iterator& b);
+        class Iterator {
+        public:
+            typedef std::set<render_group>::iterator set_iter_t;
+
+            Iterator(set_iter_t);
+
+            Iterator&    operator++();
+            Iterator     operator++(int);
+            render_group operator*();
+
+
+            using iterator_category = std::input_iterator_tag;
+            using difference_type   = int;
+
+            friend bool operator==(const Iterator& a, const Iterator& b);
+            friend bool operator!=(const Iterator& a, const Iterator& b);
+
+        private:
+            set_iter_t iter;
+        };
+
+        Iterator begin();
+
+        Iterator end();
+
+        bool contains(const render_group&);
+        void insert(render_group);
+        void replace(render_group);
+        void update();
+        void cleanupPrograms();
+
+        void removeCamera(std::size_t);
+        void removeMaterial(std::size_t);
+        void removeMesh(std::size_t);
+        void removeVertexGroup(std::size_t, std::size_t);
+
+        const std::set<render_group> deleted();
 
     private:
-        set_iter_t iter;
+        std::set<render_group> data_;
+        std::set<render_group> pending_rengroups_;
+        std::set<render_group> to_be_deleted_;
     };
 
-    Iterator begin();
-
-    Iterator end();
-
-    bool contains(const NRE_RenderGroup&);
-    void insert(NRE_RenderGroup);
-    void replace(NRE_RenderGroup);
-    void update();
-    void cleanupPrograms();
-
-    void removeCamera(std::size_t);
-    void removeMaterial(std::size_t);
-    void removeMesh(std::size_t);
-    void removeVertexGroup(std::size_t, std::size_t);
-
-    const std::set<NRE_RenderGroup> deleted();
-
-private:
-    std::set<NRE_RenderGroup> data_;
-    std::set<NRE_RenderGroup> pending_rengroups_;
-    std::set<NRE_RenderGroup> to_be_deleted_;
-};
-
-
+}; // namespace nre
 
 #endif

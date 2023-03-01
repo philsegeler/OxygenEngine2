@@ -1,7 +1,7 @@
 #include <OE/Renderer/renderer_legacy.h>
 #include <OE/Renderer/renderer_main.h>
 
-bool NRE_RenderGroup::operator<(const NRE_RenderGroup& other) const {
+bool nre::render_group::operator<(const render_group& other) const {
 
     // sort by camera
     if (this->camera < other.camera) {
@@ -42,13 +42,13 @@ bool NRE_RenderGroup::operator<(const NRE_RenderGroup& other) const {
     return false;
 }
 
-NRE_PointLightDrawCall::NRE_PointLightDrawCall(std::size_t id_in, float z_in, std::size_t priority_in) {
+nre::point_light_drawcall::point_light_drawcall(std::size_t id_in, float z_in, std::size_t priority_in) {
     this->id       = id_in;
     this->z        = z_in;
     this->priority = priority_in;
 }
 
-bool NRE_PointLightDrawCall::operator>(const NRE_PointLightDrawCall& other) const {
+bool nre::point_light_drawcall::operator>(const point_light_drawcall& other) const {
     if (this->priority == other.priority) {
         if (std::abs(this->z - other.z) < 0.0000001f) {
             return this->id > other.id;
@@ -63,7 +63,7 @@ bool NRE_PointLightDrawCall::operator>(const NRE_PointLightDrawCall& other) cons
     return false;
 }
 
-void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) {
+void nre::renderer_t::sortPointLights(std::size_t scene_id, std::size_t camera_id) {
     this->pt_visible_lights_.clear();
 
     auto persp_mat = data_.cameras_[camera_id].perspective_mat;
@@ -114,7 +114,7 @@ void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) 
         // is what's VISIBLE
         if ((not is_behind_camera) and (not is_too_far_away) and (not is_too_left) and (not is_too_right) and
             (not is_too_above) and (not is_too_below)) {
-            auto point_light = NRE_PointLightDrawCall(
+            auto point_light = nre::point_light_drawcall(
                 l, (data_.cameras_[camera_id].perspective_view_mat * data_.pt_lights_[l].model_mat[3])[2], 0);
             this->pt_visible_lights_.insert(point_light);
         }
@@ -122,7 +122,7 @@ void NRE_Renderer::sortPointLights(std::size_t scene_id, std::size_t camera_id) 
     // cout << "pt size " << this->pt_visible_lights.size() << endl;
 }
 
-void NRE_Renderer::generateDrawCalls() {
+void nre::renderer_t::generateDrawCalls() {
 
     // delete all remaining draw call programs from deleted scenes
     for (auto& sce : data_.deleted_scenes_) {
@@ -139,7 +139,7 @@ void NRE_Renderer::generateDrawCalls() {
     for (auto& scene : data_.scenes_) {
 
         if (!this->sce_ren_groups_.count(scene.first)) {
-            this->sce_ren_groups_[scene.first] = NRE_DrawCallContainer();
+            this->sce_ren_groups_[scene.first] = nre::drawcall_container_t();
         }
 
         // delete remaining draw call programs from existing scenes
@@ -154,7 +154,7 @@ void NRE_Renderer::generateDrawCalls() {
         for (auto cam : scene.second.cameras) {
             for (auto mesh : scene.second.meshes) {
                 for (auto vgroup : data_.meshes_[mesh].vgroups) {
-                    auto render_data     = NRE_RenderGroup();
+                    auto render_data     = nre::render_group();
                     render_data.camera   = cam;
                     render_data.vgroup   = vgroup;
                     render_data.mesh     = mesh;
@@ -170,7 +170,7 @@ void NRE_Renderer::generateDrawCalls() {
 
 // legacy renderer
 
-void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camera_id) {
+void nre::renderer_legacy_t::sortPointLights(std::size_t scene_id, std::size_t camera_id) {
     this->pt_visible_lights_.clear();
 
     auto persp_mat = data_.cameras_[camera_id].perspective_mat;
@@ -221,7 +221,7 @@ void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camer
         // is what's VISIBLE
         if ((not is_behind_camera) and (not is_too_far_away) and (not is_too_left) and (not is_too_right) and
             (not is_too_above) and (not is_too_below)) {
-            auto point_light = NRE_PointLightDrawCall(
+            auto point_light = nre::point_light_drawcall(
                 l, (data_.cameras_[camera_id].perspective_view_mat * data_.pt_lights_[l].model_mat[3])[2], 0);
             this->pt_visible_lights_.insert(point_light);
         }
@@ -229,7 +229,7 @@ void NRE_RendererLegacy::sortPointLights(std::size_t scene_id, std::size_t camer
     // cout << "pt size " << this->pt_visible_lights.size() << endl;
 }
 
-void NRE_RendererLegacy::generateDrawCalls() {
+void nre::renderer_legacy_t::generateDrawCalls() {
 
     // delete all remaining draw call programs from deleted scenes
     for (auto& sce : data_.deleted_scenes_) {
@@ -246,7 +246,7 @@ void NRE_RendererLegacy::generateDrawCalls() {
     for (auto& scene : data_.scenes_) {
 
         if (!this->sce_ren_groups_.count(scene.first)) {
-            this->sce_ren_groups_[scene.first] = NRE_DrawCallContainer();
+            this->sce_ren_groups_[scene.first] = nre::drawcall_container_t();
         }
 
         // delete remaining draw call programs from existing scenes
@@ -261,7 +261,7 @@ void NRE_RendererLegacy::generateDrawCalls() {
         for (auto cam : scene.second.cameras) {
             for (auto mesh : scene.second.meshes) {
                 for (auto vgroup : data_.meshes_[mesh].vgroups) {
-                    auto render_data     = NRE_RenderGroup();
+                    auto render_data     = nre::render_group();
                     render_data.camera   = cam;
                     render_data.vgroup   = vgroup;
                     render_data.mesh     = mesh;

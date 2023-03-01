@@ -4,14 +4,14 @@
 
 using namespace std;
 
-NRE_RendererLegacy::NRE_RendererLegacy() : renderer_base_t(false, "renderer_legacy") {
+nre::renderer_legacy_t::renderer_legacy_t() : renderer_base_t(false, "renderer_legacy") {
 }
 
-NRE_RendererLegacy::~NRE_RendererLegacy() {
+nre::renderer_legacy_t::~renderer_legacy_t() {
 }
 
-bool NRE_RendererLegacy::init(oe::renderer_init_info init_info, oe::renderer_update_info update_info,
-                              oe::winsys_output winsys_info) {
+bool nre::renderer_legacy_t::init(oe::renderer_init_info init_info, oe::renderer_update_info update_info,
+                                  oe::winsys_output winsys_info) {
 
 
     // make sure there are no stored objects
@@ -34,7 +34,7 @@ bool NRE_RendererLegacy::init(oe::renderer_init_info init_info, oe::renderer_upd
     return true;
 }
 
-void NRE_RendererLegacy::initOffscreenFrameBuffer() {
+void nre::renderer_legacy_t::initOffscreenFrameBuffer() {
     // setup offscreen framebuffer
 
     this->framebuffer_  = nre::gpu::new_framebuffer();
@@ -58,7 +58,7 @@ void NRE_RendererLegacy::initOffscreenFrameBuffer() {
     nre::gpu::set_framebuffer_renderbuffer(this->framebuffer_, this->depthrbo_, 0);
 }
 
-void NRE_RendererLegacy::initFullscreenQuad() {
+void nre::renderer_legacy_t::initFullscreenQuad() {
     // setup fullscreen quad
     this->vbo_fullscreen_quad_ = nre::gpu::new_vertex_buf();
     this->vao_fullscreen_quad_ = nre::gpu::new_vertex_layout();
@@ -73,7 +73,7 @@ void NRE_RendererLegacy::initFullscreenQuad() {
     nre::gpu::set_vertex_layout_format(this->vao_fullscreen_quad_, vao_quad_data);
 }
 
-void NRE_RendererLegacy::initGammaCorrectionProg() {
+void nre::renderer_legacy_t::initGammaCorrectionProg() {
     // setup gamma correction program
     this->gamma_cor_prog_ = nre::gpu::new_program();
 
@@ -91,7 +91,7 @@ void NRE_RendererLegacy::initGammaCorrectionProg() {
     // nre::gpu::setProgramTextureSlot(this->gamma_cor_prog_, "tex_output", 0);
 }
 
-void NRE_RendererLegacy::initGPUSphere() {
+void nre::renderer_legacy_t::initGPUSphere() {
     // the same VBO, VAO and IBO are used for every object
     // it holds a sphere with radius one
 
@@ -116,8 +116,8 @@ void NRE_RendererLegacy::initGPUSphere() {
 
 //------------------------updateData---------------------------//
 
-bool NRE_RendererLegacy::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
-                                     bool has_renderer_restarted) {
+bool nre::renderer_legacy_t::update_data(oe::renderer_update_info update_info, oe::winsys_output winsys_info,
+                                         bool has_renderer_restarted) {
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
 
@@ -144,7 +144,7 @@ bool NRE_RendererLegacy::update_data(oe::renderer_update_info update_info, oe::w
 
 //------------------------updateSIngleThread-------------------//
 
-bool NRE_RendererLegacy::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
+bool nre::renderer_legacy_t::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
 
     res_x_ = winsys_info.res_x;
     res_y_ = winsys_info.res_y;
@@ -295,7 +295,7 @@ bool NRE_RendererLegacy::update_single_thread(oe::renderer_update_info update_in
     return true;
 }
 
-void NRE_RendererLegacy::drawRenderGroup(NRE_RenderGroup& ren_group) {
+void nre::renderer_legacy_t::drawRenderGroup(nre::render_group& ren_group) {
 
     if (!ren_group.isSetup) {
         // cout << "Setting up Render group" << ren_group.camera << " " << ren_group.vgroup << " " << ren_group.mesh << endl;
@@ -357,7 +357,7 @@ void NRE_RendererLegacy::drawRenderGroup(NRE_RenderGroup& ren_group) {
     nre::gpu::draw(ren_group.program, data_.meshes_[ren_group.mesh].vao, data_.vgroups_[ren_group.vgroup].ibo);
 }
 
-void NRE_RendererLegacy::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
+void nre::renderer_legacy_t::drawRenderGroupZPrePass(nre::render_group& ren_group) {
 
     if (!ren_group.isZPrePassSetup) {
 
@@ -379,7 +379,7 @@ void NRE_RendererLegacy::drawRenderGroupZPrePass(NRE_RenderGroup& ren_group) {
     nre::gpu::draw(ren_group.z_prepass_program, data_.meshes_[ren_group.mesh].vao, data_.vgroups_[ren_group.vgroup].ibo);
 }
 
-void NRE_RendererLegacy::drawRenderGroupBoundingBox(NRE_RenderGroup& ren_group) {
+void nre::renderer_legacy_t::drawRenderGroupBoundingBox(nre::render_group& ren_group) {
 
     nre::gpu::set_program_uniform_data(this->prog_bbox_, "Model_Matrix", data_.meshes_[ren_group.mesh].data);
     nre::gpu::set_program_uniform_data(this->prog_bbox_, "PV_Matrix",
@@ -391,7 +391,7 @@ void NRE_RendererLegacy::drawRenderGroupBoundingBox(NRE_RenderGroup& ren_group) 
     nre::gpu::draw(this->prog_bbox_, this->vao_bbox_);
 }
 
-void NRE_RendererLegacy::drawRenderGroupBoundingSphere(NRE_RenderGroup& ren_group) {
+void nre::renderer_legacy_t::drawRenderGroupBoundingSphere(nre::render_group& ren_group) {
 
     nre::gpu::set_program_uniform_data(this->prog_sphere_, "Model_Matrix", data_.meshes_[ren_group.mesh].data);
     nre::gpu::set_program_uniform_data(this->prog_sphere_, "PV_Matrix",
@@ -404,7 +404,7 @@ void NRE_RendererLegacy::drawRenderGroupBoundingSphere(NRE_RenderGroup& ren_grou
 }
 
 
-void NRE_RendererLegacy::setupBoundingBoxProgram() {
+void nre::renderer_legacy_t::setupBoundingBoxProgram() {
 
     // the same vbo and vao are used for every object
     // The vbo holds a cube with side 1 that is scaled appropriately in the shader
@@ -440,7 +440,7 @@ void NRE_RendererLegacy::setupBoundingBoxProgram() {
     nre::gpu::setup_program(this->prog_bbox_);
 }
 
-void NRE_RendererLegacy::setupBoundingSphereProgram() {
+void nre::renderer_legacy_t::setupBoundingSphereProgram() {
 
     this->prog_sphere_ = nre::gpu::new_program();
 
@@ -461,7 +461,7 @@ void NRE_RendererLegacy::setupBoundingSphereProgram() {
 
 //---------------------------------Update actual GPU data------------------------------//
 
-void NRE_RendererLegacy::updateMeshGPUData() {
+void nre::renderer_legacy_t::updateMeshGPUData() {
     for (auto mesh : data_.meshes_) {
 
         // first time buffer initialization
@@ -554,7 +554,7 @@ void NRE_RendererLegacy::updateMeshGPUData() {
     data_.deleted_meshes_.clear();
 }
 
-void NRE_RendererLegacy::updateMaterialGPUData() {
+void nre::renderer_legacy_t::updateMaterialGPUData() {
     for (auto mat : data_.materials_) {
 
         if (!data_.materials_[mat.first].has_init) {
@@ -577,7 +577,7 @@ void NRE_RendererLegacy::updateMaterialGPUData() {
     data_.deleted_materials_.clear();
 }
 
-void NRE_RendererLegacy::updateCameraGPUData() {
+void nre::renderer_legacy_t::updateCameraGPUData() {
     for (auto cam : data_.cameras_) {
 
         if (!data_.cameras_[cam.first].has_init) {
@@ -598,7 +598,7 @@ void NRE_RendererLegacy::updateCameraGPUData() {
     }
     data_.deleted_cameras_.clear();
 }
-void NRE_RendererLegacy::updateLightGPUData() {
+void nre::renderer_legacy_t::updateLightGPUData() {
     /*for (auto l: data_.pt_lights){
 
         if (!data_.pt_lights[l.first].has_init){
@@ -633,7 +633,7 @@ void NRE_RendererLegacy::updateLightGPUData() {
     }
 }
 
-void NRE_RendererLegacy::destroy() {
+void nre::renderer_legacy_t::destroy() {
 
     this->setup_bbox_prog_   = false;
     this->setup_sphere_prog_ = false;

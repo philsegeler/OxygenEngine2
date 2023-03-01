@@ -110,14 +110,16 @@ public:
 
 namespace nre {
     class data_handler_t;
-}
+    class renderer_t;
+    class renderer_legacy_t;
+} // namespace nre
 
 class OE_PolygonStorage32 {
 
     //	friend class CSL_Interpreter;
     friend class OE_Mesh32;
-    friend class NRE_Renderer;
-    friend class NRE_RendererLegacy;
+    friend class nre::renderer_t;
+    friend class nre::renderer_legacy_t;
     friend class nre::data_handler_t;
 
 public:
