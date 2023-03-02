@@ -515,8 +515,8 @@ void nre::renderer_t::updateMeshGPUData() {
             /// index buffers
             for (auto vg : mesh.second.vgroups) {
                 data_.vgroups_[vg].ibo = nre::gpu::new_index_buf();
-                nre::gpu::set_index_buf_memory_and_data(data_.vgroups_[vg].ibo,
-                                                        data_.meshes_[mesh.first].ibos_data[vg], nre::gpu::STATIC);
+                nre::gpu::set_index_buf_memory_and_data(data_.vgroups_[vg].ibo, data_.meshes_[mesh.first].ibos_data[vg],
+                                                        nre::gpu::STATIC);
             }
 
             /// vertex layout

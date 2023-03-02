@@ -151,7 +151,7 @@ void nre::data_handler_t::handle_mesh_data(std::size_t id, std::shared_ptr<OE_Me
         mesh->data->vbo_mutex.unlockMutex();
 
         mesh->data->ibos_mutex.lockMutex();
-        for (auto vg : this->meshes_[id].vgroups){
+        for (auto vg : this->meshes_[id].vgroups) {
             this->meshes_[id].ibos_data[vg] = std::move(mesh->data->ibos[vg].data);
         }
         mesh->data->ibos_mutex.unlockMutex();

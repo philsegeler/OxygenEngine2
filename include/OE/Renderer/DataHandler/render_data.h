@@ -86,7 +86,7 @@ namespace nre {
         std::vector<float> get_scaling_min_data();
         std::vector<float> get_scaling_max_data();
 
-        std::vector<float> vbo_data;
+        std::vector<float>                                vbo_data;
         std::unordered_map<size_t, std::vector<uint32_t>> ibos_data;
 
         std::set<size_t> vgroups;

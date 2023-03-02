@@ -47,9 +47,11 @@ src = ['src/Renderer/glad.c',
 internal_inc = include_directories('./include') 
 
 
+if meson.get_compiler('c', native : false).get_id() != 'emscripten'
+    add_global_arguments('-msse3', language : 'cpp')
+endif
+
 # external dependencies
-
-
 cmake = import('cmake')
 sub_proj = cmake.subproject('ctre')
 ctre_dep = sub_proj.dependency('ctre')

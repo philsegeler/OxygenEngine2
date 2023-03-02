@@ -4,6 +4,7 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <iostream>
 
 using namespace std;
 
@@ -52,7 +53,10 @@ OE_Quat OE_Quat::operator*(const OE_Quat& other) {
 
 
 // math library functions
-
+OE_Mat4x4 OE_Transpose(OE_Mat4x4 mat4) {
+    auto temp = glm::transpose(static_cast<glm::mat4>(mat4));
+    return OE_Mat4x4(temp[0], temp[1], temp[2], temp[3]);
+}
 
 OE_Mat4x4 OE_Translate(OE_Mat4x4 mat4, OE_Vec3 vec3) {
     auto temp = glm::translate(static_cast<glm::mat4>(mat4), static_cast<glm::vec3>(vec3));
@@ -453,4 +457,85 @@ std::vector<uint32_t> OE_GetBoundingSphereIndexBuffer(float r1, float r2, size_t
         ibo.push_back(n - 1 + (n - 1) * ((k + 1) % (2 * n)));
     }
     return ibo;
+}
+
+std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& vbo, const std::vector<float>& model_matrix,
+                                                      const std::vector<float>& mvp_matrix, int num_of_uvs) {
+#include <immintrin.h>
+    auto         bufsize = vbo.size();
+    const float* bufptr  = &vbo[0];
+
+    __m128 model_mat_1 = _mm_setr_ps(model_matrix[0], model_matrix[1], model_matrix[2], model_matrix[3]);
+    __m128 model_mat_2 = _mm_setr_ps(model_matrix[4], model_matrix[5], model_matrix[6], model_matrix[7]);
+    __m128 model_mat_3 = _mm_setr_ps(model_matrix[8], model_matrix[9], model_matrix[10], model_matrix[11]);
+    __m128 model_mat_4 = _mm_setr_ps(model_matrix[12], model_matrix[13], model_matrix[14], model_matrix[15]);
+
+    __m128 mvp_mat_1 = _mm_setr_ps(mvp_matrix[0], mvp_matrix[1], mvp_matrix[2], mvp_matrix[3]);
+    __m128 mvp_mat_2 = _mm_setr_ps(mvp_matrix[4], mvp_matrix[5], mvp_matrix[6], mvp_matrix[7]);
+    __m128 mvp_mat_3 = _mm_setr_ps(mvp_matrix[8], mvp_matrix[9], mvp_matrix[10], mvp_matrix[11]);
+    __m128 mvp_mat_4 = _mm_setr_ps(mvp_matrix[12], mvp_matrix[13], mvp_matrix[14], mvp_matrix[15]);
+
+    __m128 empty_buf = _mm_set_ps(0.0f, 0.0f, 0.0f, 0.0f);
+
+    long int offset          = 6 + num_of_uvs * 2;
+    long int num_of_vertices = bufsize / offset;
+
+    std::vector<float> output;
+    output.reserve(num_of_vertices * (offset + 4));
+    output.resize(num_of_vertices * (offset + 4));
+
+    for (long int i = 0; i < num_of_vertices; i++) {
+
+        alignas(16) float vertices[4];
+        alignas(16) float normals[4];
+
+        vertices[3] = 1.0f;
+        normals[3]  = 0.0f;
+
+        std::memcpy(&vertices[0], &bufptr[i * offset], 12);
+        std::memcpy(&normals[0], &bufptr[i * offset + 3], 12);
+
+        __m128 vertex_in  = _mm_load_ps(&vertices[0]);
+        __m128 normals_in = _mm_load_ps(&normals[0]);
+
+        __m128 mm1  = _mm_mul_ps(vertex_in, model_mat_1);
+        __m128 mmn1 = _mm_mul_ps(normals_in, model_mat_1);
+        __m128 mvp1 = _mm_mul_ps(vertex_in, mvp_mat_1);
+
+        __m128 mm2  = _mm_mul_ps(vertex_in, model_mat_2);
+        __m128 mmn2 = _mm_mul_ps(normals_in, model_mat_2);
+        __m128 mvp2 = _mm_mul_ps(vertex_in, mvp_mat_2);
+
+        __m128 mm3  = _mm_mul_ps(vertex_in, model_mat_3);
+        __m128 mmn3 = _mm_mul_ps(normals_in, model_mat_3);
+        __m128 mvp3 = _mm_mul_ps(vertex_in, mvp_mat_3);
+
+        __m128 mm4  = _mm_mul_ps(vertex_in, model_mat_4);
+        __m128 mvp4 = _mm_mul_ps(vertex_in, mvp_mat_4);
+
+        __m128 mm12  = _mm_hadd_ps(mm1, mm2);
+        __m128 mvp12 = _mm_hadd_ps(mvp1, mvp2);
+        __m128 mmn12 = _mm_hadd_ps(mmn1, mmn2);
+
+        __m128 mm34  = _mm_hadd_ps(mm3, mm4);
+        __m128 mvp34 = _mm_hadd_ps(mvp3, mvp4);
+        __m128 mmn34 = _mm_hadd_ps(mmn3, empty_buf);
+
+        __m128 mmn1234 = _mm_hadd_ps(mmn12, mmn34);
+        __m128 mm1234  = _mm_hadd_ps(mm12, mm34);
+        __m128 mvp1234 = _mm_hadd_ps(mvp12, mvp34);
+
+        _mm_store_ps(&normals[0], mmn1234);
+        _mm_store_ps(&vertices[0], mm1234);
+        _mm_storeu_ps(&output[i * (offset + 4) + 6], mvp1234);
+
+        std::memcpy(&output[i * (offset + 4)], &vertices[0], 12);
+        std::memcpy(&output[i * (offset + 4) + 3], &normals[0], 12);
+
+        for (int uv = 0; uv < num_of_uvs; uv++) {
+            std::memcpy(&output[i * (offset + 4) + 10 + uv * 2], &bufptr[i * offset + 6 + uv * 2], 8);
+        }
+    }
+
+    return output;
 }

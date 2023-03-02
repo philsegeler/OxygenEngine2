@@ -14,6 +14,7 @@ namespace nre { namespace gpu {
         VS_UNDEFINED,
         VS_Z_PREPASS,
         VS_REGULAR,
+        VS_REGULAR_SOFTWARE,
         VS_BOUNDING_BOX,
         VS_BOUNDING_SPHERE,
         VS_LIGHT,

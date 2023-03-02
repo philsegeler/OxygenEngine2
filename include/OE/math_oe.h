@@ -87,9 +87,9 @@ public:
 #define OE_Dot          glm::dot
 
 #define OE_Identity     glm::identity
-#define OE_Det          glm::determinant
-#define OE_Transpose    glm::transpose*/
+#define OE_Det          glm::determinant*/
 
+OE_Mat4x4 OE_Transpose(OE_Mat4x4);
 OE_Mat4x4 OE_Translate(OE_Mat4x4, OE_Vec3);
 OE_Mat4x4 OE_Scale(OE_Mat4x4, OE_Vec3);
 
@@ -116,5 +116,8 @@ std::vector<float> OE_GetBoundingBoxVertexBuffer(float, float, float, float, flo
 
 std::vector<float>    OE_GetBoundingSphereVertexBuffer(float, float, size_t);
 std::vector<uint32_t> OE_GetBoundingSphereIndexBuffer(float, float, size_t);
-
+namespace oe { namespace math {
+        std::vector<float> vertex_shader_regular_sw(const std::vector<float>&, const std::vector<float>&,
+                                                    const std::vector<float>&, int);
+}; };  // namespace oe::math
 #endif // FMATH_H_INCLUDED

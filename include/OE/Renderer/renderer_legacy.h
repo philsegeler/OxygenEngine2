@@ -86,6 +86,7 @@ namespace nre {
         bool                      render_bounding_spheres_{false};
         bool                      use_HDR_{false};
         bool                      use_z_prepass_{false};
+        bool                      use_software_vertex_shaders_{false};
 
         int                    res_x_{0};
         int                    res_y_{0};
