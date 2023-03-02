@@ -354,8 +354,8 @@ void nre::renderer_legacy_t::drawRenderGroup(nre::render_group& ren_group) {
         nre::gpu::set_program_uniform_data(ren_group.program, "MVP_Matrix", OE_Mat4x4ToSTDVector(mvp_mat));
     }
     else {
-        auto mvp_mat_tr       = OE_Mat4x4ToSTDVector(OE_Transpose(mvp_mat));
-        auto model_mat_tr     = OE_Mat4x4ToSTDVector(OE_Transpose(model_mat));
+        auto mvp_mat_tr       = OE_Transpose(mvp_mat);
+        auto model_mat_tr     = OE_Transpose(model_mat);
         auto updated_vertices = oe::math::vertex_shader_regular_sw(data_.meshes_[ren_group.mesh].vbo_data, model_mat_tr,
                                                                    mvp_mat_tr, data_.meshes_[ren_group.mesh].uvmaps);
         nre::gpu::set_vertex_buf_memory_and_data(data_.meshes_[ren_group.mesh].vbo, updated_vertices, nre::gpu::DYNAMIC);

@@ -1,10 +1,16 @@
 #include <OE/math_oe.h>
+
+#include <pmmintrin.h>
+#include <xmmintrin.h>
+
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <iostream>
+
+
 
 using namespace std;
 
@@ -459,11 +465,14 @@ std::vector<uint32_t> OE_GetBoundingSphereIndexBuffer(float r1, float r2, size_t
     return ibo;
 }
 
-std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& vbo, const std::vector<float>& model_matrix,
-                                                      const std::vector<float>& mvp_matrix, int num_of_uvs) {
-#include <immintrin.h>
+std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& vbo, OE_Mat4x4 model_matrix_in,
+                                                      OE_Mat4x4 mvp_matrix_in, int num_of_uvs) {
+
     auto         bufsize = vbo.size();
     const float* bufptr  = &vbo[0];
+
+    auto model_matrix = OE_Mat4x4ToSTDVector(model_matrix_in);
+    auto mvp_matrix   = OE_Mat4x4ToSTDVector(mvp_matrix_in);
 
     __m128 model_mat_1 = _mm_setr_ps(model_matrix[0], model_matrix[1], model_matrix[2], model_matrix[3]);
     __m128 model_mat_2 = _mm_setr_ps(model_matrix[4], model_matrix[5], model_matrix[6], model_matrix[7]);
