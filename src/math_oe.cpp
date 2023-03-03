@@ -519,6 +519,11 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
         __m128 vertex_in  = _mm_load_ps(&vertices[0]);
         __m128 normals_in = _mm_load_ps(&normals[0]);
 
+        // explanation: "mm1" stands for "model matrix 1st row dot product with vertices"
+        // explanation: "mmn1" stands for "model matrix 1st row dot product with normals"
+        // explanation: "mvp1" stands for "mvp (ModelViewPerspective) matrix 1st row dot product with vertices"
+        // equivalent for the rest
+
         __m128 mm1  = _mm_mul_ps(vertex_in, model_mat_1);
         __m128 mmn1 = _mm_mul_ps(normals_in, model_mat_1);
         __m128 mvp1 = _mm_mul_ps(vertex_in, mvp_mat_1);
