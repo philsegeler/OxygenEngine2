@@ -354,11 +354,9 @@ void nre::renderer_legacy_t::drawRenderGroup(nre::render_group& ren_group) {
         nre::gpu::set_program_uniform_data(ren_group.program, "MVP_Matrix", OE_Mat4x4ToSTDVector(mvp_mat));
     }
     else {
-        auto mvp_mat_tr       = OE_Transpose(mvp_mat);
-        auto model_mat_tr     = OE_Transpose(model_mat);
-        auto updated_vertices = oe::math::vertex_shader_regular_sw(data_.meshes_[ren_group.mesh].vbo_data, model_mat_tr,
-                                                                   mvp_mat_tr, data_.meshes_[ren_group.mesh].uvmaps);
-        nre::gpu::set_vertex_buf_memory_and_data(data_.meshes_[ren_group.mesh].vbo, updated_vertices, nre::gpu::DYNAMIC);
+        auto updated_vertices = oe::math::vertex_shader_regular_sw(data_.meshes_[ren_group.mesh].vbo_data, model_mat, mvp_mat,
+                                                                   data_.meshes_[ren_group.mesh].uvmaps);
+        nre::gpu::set_vertex_buf_data(data_.meshes_[ren_group.mesh].vbo, updated_vertices, 0);
     }
 
 
@@ -496,9 +494,16 @@ void nre::renderer_legacy_t::updateMeshGPUData() {
         if (!data_.meshes_[mesh.first].vao_initialized) {
 
             /// vertex buffer
-            if (!this->use_software_vertex_shaders_)
+            if (!this->use_software_vertex_shaders_) {
                 nre::gpu::set_vertex_buf_memory_and_data(data_.meshes_[mesh.first].vbo, data_.meshes_[mesh.first].vbo_data,
                                                          nre::gpu::STATIC);
+            }
+            else {
+                long int offset          = 6 + data_.meshes_[mesh.first].uvmaps * 2;
+                long int num_of_vertices = data_.meshes_[mesh.first].vbo_data.size() / offset;
+                nre::gpu::set_vertex_buf_memory(data_.meshes_[mesh.first].vbo, num_of_vertices * (offset + 4),
+                                                nre::gpu::STREAM);
+            }
 
             /// index buffers
             for (auto vg : mesh.second.vgroups) {

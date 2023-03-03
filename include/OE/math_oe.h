@@ -12,7 +12,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 // #include <glm/gtc/constants.hpp>
-// #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // #include <glm/ext/vector_trigonometric.hpp>
 // #include <glm/gtc/matrix_inverse.hpp>
@@ -54,8 +54,9 @@ class OE_Mat4x4 : public glm::mat4 {
 public:
     using glm::mat4::mat4;
 
-    OE_Mat4x4 operator*(const OE_Mat4x4&);
-    OE_Vec4   operator*(const OE_Vec4&);
+    OE_Mat4x4    operator*(const OE_Mat4x4&);
+    OE_Vec4      operator*(const OE_Vec4&);
+    const float* get_ptr();
 };
 
 class OE_Mat3x3 : public glm::mat3 {

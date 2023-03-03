@@ -53,6 +53,9 @@ OE_Vec4 OE_Mat4x4::operator*(const OE_Vec4& other) {
     return OE_Vec4(temp[0], temp[1], temp[2], temp[3]);
 }
 
+const float* OE_Mat4x4::get_ptr() {
+    return (const float*)glm::value_ptr(*static_cast<glm::mat4*>(this));
+}
 
 OE_Quat OE_Quat::operator*(const OE_Quat& other) {
     auto temp = static_cast<glm::quat>(*this) * static_cast<glm::quat>(other);
@@ -494,18 +497,18 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
     output.resize(num_of_vertices * (offset + 4));
 
 #ifndef OE_USE_NO_SSE_FALLBACK
-    auto model_matrix = OE_Mat4x4ToSTDVector(model_matrix_in);
-    auto mvp_matrix   = OE_Mat4x4ToSTDVector(mvp_matrix_in);
+    const float* model_matrix = model_matrix_in.get_ptr();
+    const float* mvp_matrix   = mvp_matrix_in.get_ptr();
 
-    __m128 model_mat_1 = _mm_setr_ps(model_matrix[0], model_matrix[1], model_matrix[2], model_matrix[3]);
-    __m128 model_mat_2 = _mm_setr_ps(model_matrix[4], model_matrix[5], model_matrix[6], model_matrix[7]);
-    __m128 model_mat_3 = _mm_setr_ps(model_matrix[8], model_matrix[9], model_matrix[10], model_matrix[11]);
-    __m128 model_mat_4 = _mm_setr_ps(model_matrix[12], model_matrix[13], model_matrix[14], model_matrix[15]);
+    __m128 model_mat_1 = _mm_setr_ps(model_matrix[0], model_matrix[4], model_matrix[8], model_matrix[12]);
+    __m128 model_mat_2 = _mm_setr_ps(model_matrix[1], model_matrix[5], model_matrix[9], model_matrix[13]);
+    __m128 model_mat_3 = _mm_setr_ps(model_matrix[2], model_matrix[6], model_matrix[10], model_matrix[14]);
+    __m128 model_mat_4 = _mm_setr_ps(model_matrix[3], model_matrix[7], model_matrix[11], model_matrix[15]);
 
-    __m128 mvp_mat_1 = _mm_setr_ps(mvp_matrix[0], mvp_matrix[1], mvp_matrix[2], mvp_matrix[3]);
-    __m128 mvp_mat_2 = _mm_setr_ps(mvp_matrix[4], mvp_matrix[5], mvp_matrix[6], mvp_matrix[7]);
-    __m128 mvp_mat_3 = _mm_setr_ps(mvp_matrix[8], mvp_matrix[9], mvp_matrix[10], mvp_matrix[11]);
-    __m128 mvp_mat_4 = _mm_setr_ps(mvp_matrix[12], mvp_matrix[13], mvp_matrix[14], mvp_matrix[15]);
+    __m128 mvp_mat_1 = _mm_setr_ps(mvp_matrix[0], mvp_matrix[4], mvp_matrix[8], mvp_matrix[12]);
+    __m128 mvp_mat_2 = _mm_setr_ps(mvp_matrix[1], mvp_matrix[5], mvp_matrix[9], mvp_matrix[13]);
+    __m128 mvp_mat_3 = _mm_setr_ps(mvp_matrix[2], mvp_matrix[6], mvp_matrix[10], mvp_matrix[14]);
+    __m128 mvp_mat_4 = _mm_setr_ps(mvp_matrix[3], mvp_matrix[7], mvp_matrix[11], mvp_matrix[15]);
 
     __m128 empty_buf = _mm_set_ps(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -573,9 +576,9 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
         OE_Vec4 vertex = OE_Vec4(bufptr[i * offset], bufptr[i * offset + 1], bufptr[i * offset + 2], 1.0f);
         OE_Vec4 normal = OE_Vec4(bufptr[i * offset + 3], bufptr[i * offset + 4], bufptr[i * offset + 5], 0.0f);
 
-        OE_Vec4 vertex_transformed = OE_Transpose(model_matrix_in) * vertex;
-        OE_Vec4 normal_transformed = OE_Transpose(model_matrix_in) * normal;
-        OE_Vec4 vertex_everything  = OE_Transpose(mvp_matrix_in) * vertex;
+        OE_Vec4 vertex_transformed = model_matrix_in * vertex;
+        OE_Vec4 normal_transformed = model_matrix_in * normal;
+        OE_Vec4 vertex_everything  = mvp_matrix_in * vertex;
 
 
         for (int coord = 0; coord < 3; coord++) {
