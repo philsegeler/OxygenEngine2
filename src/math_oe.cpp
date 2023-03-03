@@ -1,7 +1,9 @@
 #include <OE/math_oe.h>
 
+#ifndef OE_USE_NO_SSE_FALLBACK
 #include <pmmintrin.h>
 #include <xmmintrin.h>
+#endif
 
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -480,9 +482,18 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
      *
      * Also this is a first step towards purely software rendering.
      */
+
     auto         bufsize = vbo.size();
     const float* bufptr  = &vbo[0];
 
+    long int offset          = 6 + num_of_uvs * 2;
+    long int num_of_vertices = bufsize / offset;
+
+    std::vector<float> output;
+    output.reserve(num_of_vertices * (offset + 4));
+    output.resize(num_of_vertices * (offset + 4));
+
+#ifndef OE_USE_NO_SSE_FALLBACK
     auto model_matrix = OE_Mat4x4ToSTDVector(model_matrix_in);
     auto mvp_matrix   = OE_Mat4x4ToSTDVector(mvp_matrix_in);
 
@@ -497,13 +508,6 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
     __m128 mvp_mat_4 = _mm_setr_ps(mvp_matrix[12], mvp_matrix[13], mvp_matrix[14], mvp_matrix[15]);
 
     __m128 empty_buf = _mm_set_ps(0.0f, 0.0f, 0.0f, 0.0f);
-
-    long int offset          = 6 + num_of_uvs * 2;
-    long int num_of_vertices = bufsize / offset;
-
-    std::vector<float> output;
-    output.reserve(num_of_vertices * (offset + 4));
-    output.resize(num_of_vertices * (offset + 4));
 
     for (long int i = 0; i < num_of_vertices; i++) {
 
@@ -563,5 +567,30 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
         }
     }
 
+#else
+
+    for (long int i = 0; i < num_of_vertices; i++) {
+        OE_Vec4 vertex = OE_Vec4(bufptr[i * offset], bufptr[i * offset + 1], bufptr[i * offset + 2], 1.0f);
+        OE_Vec4 normal = OE_Vec4(bufptr[i * offset + 3], bufptr[i * offset + 4], bufptr[i * offset + 5], 0.0f);
+
+        OE_Vec4 vertex_transformed = OE_Transpose(model_matrix_in) * vertex;
+        OE_Vec4 normal_transformed = OE_Transpose(model_matrix_in) * normal;
+        OE_Vec4 vertex_everything  = OE_Transpose(mvp_matrix_in) * vertex;
+
+
+        for (int coord = 0; coord < 3; coord++) {
+            output[i * (offset + 4) + coord]     = vertex_transformed[coord];
+            output[i * (offset + 4) + coord + 3] = normal_transformed[coord];
+            output[i * (offset + 4) + coord + 6] = vertex_everything[coord];
+        }
+
+        output[i * (offset + 4) + 9] = vertex_everything[3];
+
+        for (int uv = 0; uv < num_of_uvs; uv++) {
+            std::memcpy(&output[i * (offset + 4) + 10 + uv * 2], &bufptr[i * offset + 6 + uv * 2], 8);
+        }
+    }
+
+#endif
     return output;
 }
