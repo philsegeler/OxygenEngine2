@@ -468,6 +468,18 @@ std::vector<uint32_t> OE_GetBoundingSphereIndexBuffer(float r1, float r2, size_t
 std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& vbo, OE_Mat4x4 model_matrix_in,
                                                       OE_Mat4x4 mvp_matrix_in, int num_of_uvs) {
 
+    /* This overly complicated function basically accelerates the 3 matrix-vector multiplications
+     * which are normally done inside the vertex shader.
+     *
+     * Why is it needed? Because for my highly performant 1-core Intel Atom netbook, there also exists an integrated "GPU".
+     * This integrated GPU (GMA 3150) also known as GMD (Graphics Media DECELERATOR) does not
+     * support hardware-accelerated vertex shaders, which means they have to run on the CPU.
+     *
+     * Apparently, running the calculations here manually provides visible performance increase (~30%+) against
+     * a vertex shader compiled by mesa for some reason.
+     *
+     * Also this is a first step towards purely software rendering.
+     */
     auto         bufsize = vbo.size();
     const float* bufptr  = &vbo[0];
 
