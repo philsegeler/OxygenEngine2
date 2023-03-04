@@ -512,41 +512,41 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
 
     for (long int i = 0; i < num_of_vertices; i++) {
 
-        __m128 vertex_x = _mm_set1_ps(bufptr[i*offset]);
-        __m128 vertex_y = _mm_set1_ps(bufptr[i*offset+1]);
-        __m128 vertex_z = _mm_set1_ps(bufptr[i*offset+2]);
+        __m128 vertex_x = _mm_set1_ps(bufptr[i * offset]);
+        __m128 vertex_y = _mm_set1_ps(bufptr[i * offset + 1]);
+        __m128 vertex_z = _mm_set1_ps(bufptr[i * offset + 2]);
 
-        __m128 normal_x = _mm_set1_ps(bufptr[i*offset+3]);
-        __m128 normal_y = _mm_set1_ps(bufptr[i*offset+4]);
-        __m128 normal_z = _mm_set1_ps(bufptr[i*offset+5]);
+        __m128 normal_x = _mm_set1_ps(bufptr[i * offset + 3]);
+        __m128 normal_y = _mm_set1_ps(bufptr[i * offset + 4]);
+        __m128 normal_z = _mm_set1_ps(bufptr[i * offset + 5]);
 
         __m128 mm_x = _mm_mul_ps(vertex_x, model_mat_1);
-         __m128 mm_y = _mm_mul_ps(vertex_y, model_mat_2);
-         __m128 mm_z = _mm_mul_ps(vertex_z, model_mat_3);
+        __m128 mm_y = _mm_mul_ps(vertex_y, model_mat_2);
+        __m128 mm_z = _mm_mul_ps(vertex_z, model_mat_3);
 
-        __m128 mm_xy = _mm_add_ps(mm_x, mm_y);
-        __m128 mm_zw = _mm_add_ps(mm_z, model_mat_4);
+        __m128 mm_xy  = _mm_add_ps(mm_x, mm_y);
+        __m128 mm_zw  = _mm_add_ps(mm_z, model_mat_4);
         __m128 mm1234 = _mm_add_ps(mm_xy, mm_zw);
-        _mm_storeu_ps(&output[i*(offset+4)], mm1234);
+        _mm_storeu_ps(&output[i * (offset + 4)], mm1234);
 
         __m128 mmn_x = _mm_mul_ps(normal_x, model_mat_1);
-         __m128 mmn_y = _mm_mul_ps(normal_y, model_mat_2);
-         __m128 mmn_z = _mm_mul_ps(normal_z, model_mat_3);
+        __m128 mmn_y = _mm_mul_ps(normal_y, model_mat_2);
+        __m128 mmn_z = _mm_mul_ps(normal_z, model_mat_3);
 
-        __m128 mmn_xy = _mm_add_ps(mmn_x, mmn_y);
+        __m128 mmn_xy  = _mm_add_ps(mmn_x, mmn_y);
         __m128 mmn1234 = _mm_add_ps(mmn_xy, mmn_z);
 
-        _mm_storeu_ps(&output[i*(offset+4)+3], mmn1234);
+        _mm_storeu_ps(&output[i * (offset + 4) + 3], mmn1234);
 
         __m128 mvp1 = _mm_mul_ps(vertex_x, mvp_mat_1);
         __m128 mvp2 = _mm_mul_ps(vertex_y, mvp_mat_2);
         __m128 mvp3 = _mm_mul_ps(vertex_z, mvp_mat_3);
 
-        __m128 mvp12 = _mm_add_ps(mvp1, mvp2);
-        __m128 mvp34 = _mm_add_ps(mvp3, mvp_mat_4);
+        __m128 mvp12   = _mm_add_ps(mvp1, mvp2);
+        __m128 mvp34   = _mm_add_ps(mvp3, mvp_mat_4);
         __m128 mvp1234 = _mm_add_ps(mvp12, mvp34);
 
-        _mm_storeu_ps(&output[i*(offset+4)+6], mvp1234);
+        _mm_storeu_ps(&output[i * (offset + 4) + 6], mvp1234);
 
         for (int uv = 0; uv < num_of_uvs; uv++) {
             std::memcpy(&output[i * (offset + 4) + 10 + uv * 2], &bufptr[i * offset + 6 + uv * 2], 8);
