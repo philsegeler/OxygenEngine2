@@ -6,8 +6,6 @@
 #include <OE/task.h>
 #include <OE/types/base_types.h>
 
-class OE_TaskManager;
-
 namespace oe {
 
     enum OS : int { OS_UNDEFINED = 0, OS_LINUX = 1, OS_WINDOWS = 2, OS_ANDROID = 3, OS_WEB = 4 };
@@ -59,7 +57,7 @@ namespace oe {
     };
 
     class winsys_base_t : public OE_THREAD_SAFETY_OBJECT {
-        friend class OE_TaskManager;
+        friend class task_manager;
 
     public:
         winsys_base_t();

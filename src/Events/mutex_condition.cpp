@@ -2,13 +2,13 @@
 #include <OE/types/libs_oe.h>
 
 #ifdef __EMSCRIPTEN__
-void OE_EmscriptenBoolConditionWrapper::operator=(bool a_val) {
+void oe::bool_condition_wrapper_emscripten::operator=(bool a_val) {
     lockMutex();
     value_ = a_val;
     unlockMutex();
 }
 
-bool OE_EmscriptenBoolConditionWrapper::operator!() {
+bool oe::bool_condition_wrapper_emscripten::operator!() {
     lockMutex();
     auto result = value_;
     unlockMutex();
@@ -16,66 +16,63 @@ bool OE_EmscriptenBoolConditionWrapper::operator!() {
 }
 #endif
 
-OE_MutexCondition::OE_MutexCondition() {
+oe::mutex_condition_t::mutex_condition_t() {
 }
 
-OE_MutexCondition::~OE_MutexCondition() {
-}
-
-void OE_MutexCondition::destroy() {
+oe::mutex_condition_t::~mutex_condition_t() {
     lockMutex();
 #ifndef __EMSCRIPTEN__
-    for (auto x : this->conditions)
+    for (auto x : this->conditions_)
         SDL_DestroyCond(x);
 #else
-    this->conditions.clear();
+    this->conditions_.clear();
 #endif
     unlockMutex();
 }
 
-void OE_MutexCondition::createCondition() {
+void oe::mutex_condition_t::create_condition() {
     lockMutex();
 #ifdef __EMSCRIPTEN__
 
-    this->conditions.push_back(OE_EmscriptenBoolConditionWrapper());
+    this->conditions_.push_back(bool_condition_wrapper_emscripten());
 #else
     SDL_cond* condition = SDL_CreateCond();
-    this->conditions.push_back(condition);
+    this->conditions_.push_back(condition);
 #endif
 
     unlockMutex();
 }
 
-void OE_MutexCondition::condWait(size_t id) {
-    if (this->conditions.size() > id) {
+void oe::mutex_condition_t::cond_wait(size_t id) {
+    if (this->conditions_.size() > id) {
 #ifdef __EMSCRIPTEN__
-        this->conditions[id] = false;
+        this->conditions_[id] = false;
         unlockMutex();
 
-        while (!this->conditions[id])
+        while (!this->conditions_[id])
             this->pause(1);
 
         lockMutex();
 #else
-        SDL_CondWait(this->conditions[id], this->wmutex);
+        SDL_CondWait(this->conditions_[id], this->wmutex);
 #endif
     }
 }
 
-void OE_MutexCondition::condBroadcast(size_t id) {
-    if (this->conditions.size() > id) {
+void oe::mutex_condition_t::cond_broadcast(size_t id) {
+    if (this->conditions_.size() > id) {
 #ifdef __EMSCRIPTEN__
-        this->conditions[id] = true;
+        this->conditions_[id] = true;
 #else
-        SDL_CondBroadcast(this->conditions[id]);
+        SDL_CondBroadcast(this->conditions_[id]);
 #endif
     }
 }
 
-void OE_MutexCondition::pause(int delay) {
+void oe::mutex_condition_t::pause(int delay) {
     SDL_Delay(delay);
 }
 
-unsigned int OE_MutexCondition::getTicks() {
+unsigned int oe::mutex_condition_t::getTicks() {
     return SDL_GetTicks();
 }

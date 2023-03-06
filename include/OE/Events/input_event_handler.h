@@ -8,16 +8,11 @@
  *
  */
 
-class OE_TaskManager;
-class OE_SDL_WindowSystem;
-class OE_WindowSystemBase;
-
 namespace oe {
     class input_event_handler_t {
-        friend class ::OE_TaskManager;
+        friend class task_manager_t;
         friend class event_handler_t;
-        friend class ::OE_SDL_WindowSystem;
-        friend class ::OE_WindowSystemBase;
+        friend class sdl_window_system_t;
 
     public:
         input_event_handler_t();

@@ -5,8 +5,6 @@
 #include <atomic>
 #include <functional>
 
-class OE_TaskManager;
-
 namespace oe {
 
     enum class task_type { EVENT, REGULAR, UNSYNC, PHYSICS };
@@ -16,7 +14,7 @@ namespace oe {
 
     /// This class is used as a const argument to all functions passed to the engine
     class task_info_t {
-        friend class ::OE_TaskManager;
+        friend class task_manager_t;
         friend struct OE_ThreadStruct;
         friend class event_t;
         friend class task_t;
@@ -63,7 +61,7 @@ namespace oe {
     /// This class is used for storing regular tasks running on synchronized threads on a shared_index_map
     class task_t : public task_info_t {
 
-        friend class ::OE_TaskManager;
+        friend class task_manager_t;
         friend struct OE_ThreadStruct;
         friend class event_t;
 

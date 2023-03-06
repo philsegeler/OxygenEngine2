@@ -3,7 +3,7 @@
 
 #include <OE/types/base_types.h>
 
-//#include <glm/glm.hpp>
+// #include <glm/glm.hpp>
 #ifndef __EMSCRIPTEN__
 #define GLM_FORCE_SSE3
 #endif
@@ -11,22 +11,22 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-//#include <glm/gtc/constants.hpp>
-//#include <glm/gtc/type_ptr.hpp>
+// #include <glm/gtc/constants.hpp>
+// #include <glm/gtc/type_ptr.hpp>
 
-//#include <glm/ext/vector_trigonometric.hpp>
-//#include <glm/gtc/matrix_inverse.hpp>
-//#include <glm/gtc/matrix_access.hpp>
-//#include <glm/ext/matrix_clip_space.hpp>
-//#include <glm/ext/matrix_projection.hpp>
+// #include <glm/ext/vector_trigonometric.hpp>
+// #include <glm/gtc/matrix_inverse.hpp>
+// #include <glm/gtc/matrix_access.hpp>
+// #include <glm/ext/matrix_clip_space.hpp>
+// #include <glm/ext/matrix_projection.hpp>
 
 #include <glm/gtc/quaternion.hpp>
-//#include <glm/ext/quaternion_float.hpp>
-//#include <glm/ext/quaternion_common.hpp>
-//#include <glm/ext/quaternion_geometric.hpp>
-//#include <glm/ext/quaternion_transform.hpp>
+// #include <glm/ext/quaternion_float.hpp>
+// #include <glm/ext/quaternion_common.hpp>
+// #include <glm/ext/quaternion_geometric.hpp>
+// #include <glm/ext/quaternion_transform.hpp>
 
-//#include <glm/gtc/noise.hpp>
+// #include <glm/gtc/noise.hpp>
 
 #define FE_EPSILON 0.000001f
 #define OE_EPSILON 0.000001f

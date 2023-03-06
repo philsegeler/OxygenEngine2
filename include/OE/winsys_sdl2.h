@@ -4,53 +4,53 @@
 #include <OE/dummy_classes.h>
 #include <OE/types/libs_oe.h>
 
-class OE_SDL_WindowSystem : public oe::winsys_base_t {
-    friend class OE_TaskManager;
+namespace oe {
 
-public:
-    OE_SDL_WindowSystem();
-    ~OE_SDL_WindowSystem();
+    class sdl_window_system_t : public oe::winsys_base_t {
+        friend class OE_TaskManager;
 
-    oe::winsys_output init(oe::winsys_init_info, oe::winsys_update_info);
-    oe::winsys_output update(oe::winsys_update_info);
+    public:
+        sdl_window_system_t();
+        ~sdl_window_system_t();
 
-    bool is_mouse_locked();
-    void lock_mouse();
-    void unlock_mouse();
+        oe::winsys_output init(oe::winsys_init_info, oe::winsys_update_info);
+        oe::winsys_output update(oe::winsys_update_info);
 
-    void destroy();
+        bool is_mouse_locked();
+        void lock_mouse();
+        void unlock_mouse();
 
-private:
-    bool update_events();
+        void destroy();
 
-    SDL_Window*   window{nullptr};
-    SDL_GLContext context;
+    private:
+        bool update_events();
 
-    SDL_Event event;
+        SDL_Window*   window_{nullptr};
+        SDL_GLContext context_;
 
-    int counter{0};
+        SDL_Event event_;
 
-    bool mouse_moved{false};
+        bool mouse_moved_{false};
 
-    void              updateWindowEvents();
-    void              createWindow(int, int);
-    oe::winsys_output finishInit();
+        void              update_window_events();
+        void              create_window(int, int);
+        oe::winsys_output finish_init();
 
-    int  resolution_x{0};
-    int  resolution_y{0};
-    int  dpi{96};
-    bool vsync{true};
+        int  resolution_x_{0};
+        int  resolution_y_{0};
+        int  dpi_{96};
+        bool vsync_{true};
 
-    // For different OpenGL versions
-    std::string title;
-    bool        fullscreen{false};
-    int         major{0};
-    int         minor{0};
-    bool        isES{false};
-    bool        mouse_locked{false};
+        // For different OpenGL versions
+        std::string title_;
+        bool        fullscreen_{false};
+        int         major_{0};
+        int         minor_{0};
+        bool        isES_{false};
+        bool        mouse_locked_{false};
 
-    std::atomic<bool> restart_renderer{false};
-};
-
+        std::atomic<bool> restart_renderer_{false};
+    };
+}; // namespace oe
 
 #endif

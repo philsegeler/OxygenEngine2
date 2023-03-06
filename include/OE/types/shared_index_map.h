@@ -5,13 +5,14 @@
 #include <OE/error_oe.h>
 #include <OE/types/base_types.h>
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <map>
 #include <memory>
 #include <set>
 #include <type_traits>
-
+#include <utility>
 
 /** New General class intended to optimize and properly parallelize accesing of
  * individual meshes/materials/etc. Stores ids and names. Only stores one name per element and one id per element.
@@ -19,7 +20,6 @@
  * [Enhancement TODO for Andreas]: Add a custom container in place of std::set in changed_t/deleted_t
  */
 
-class OE_TaskManager;
 
 namespace oe {
 
@@ -195,7 +195,7 @@ namespace oe {
 
         constexpr static bool is_sorted = (IndexMapType != index_map_sort_type::unsorted);
 
-        friend class ::OE_TaskManager;
+        friend class task_manager_t;
         friend class changed_t;
         friend class deleted_t;
 
