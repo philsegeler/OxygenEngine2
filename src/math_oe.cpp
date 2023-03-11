@@ -470,8 +470,8 @@ std::vector<uint32_t> OE_GetBoundingSphereIndexBuffer(float r1, float r2, size_t
     return ibo;
 }
 
-std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& vbo, const std::vector<uint32_t>& ibo, OE_Mat4x4 model_matrix_in,
-                                                      OE_Mat4x4 mvp_matrix_in, int num_of_uvs) {
+std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& vbo, const std::vector<uint32_t>& ibo,
+                                                      OE_Mat4x4 model_matrix_in, OE_Mat4x4 mvp_matrix_in, int num_of_uvs) {
 
     /* This overly complicated function basically accelerates the 3 matrix-vector multiplications
      * which are normally done inside the vertex shader.
@@ -512,6 +512,8 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
 
     for (long int i = 0; i < num_of_vertices; i++) {
 
+
+
         __m128 vertex_x = _mm_set1_ps(bufptr[ibo[i] * offset]);
         __m128 vertex_y = _mm_set1_ps(bufptr[ibo[i] * offset + 1]);
         __m128 vertex_z = _mm_set1_ps(bufptr[ibo[i] * offset + 2]);
@@ -549,7 +551,7 @@ std::vector<float> oe::math::vertex_shader_regular_sw(const std::vector<float>& 
         _mm_storeu_ps(&output[i * (offset + 4) + 6], mvp1234);
 
         for (int uv = 0; uv < num_of_uvs; uv++) {
-            std::memcpy(&output[i * (offset + 4) + 10 + uv * 2], &bufptr[i * offset + 6 + uv * 2], 8);
+            std::memcpy(&output[i * (offset + 4) + 10 + uv * 2], &bufptr[ibo[i] * offset + 6 + uv * 2], 8);
         }
     }
 
