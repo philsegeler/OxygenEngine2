@@ -64,6 +64,7 @@ namespace nre {
         /// These two are in the NRE_RendererUtils.cpp
         void generateDrawCalls();
         void sortPointLights(std::size_t, std::size_t);
+        void update_software_vertex_shaders(size_t, size_t);
         /////////////////////////
 
         void drawRenderGroup(nre::render_group&);

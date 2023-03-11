@@ -118,7 +118,8 @@ std::vector<float> OE_GetBoundingBoxVertexBuffer(float, float, float, float, flo
 std::vector<float>    OE_GetBoundingSphereVertexBuffer(float, float, size_t);
 std::vector<uint32_t> OE_GetBoundingSphereIndexBuffer(float, float, size_t);
 namespace oe { namespace math {
-        std::vector<float> vertex_shader_regular_sw(const std::vector<float>&, const std::vector<uint32_t>&, OE_Mat4x4,
-                                                    OE_Mat4x4, int);
+        std::vector<float> vertex_shader_regular_sw(const std::vector<float>&, OE_Mat4x4, OE_Mat4x4, int);
+        std::vector<float> vertex_shader_regular_sw_ibo(const std::vector<float>&, const std::vector<uint32_t>&, OE_Mat4x4,
+                                                        OE_Mat4x4, int);
 }; };  // namespace oe::math
 #endif // FMATH_H_INCLUDED

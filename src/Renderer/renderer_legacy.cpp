@@ -144,6 +144,17 @@ bool nre::renderer_legacy_t::update_data(oe::renderer_update_info update_info, o
     return true;
 }
 
+
+void nre::renderer_legacy_t::update_software_vertex_shaders(size_t camera_id, size_t scene_id) {
+    for (auto mesh : data_.scenes_[scene_id].meshes) {
+        auto mvp_mat   = data_.cameras_[camera_id].perspective_view_mat * data_.meshes_[mesh].model_mat;
+        auto model_mat = data_.meshes_[mesh].model_mat;
+        auto updated_vertices =
+            oe::math::vertex_shader_regular_sw(data_.meshes_[mesh].vbo_data, model_mat, mvp_mat, data_.meshes_[mesh].uvmaps);
+        nre::gpu::set_vertex_buf_memory_and_data(data_.meshes_[mesh].vbo, updated_vertices, nre::gpu::STREAM);
+    }
+}
+
 //------------------------updateSIngleThread-------------------//
 
 bool nre::renderer_legacy_t::update_single_thread(oe::renderer_update_info update_info, oe::winsys_output winsys_info) {
@@ -237,6 +248,11 @@ bool nre::renderer_legacy_t::update_single_thread(oe::renderer_update_info updat
         }
         else {
             nre::gpu::set_render_mode(nre::gpu::REGULAR_BACKFACE);
+        }
+
+        // precalculate software vertex shader if necessary
+        if (this->use_software_vertex_shaders_) {
+            this->update_software_vertex_shaders(camera_id, scene_id);
         }
 
         for (auto x : this->sce_ren_groups_[scene_id]) {
@@ -353,12 +369,6 @@ void nre::renderer_legacy_t::drawRenderGroup(nre::render_group& ren_group) {
         nre::gpu::set_program_uniform_data(ren_group.program, "Model_Matrix", OE_Mat4x4ToSTDVector(model_mat));
         nre::gpu::set_program_uniform_data(ren_group.program, "MVP_Matrix", OE_Mat4x4ToSTDVector(mvp_mat));
     }
-    else {
-        auto updated_vertices = oe::math::vertex_shader_regular_sw(data_.meshes_[ren_group.mesh].vbo_data,
-                                                                   data_.meshes_[ren_group.mesh].ibos_data[ren_group.vgroup],
-                                                                   model_mat, mvp_mat, data_.meshes_[ren_group.mesh].uvmaps);
-        nre::gpu::set_vertex_buf_memory_and_data(data_.meshes_[ren_group.mesh].vbo, updated_vertices, nre::gpu::STREAM);
-    }
 
 
     if (nre::gpu::get_program_uniform_slot(ren_group.program, "mat_diffuse") != -2) {
@@ -374,12 +384,7 @@ void nre::renderer_legacy_t::drawRenderGroup(nre::render_group& ren_group) {
                                            data_.materials_[ren_group.material].get_mat_specular_hardness());
     }
 
-    if (not this->use_software_vertex_shaders_) {
-        nre::gpu::draw(ren_group.program, data_.meshes_[ren_group.mesh].vao, data_.vgroups_[ren_group.vgroup].ibo);
-    }
-    else {
-        nre::gpu::draw(ren_group.program, data_.meshes_[ren_group.mesh].vao);
-    }
+    nre::gpu::draw(ren_group.program, data_.meshes_[ren_group.mesh].vao, data_.vgroups_[ren_group.vgroup].ibo);
 }
 
 void nre::renderer_legacy_t::drawRenderGroupZPrePass(nre::render_group& ren_group) {
